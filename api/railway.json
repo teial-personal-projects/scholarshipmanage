@@ -1,0 +1,14 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "npm install && npm run build:api",
+    "watchPatterns": [
+      "/api/**",
+      "/shared/**"
+    ]
+  },
+  "deploy": {
+    "startCommand": "node api/dist/api/src/index.js"
+  }
+}

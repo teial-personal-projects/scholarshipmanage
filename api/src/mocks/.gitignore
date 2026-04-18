@@ -1,0 +1,8 @@
+# Ignore user data files
+data/*.json
+output/*.sql
+
+# But keep the directory structure
+!data/.gitkeep
+!output/.gitkeep
+

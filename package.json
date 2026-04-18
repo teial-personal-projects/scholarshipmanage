@@ -1,0 +1,28 @@
+{
+  "name": "scholarship-hub",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "web",
+    "api",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w web\" \"npm run dev -w api\"",
+    "dev:web": "npm run dev --workspace=web",
+    "dev:api": "npm run dev --workspace=api",
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build --workspace=shared",
+    "build:web": "npm run build:shared && npm run build --workspace=@scholarship-hub/web",
+    "build:api": "npm run build:shared && npm run build --workspace=@scholarship-hub/api",
+    "lint": "npm run lint --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,76 @@
+name: Send Automated Reminders
+
+# Schedule the reminder job to run daily at noon UTC (7 AM EST / 4 AM PST)
+# Cron syntax: minute hour day-of-month month day-of-week
+# Adjust the schedule as needed for your timezone and reminder frequency
+on:
+  # DISABLED: Schedule the reminder job to run daily at noon UTC (7 AM EST / 4 AM PST)
+  # Cron syntax: minute hour day-of-month month day-of-week
+  # Adjust the schedule as needed for your timezone and reminder frequency
+  # schedule:
+  #   # Runs every day at 12:00 PM UTC (noon)
+  #   - cron: '0 12 * * *'
+
+  # Allow manual triggering for testing with environment selection
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run against'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+          - dev
+        default: 'production'
+
+jobs:
+  send-reminders:
+    name: Process and send reminder emails
+    runs-on: ubuntu-latest
+
+    # Use the environment (defaults to production for scheduled runs)
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Send reminders via API
+        run: |
+          echo "Calling reminder endpoint for environment: ${{ github.event.inputs.environment || 'production' }}"
+          # vars.API_URL is resolved from the environment variables configured in GitHub Environments
+          echo "API URL: ${{ vars.API_URL }}"
+
+          # Call the cron endpoint with the secret token
+          # vars.API_URL and secrets.CRON_SECRET are provided by the selected GitHub Environment
+          RESPONSE=$(curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP_STATUS:%{http_code}" \
+            ${{ vars.API_URL }}/api/cron/send-reminders)
+
+          # Extract HTTP status code
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+
+          echo "Response body:"
+          echo "$BODY"
+          echo "HTTP Status: $HTTP_STATUS"
+
+          # Check if request was successful
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Error: Reminder endpoint returned status $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo "Reminders sent successfully!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "⚠️ Reminder job failed! Check the logs above for details."
+          echo "Environment: ${{ github.event.inputs.environment || 'production' }}"
+          echo "Common issues:"
+          echo "  - CRON_SECRET not set in environment secrets"
+          echo "  - API_URL not set in environment variables"
+          echo "  - API endpoint is down or unreachable"
+          echo "  - CRON_SECRET mismatch between GitHub and server"
+          echo "  - Wrong environment selected"
