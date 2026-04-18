@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { apiGet } from '../services/api';
-import type { CollaboratorResponse } from '@scholarship-hub/shared';
+import type { CollaboratorResponse } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 /**

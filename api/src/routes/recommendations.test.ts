@@ -32,7 +32,7 @@ vi.mock('../utils/supabase.js', () => ({
 }));
 
 // Mock shared package
-vi.mock('@scholarship-hub/shared', async () => {
+vi.mock('@scholarshipmanage/shared', async () => {
     const { z } = await import('zod');
     return {
   toCamelCase: vi.fn((obj: any) => obj),

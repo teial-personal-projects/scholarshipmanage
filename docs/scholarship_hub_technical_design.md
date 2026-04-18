@@ -1,4 +1,4 @@
-# Scholarship Hub - Technical Design Document
+# Scholarshipmanage - Technical Design Document
 
 **Version:** 1.0  
 **Date:** 2024  
@@ -25,7 +25,7 @@
 
 ### 1.1 Purpose
 
-This Technical Design Document (TDD) describes the implementation details and technical approaches for the Scholarship Hub application. It explains **how** the system is implemented and **why** specific technical solutions were chosen.
+This Technical Design Document (TDD) describes the implementation details and technical approaches for the Scholarshipmanage application. It explains **how** the system is implemented and **why** specific technical solutions were chosen.
 
 **Audience:** Implementing engineers, code reviewers, maintainers
 
@@ -127,7 +127,7 @@ This TDD complements:
 ### 3.1 Monorepo Organization
 
 ```
-scholarship-hub/
+scholarshipmanage/
 ├── package.json                 # Root workspace config
 ├── .env.local                  # Local environment variables
 ├── .gitignore
@@ -323,7 +323,7 @@ The application structure follows this hierarchy:
 - Request interceptors: Adds JWT token to Authorization header
 - Response interceptors: Handles 401 errors, attempts token refresh
 - Error handling: Transforms API errors into typed exceptions
-- TypeScript types: Uses shared types from `@scholarship-hub/shared`
+- TypeScript types: Uses shared types from `@scholarshipmanage/shared`
 
 **Token Refresh Flow**:
 1. API request returns 401 (unauthorized)
@@ -1080,7 +1080,7 @@ web/src/test/
 
 ## References
 
-- System Design Document: `docs/scholarship_hub_system_design.md`
+- System Design Document: `docs/scholarshipmanage_system_design.md`
 - Database Schema Documentation: `docs/database-schema.md`
 - [Supabase Documentation](https://supabase.com/docs)
 - [Express.js Documentation](https://expressjs.com/)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiGet, apiPatch } from '../services/api';
-import type { UserProfile } from '@scholarship-hub/shared';
+import type { UserProfile } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 function Profile() {

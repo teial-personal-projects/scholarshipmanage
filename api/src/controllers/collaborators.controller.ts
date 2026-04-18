@@ -6,7 +6,7 @@
 import { Request, Response } from 'express';
 import * as collaboratorsService from '../services/collaborators.service.js';
 import { asyncHandler } from '../middleware/error-handler.js';
-import { toCamelCase } from '@scholarship-hub/shared';
+import { toCamelCase } from '@scholarshipmanage/shared';
 import {
   createCollaboratorInputSchema,
   updateCollaboratorInputSchema,

@@ -1,7 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { getUserProfileById } from '../utils/supabase.js';
-import type { DashboardReminders } from '@scholarship-hub/shared';
-import { sanitizePhoneNumber } from '@scholarship-hub/shared';
+import type { DashboardReminders } from '@scholarshipmanage/shared';
+import { sanitizePhoneNumber } from '@scholarshipmanage/shared';
 import { AppError } from '../middleware/error-handler.js';
 
 /**

@@ -31,7 +31,7 @@ function Register() {
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5F3] px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">ScholarshipHub</h1>
+          <h1 className="text-3xl font-bold text-gray-900">ScholarshipManage</h1>
           <p className="text-gray-600 text-sm">Create your account</p>
         </div>
 

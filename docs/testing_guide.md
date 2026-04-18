@@ -1,6 +1,6 @@
-# Scholarship Hub - Testing Guide
+# Scholarshipmanage - Testing Guide
 
-This document provides comprehensive testing guidance for the Scholarship Hub application, including end-to-end testing setup, email invitations testing, and troubleshooting.
+This document provides comprehensive testing guidance for the Scholarshipmanage application, including end-to-end testing setup, email invitations testing, and troubleshooting.
 
 ---
 

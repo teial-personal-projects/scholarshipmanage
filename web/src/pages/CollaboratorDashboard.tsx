@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCollaboratorCollaborations } from '../hooks/useCollaborations';
-import type { CollaborationResponse } from '@scholarship-hub/shared';
+import type { CollaborationResponse } from '@scholarshipmanage/shared';
 import CollaborationHistory from '../components/CollaborationHistory';
 import { apiPatch } from '../services/api';
 import { formatDateNoTimezone, formatRelativeTimestamp } from '../utils/date';

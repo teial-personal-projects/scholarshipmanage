@@ -39,8 +39,8 @@
     // Path mapping for shared package
     "baseUrl": ".",
     "paths": {
-      "@scholarship-hub/shared": ["../shared/src"],
-      "@scholarship-hub/shared/*": ["../shared/src/*"]
+      "@scholarshipmanage/shared": ["../shared/src"],
+      "@scholarshipmanage/shared/*": ["../shared/src/*"]
     }
   },
   "include": ["src/**/*"],

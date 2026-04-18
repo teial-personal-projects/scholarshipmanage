@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../services/api';
-import type { DashboardReminders } from '@scholarship-hub/shared';
+import type { DashboardReminders } from '@scholarshipmanage/shared';
 import { parseDateOnlyToLocalDate } from '../utils/date';
 
 function DashboardReminders() {

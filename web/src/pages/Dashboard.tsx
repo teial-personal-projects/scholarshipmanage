@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardReminders from '../components/DashboardReminders';
-import type { UserProfile, ApplicationResponse } from '@scholarship-hub/shared';
+import type { UserProfile, ApplicationResponse } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 const STATUS_BADGE: Record<string, string> = {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { urlSchema } from '@scholarship-hub/shared';
+import { urlSchema } from '@scholarshipmanage/shared';
 
 /**
  * Essay Validation Schemas

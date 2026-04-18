@@ -1,4 +1,4 @@
--- Test Data for ScholarshipHub Database
+-- Test Data for ScholarshipManage Database
 -- This file contains sample data for testing the database schema
 -- Run this AFTER all migrations have been applied
 -- 

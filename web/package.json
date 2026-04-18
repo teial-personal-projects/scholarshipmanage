@@ -1,5 +1,5 @@
 {
-  "name": "@scholarship-hub/web",
+  "name": "@scholarshipmanage/web",
   "version": "1.0.0",
   "type": "module",
   "private": true,
@@ -9,7 +9,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:dev": "vite --mode dev",
     "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode dev",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
@@ -18,7 +20,7 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@scholarship-hub/shared": "*",
+    "@scholarshipmanage/shared": "*",
     "@supabase/supabase-js": "^2.39.0",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-query-devtools": "^5.91.1",

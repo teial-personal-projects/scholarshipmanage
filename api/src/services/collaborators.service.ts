@@ -9,7 +9,7 @@ import {
   DB_ERROR_CODES,
   isDbErrorCode,
 } from '../constants/db-errors.js';
-import { sanitizePhoneNumber, sanitizeEmail } from '@scholarship-hub/shared';
+import { sanitizePhoneNumber, sanitizeEmail } from '@scholarshipmanage/shared';
 
 /**
  * Get all collaborators for a user

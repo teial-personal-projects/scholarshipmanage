@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, Trash2, History } from 'lucide-react';
 import { apiGet, apiDelete } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import type { ApplicationResponse } from '@scholarship-hub/shared';
+import type { ApplicationResponse } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 function getStatusClasses(status: string) {

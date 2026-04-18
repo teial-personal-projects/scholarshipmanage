@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../services/api';
-import type { ApplicationResponse, CollaborationResponse, CollaborationResponseWithSnakeCase, CollaboratorResponse } from '@scholarship-hub/shared';
+import type { ApplicationResponse, CollaborationResponse, CollaborationResponseWithSnakeCase, CollaboratorResponse } from '@scholarshipmanage/shared';
 import { formatDate } from '../utils/date';
 
 const STATUS_BADGE: Record<string, string> = {

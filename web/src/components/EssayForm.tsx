@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiPost, apiPatch } from '../services/api';
-import type { EssayResponse } from '@scholarship-hub/shared';
+import type { EssayResponse } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 interface EssayFormProps {

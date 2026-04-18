@@ -9,7 +9,7 @@ import type {
   EssayResponse,
   CollaboratorResponse,
   CollaborationResponse
-} from '@scholarship-hub/shared';
+} from '@scholarshipmanage/shared';
 
 /**
  * Mock Users

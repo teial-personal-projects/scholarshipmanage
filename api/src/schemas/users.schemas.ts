@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { nameSchema, phoneSchema } from '@scholarship-hub/shared';
+import { nameSchema, phoneSchema } from '@scholarshipmanage/shared';
 
 /**
  * User Profile Validation Schemas

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiGet, apiPost } from '../services/api';
-import type { CollaboratorResponse, EssayResponse } from '@scholarship-hub/shared';
+import type { CollaboratorResponse, EssayResponse } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 interface AddCollaborationModalProps {

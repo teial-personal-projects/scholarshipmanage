@@ -1,5 +1,5 @@
 {
-    "name": "@scholarship-hub/api",
+    "name": "@scholarshipmanage/api",
     "version": "1.0.0",
     "type": "module",
     "engines": {
@@ -9,7 +9,7 @@
     "scripts": {
         "dev": "tsx watch src/index.ts",
         "build": "tsc",
-        "start": "node dist/api/src/index.js",
+        "start": "tsx src/index.ts",
         "lint": "eslint src/**/*.ts",
         "type-check": "tsc --noEmit",
         "test": "vitest",
@@ -17,7 +17,7 @@
         "test:coverage": "vitest --coverage"
     },
     "dependencies": {
-        "@scholarship-hub/shared": "*",
+        "@scholarshipmanage/shared": "*",
         "@supabase/supabase-js": "^2.x",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
@@ -28,6 +28,7 @@
         "isomorphic-dompurify": "^2.35.0",
         "morgan": "^1.10.0",
         "resend": "^6.5.2",
+        "tsx": "^4.7.0",
         "zod": "^3.22.0"
     },
     "devDependencies": {
@@ -41,7 +42,6 @@
         "@vitest/ui": "^4.0.15",
         "eslint": "^8.56.0",
         "supertest": "^7.1.4",
-        "tsx": "^4.7.0",
         "typescript": "^5.3.3",
         "vitest": "^4.0.15"
     }
