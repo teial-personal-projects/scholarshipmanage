@@ -1,4 +1,4 @@
-# Scholarship Hub - System Design Document
+# Scholarshipmanage - System Design Document
 
 **Version:** 1.0  
 **Date:** 2024  
@@ -25,7 +25,7 @@
 
 ### 1.1 Purpose
 
-This System Design Document (SDD) describes the architectural design and rationale for the Scholarship Hub application. It explains **why** major architectural decisions were made and how the system is structured to meet its goals.
+This System Design Document (SDD) describes the architectural design and rationale for the Scholarshipmanage application. It explains **why** major architectural decisions were made and how the system is structured to meet its goals.
 
 **Audience:** Architects, senior engineers, technical leads, stakeholders
 
@@ -58,7 +58,7 @@ This SDD is complemented by:
 
 ### 2.1 System Purpose
 
-Scholarship Hub is a scholarship application tracking system that helps students manage scholarship applications, essays, and collaborations with recommenders and essay reviewers.
+Scholarshipmanage is a scholarship application tracking system that helps students manage scholarship applications, essays, and collaborations with recommenders and essay reviewers.
 
 **Core Problem Solved:**
 Students applying for scholarships need a centralized system to:
@@ -702,7 +702,7 @@ This section tracks the implementation status of security features identified in
 
 ## References
 
-- Technical Design Document: `docs/scholarship_hub_technical_design.md`
+- Technical Design Document: `docs/scholarshipmanage_technical_design.md`
 - Database Schema Documentation: `docs/database-schema.md`
 - Related Documentation: See Technical Design Document for additional references
 

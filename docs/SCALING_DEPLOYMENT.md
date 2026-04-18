@@ -31,7 +31,7 @@ Create `scholarship-finder/scheduler/run_finder.sh`:
 # Scholarship Finder - Cron Job Runner
 # Add to crontab: 0 */6 * * * /path/to/run_finder.sh
 
-cd /Users/teial/Tutorials/scholarship-hub/scholarship-finder
+cd /Users/teial/Tutorials/scholarshipmanage/scholarship-finder
 
 # Activate virtual environment
 source venv/bin/activate
@@ -45,7 +45,7 @@ Add to crontab:
 crontab -e
 
 # Add this line (runs every 6 hours):
-0 */6 * * * /Users/teial/Tutorials/scholarship-hub/scholarship-finder/scheduler/run_finder.sh
+0 */6 * * * /Users/teial/Tutorials/scholarshipmanage/scholarship-finder/scheduler/run_finder.sh
 ```
 
 ### Option 2: Node.js Scheduler (Integrated with API)

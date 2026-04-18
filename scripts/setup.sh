@@ -1,7 +1,7 @@
 #!/bin/bash
 # First-time project setup script
 
-echo "🚀 Setting up ScholarshipHub..."
+echo "🚀 Setting up ScholarshipManage..."
 
 # Check if .env.local exists
 if [ ! -f .env.local ]; then

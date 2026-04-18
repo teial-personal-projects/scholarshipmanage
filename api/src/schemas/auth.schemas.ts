@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { nameSchema, emailSchema } from '@scholarship-hub/shared';
+import { nameSchema, emailSchema } from '@scholarshipmanage/shared';
 
 /**
  * Authentication Validation Schemas

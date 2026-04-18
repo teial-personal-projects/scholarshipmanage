@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { CollaborationResponse } from '@scholarship-hub/shared';
+import type { CollaborationResponse } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 import { useUpdateCollaboration } from '../hooks/useCollaborations';
 

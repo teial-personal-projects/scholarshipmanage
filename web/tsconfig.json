@@ -21,10 +21,9 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Path aliases */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@scholarship-hub/shared": ["../shared/src/index.ts"]
+      "@/*": ["./src/*"],
+      "@scholarshipmanage/shared": ["../shared/src/index.ts"]
     }
   },
   "include": ["src"],

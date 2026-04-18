@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { apiDelete } from '../services/api';
-import type { CollaboratorResponse } from '@scholarship-hub/shared';
+import type { CollaboratorResponse } from '@scholarshipmanage/shared';
 import CollaboratorForm from '../components/CollaboratorForm';
 import { useToastHelpers } from '../utils/toast';
 import { useCollaborators } from '../hooks/useCollaborators';

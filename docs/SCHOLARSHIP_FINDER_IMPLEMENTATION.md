@@ -274,7 +274,7 @@ CREATE INDEX idx_user_scholarships_match_score ON user_scholarships(match_score)
 - [✅] #### Step 1.1: Create Migration Files
 
 ```bash
-cd scholarship-hub
+cd scholarshipmanage
 npm run migration:create add_scholarships_tables
 ```
 
@@ -365,7 +365,7 @@ npm run migrate:latest --workspace=api
 - [✅] #### Step 2.1: Create scholarship-finder Directory
 
 ```bash
-cd scholarship-hub
+cd scholarshipmanage
 mkdir -p scholarship-finder
 ```
 
@@ -1008,7 +1008,7 @@ class ExpirationManager:
 ### Project Structure (Scraper Components)
 
 ```
-scholarship-hub/
+scholarshipmanage/
 ├── scholarship-finder/          # Python scholarship scraper
 │   ├── requirements.txt
 │   ├── FINDER.md

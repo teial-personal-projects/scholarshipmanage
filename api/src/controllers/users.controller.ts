@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as usersService from '../services/users.service.js';
 import { asyncHandler } from '../middleware/error-handler.js';
-import { toCamelCase } from '@scholarship-hub/shared';
+import { toCamelCase } from '@scholarshipmanage/shared';
 import { updateUserProfileInputSchema } from '../schemas/users.schemas.js';
 import { httpResponse } from '../utils/http-response.js';
 

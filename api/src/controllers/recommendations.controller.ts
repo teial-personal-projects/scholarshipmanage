@@ -6,7 +6,7 @@
 import { Request, Response } from 'express';
 import * as recommendationsService from '../services/recommendations.service.js';
 import { asyncHandler } from '../middleware/error-handler.js';
-import { toCamelCase } from '@scholarship-hub/shared';
+import { toCamelCase } from '@scholarshipmanage/shared';
 import {
   createRecommendationInputSchema,
   updateRecommendationInputSchema,

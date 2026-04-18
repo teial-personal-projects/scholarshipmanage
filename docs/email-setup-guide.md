@@ -1,10 +1,10 @@
 # Email Setup Guide
 
-This guide explains how to configure email sending for Scholarship Hub using Resend and your Cloudflare domain.
+This guide explains how to configure email sending for Scholarshipmanage using Resend and your Cloudflare domain.
 
 ## Overview
 
-Scholarship Hub uses [Resend](https://resend.com/) to send transactional emails for:
+Scholarshipmanage uses [Resend](https://resend.com/) to send transactional emails for:
 - Collaboration invitations to recommenders and essay reviewers
 - Application deadline reminders
 - Recommendation deadline notifications
@@ -83,7 +83,7 @@ RESEND_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 
 # Email Settings
 RESEND_FROM_EMAIL=noreply@scholarshipmanage.com.com
-RESEND_FROM_NAME=Scholarship Hub
+RESEND_FROM_NAME=Scholarshipmanage
 
 # App URL (used in email links)
 APP_URL=http://localhost:5173
@@ -101,7 +101,7 @@ For Railway, Vercel, or other hosting:
 RESEND_API_KEY=re_your_production_api_key
 RESEND_WEBHOOK_SECRET=whsec_your_webhook_secret
 RESEND_FROM_EMAIL=noreply@yourscholarships.com
-RESEND_FROM_NAME=Scholarship Hub
+RESEND_FROM_NAME=Scholarshipmanage
 APP_URL=https://yourscholarships.com
 ```
 
@@ -112,7 +112,7 @@ APP_URL=https://yourscholarships.com
 1. **No-Reply Address** (Recommended)
    ```
    RESEND_FROM_EMAIL=noreply@yourscholarships.com
-   RESEND_FROM_NAME=Scholarship Hub
+   RESEND_FROM_NAME=Scholarshipmanage
    ```
    - Best for transactional emails
    - Users won't try to reply
@@ -120,7 +120,7 @@ APP_URL=https://yourscholarships.com
 2. **Support Address**
    ```
    RESEND_FROM_EMAIL=support@yourscholarships.com
-   RESEND_FROM_NAME=Scholarship Hub
+   RESEND_FROM_NAME=Scholarshipmanage
    ```
    - Allows users to reply
    - Requires email forwarding setup (see below)
@@ -258,7 +258,7 @@ To customize:
 
 1. **Use a Professional From Name**
    ```
-   RESEND_FROM_NAME=Scholarship Hub
+   RESEND_FROM_NAME=Scholarshipmanage
    ```
    Not: `RESEND_FROM_NAME=John's App`
 
@@ -308,7 +308,7 @@ For higher volumes, upgrade to Pro:
 1. **Check Logs**
    ```bash
    # In development
-   npm run dev --workspace=@scholarship-hub/api
+   npm run dev --workspace=@scholarshipmanage/api
 
    # Look for errors in console
    ```

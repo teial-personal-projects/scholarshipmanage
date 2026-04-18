@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2, ExternalLink, History, Mail, Check } from 'lucide-react';
 import { apiGet, apiDelete, apiPatch } from '../services/api';
-import type { ApplicationResponse, EssayResponse, CollaborationResponse, CollaboratorResponse } from '@scholarship-hub/shared';
+import type { ApplicationResponse, EssayResponse, CollaborationResponse, CollaboratorResponse } from '@scholarshipmanage/shared';
 import EssayForm from '../components/EssayForm';
 import SendInviteDialog from '../components/SendInviteDialog';
 import CollaborationHistory from '../components/CollaborationHistory';

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPatch, apiDelete } from '../services/api';
-import type { CollaborationResponse } from '@scholarship-hub/shared';
+import type { CollaborationResponse } from '@scholarshipmanage/shared';
 
 // Query Keys
 export const collaborationKeys = {

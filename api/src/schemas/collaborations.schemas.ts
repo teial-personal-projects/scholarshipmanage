@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { urlSchema, htmlNoteSchema } from '@scholarship-hub/shared';
+import { urlSchema, htmlNoteSchema } from '@scholarshipmanage/shared';
 
 /**
  * Collaboration Validation Schemas

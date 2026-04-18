@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as resourcesService from '../services/resources.service.js';
 import { asyncHandler } from '../middleware/error-handler.js';
-import { toCamelCase } from '@scholarship-hub/shared';
+import { toCamelCase } from '@scholarshipmanage/shared';
 
 /**
  * GET /api/resources

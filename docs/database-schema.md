@@ -1,10 +1,10 @@
 # Database Schema Reference
 
-This document provides a comprehensive reference for the ScholarshipHub database schema, including all tables, relationships, and migrations.
+This document provides a comprehensive reference for the ScholarshipManage database schema, including all tables, relationships, and migrations.
 
 ## Overview
 
-The ScholarshipHub database is built on **PostgreSQL** (via Supabase) and uses:
+The ScholarshipManage database is built on **PostgreSQL** (via Supabase) and uses:
 - **Row Level Security (RLS)** for data access control
 - **Foreign key constraints** for referential integrity
 - **Automatic timestamps** via triggers (`created_at`, `updated_at`)

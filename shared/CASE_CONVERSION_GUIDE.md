@@ -1,19 +1,19 @@
 # Case Conversion Guide
 
-This guide explains how to convert between snake_case (database) and camelCase (TypeScript) in the ScholarshipHub application.
+This guide explains how to convert between snake_case (database) and camelCase (TypeScript) in the ScholarshipManage application.
 
 ## Overview
 
 - **Database columns**: Use `snake_case` (e.g., `user_id`, `first_name`, `created_at`)
 - **TypeScript properties**: Use `camelCase` (e.g., `userId`, `firstName`, `createdAt`)
-- **Conversion**: Use the utility functions from `@scholarship-hub/shared`
+- **Conversion**: Use the utility functions from `@scholarshipmanage/shared`
 
 ## Utility Functions
 
-The `@scholarship-hub/shared` package provides conversion utilities:
+The `@scholarshipmanage/shared` package provides conversion utilities:
 
 ```typescript
-import { toCamelCase, toSnakeCase, mapDbResults, mapDbResult } from '@scholarship-hub/shared';
+import { toCamelCase, toSnakeCase, mapDbResults, mapDbResult } from '@scholarshipmanage/shared';
 ```
 
 ### `toCamelCase<T>(obj: any): T`
@@ -83,7 +83,7 @@ const user: User = mapDbResult<User>(data);
 
 ```typescript
 import { supabase } from '../config/supabase';
-import { mapDbResults, type User } from '@scholarship-hub/shared';
+import { mapDbResults, type User } from '@scholarshipmanage/shared';
 
 // Get all users
 const { data, error } = await supabase
@@ -102,7 +102,7 @@ const users: User[] = mapDbResults<User>(data);
 
 ```typescript
 import { supabase } from '../config/supabase';
-import { toSnakeCase, type User } from '@scholarship-hub/shared';
+import { toSnakeCase, type User } from '@scholarshipmanage/shared';
 
 const user: Partial<User> = {
   firstName: 'Jane',
@@ -124,7 +124,7 @@ if (error) throw error;
 
 ```typescript
 import { supabase } from '../config/supabase';
-import { toSnakeCase, type User } from '@scholarship-hub/shared';
+import { toSnakeCase, type User } from '@scholarshipmanage/shared';
 
 const updates: Partial<User> = {
   firstName: 'Jane',
@@ -146,7 +146,7 @@ if (error) throw error;
 
 ```typescript
 import { supabase } from '../config/supabase';
-import { mapDbResults, type Application } from '@scholarship-hub/shared';
+import { mapDbResults, type Application } from '@scholarshipmanage/shared';
 
 const { data, error } = await supabase
   .from('applications')
@@ -205,7 +205,7 @@ const user = toCamelCase<User>(dbData);
 ```typescript
 // users.service.ts
 import { supabase } from '../config/supabase';
-import { mapDbResults, mapDbResult, toSnakeCase, type User } from '@scholarship-hub/shared';
+import { mapDbResults, mapDbResult, toSnakeCase, type User } from '@scholarshipmanage/shared';
 
 export class UsersService {
   async getAll(): Promise<User[]> {
@@ -262,7 +262,7 @@ export class UsersService {
 You can test the conversion utilities:
 
 ```typescript
-import { toCamelCase, toSnakeCase } from '@scholarship-hub/shared';
+import { toCamelCase, toSnakeCase } from '@scholarshipmanage/shared';
 
 const snakeData = {
   user_id: 1,

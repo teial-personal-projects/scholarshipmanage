@@ -153,7 +153,7 @@ function generateEmailContent(params: SendCollaborationInviteParams): string {
     
     <p style="font-size: 12px; color: #666; margin-top: 20px;">
       Best regards,<br>
-      ScholarshipHub Team
+      ScholarshipManage Team
     </p>
   </div>
 </body>
@@ -225,8 +225,8 @@ export async function sendTestEmail(to: string): Promise<string> {
   const { data, error } = await resend.emails.send({
     from: fromEmail,
     to: [to],
-    subject: 'Test Email from ScholarshipHub',
-    html: '<p>This is a test email from ScholarshipHub.</p>',
+    subject: 'Test Email from ScholarshipManage',
+    html: '<p>This is a test email from ScholarshipManage.</p>',
   });
 
   if (error) {
@@ -319,7 +319,7 @@ function generateApplicationDueSoonEmail(params: SendApplicationReminderParams):
 
     <p style="font-size: 12px; color: #666; margin-top: 20px;">
       Best regards,<br>
-      ScholarshipHub Team
+      ScholarshipManage Team
     </p>
   </div>
 </body>
@@ -376,7 +376,7 @@ function generateApplicationOverdueEmail(params: SendApplicationReminderParams):
 
     <p style="font-size: 12px; color: #666; margin-top: 20px;">
       Best regards,<br>
-      ScholarshipHub Team
+      ScholarshipManage Team
     </p>
   </div>
 </body>
@@ -450,7 +450,7 @@ function generateCollaboratorDueSoonEmail(params: SendCollaborationReminderParam
 
     <p style="font-size: 12px; color: #666; margin-top: 20px;">
       Best regards,<br>
-      ScholarshipHub Team
+      ScholarshipManage Team
     </p>
   </div>
 </body>
@@ -530,7 +530,7 @@ function generateCollaboratorOverdueEmail(params: SendCollaborationReminderParam
 
     <p style="font-size: 12px; color: #666; margin-top: 20px;">
       Best regards,<br>
-      ScholarshipHub Team
+      ScholarshipManage Team
     </p>
   </div>
 </body>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiGet, apiPost, apiPatch } from '../services/api';
-import type { ApplicationResponse } from '@scholarship-hub/shared';
-import { APPLICATION_STATUSES, TARGET_TYPES } from '@scholarship-hub/shared';
+import type { ApplicationResponse } from '@scholarshipmanage/shared';
+import { APPLICATION_STATUSES, TARGET_TYPES } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 function ApplicationForm() {
