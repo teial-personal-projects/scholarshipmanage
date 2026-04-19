@@ -3,10 +3,10 @@
     "target": "ES2020",
     "module": "ESNext",
     "lib": ["ES2020"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "outDir": "./dist",
+    "rootDir": "..",
 
-    // Strict type checking
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -16,27 +16,23 @@
     "noImplicitThis": true,
     "alwaysStrict": true,
 
-    // Additional checks
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
 
-    // Module resolution
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    // Other options
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
 
-    // Path mapping for shared package
     "baseUrl": ".",
     "paths": {
       "@scholarshipmanage/shared": ["../shared/src"],
