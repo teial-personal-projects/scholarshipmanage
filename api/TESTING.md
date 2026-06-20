@@ -27,6 +27,7 @@ curl http://localhost:3001/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -41,6 +42,7 @@ All `/api/*` endpoints require a valid Supabase JWT token in the `Authorization`
 #### Getting a Test Token
 
 **Option 1: Use Supabase Dashboard**
+
 1. Go to Supabase Dashboard → Authentication → Users
 2. Find user: `teial.dickens@gmail.com` (auth_user_id: `fcb86d3c-aa8c-4245-931b-a584ac4afbe0`)
 3. Set a password for this user (if not already set)
@@ -333,6 +335,7 @@ curl -X DELETE http://localhost:3001/api/recommendations/1 \
 ## Error Responses
 
 ### 401 Unauthorized
+
 ```json
 {
   "error": "Unauthorized",
@@ -341,6 +344,7 @@ curl -X DELETE http://localhost:3001/api/recommendations/1 \
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "error": "Not Found",
@@ -349,6 +353,7 @@ curl -X DELETE http://localhost:3001/api/recommendations/1 \
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "error": "Internal Server Error",
@@ -359,8 +364,9 @@ curl -X DELETE http://localhost:3001/api/recommendations/1 \
 ## Database User Info
 
 Current test user in database:
+
 - **ID**: 1
-- **Email**: teial.dickens@gmail.com
+- **Email**: <teial.dickens@gmail.com>
 - **Auth User ID**: fcb86d3c-aa8c-4245-931b-a584ac4afbe0
 
 ## Notes

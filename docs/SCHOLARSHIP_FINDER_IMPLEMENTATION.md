@@ -33,12 +33,14 @@
 **Recommendation: Keep Python for Scholarship Finder, Integrate with Node.js API**
 
 **Why Python:**
+
 - Your existing scraper is already in Python and working well
 - Better AI/ML libraries (OpenAI SDK, Beautiful Soup, Selenium)
 - Excellent scraping ecosystem
 - Easier data processing
 
 **Integration Strategy:**
+
 - Scholarship Finder runs as a standalone Python service
 - Writes directly to the same PostgreSQL/MySQL database
 - Node.js API reads from the same scholarships table
@@ -105,6 +107,7 @@
 ### New Tables
 
 #### 1. `scholarships` Table
+
 ```sql
 CREATE TABLE scholarships (
   id SERIAL PRIMARY KEY,
@@ -165,6 +168,7 @@ CREATE INDEX idx_scholarships_expires_at ON scholarships(expires_at);
 ```
 
 #### 2. `scholarship_sources` Table
+
 ```sql
 CREATE TABLE scholarship_sources (
   id SERIAL PRIMARY KEY,
@@ -198,6 +202,7 @@ CREATE TABLE scholarship_sources (
 ```
 
 #### 3. `finder_jobs` Table
+
 ```sql
 CREATE TABLE finder_jobs (
   id SERIAL PRIMARY KEY,
@@ -233,6 +238,7 @@ CREATE INDEX idx_finder_jobs_created_at ON finder_jobs(created_at);
 ```
 
 #### 4. `user_scholarships` Table
+
 ```sql
 CREATE TABLE user_scholarships (
   id SERIAL PRIMARY KEY,
@@ -383,11 +389,13 @@ mv scholarship-finder/main.py scholarship-finder/finder_main.py
 - [✅] #### Step 2.3: Update Database Connection
 
 First, install the Supabase Python library:
+
 ```bash
 pip install supabase
 ```
 
 Add to `requirements.txt`:
+
 ```txt
 supabase>=2.0.0
 ```
@@ -853,6 +861,7 @@ Return ONLY valid JSON, no explanation.
 ```
 
 **Note**: This AI discovery approach is cost-effective because:
+
 - Uses GPT-3.5-turbo for search queries (~$0.001 per query)
 - Uses GPT-4-turbo for extraction (~$0.01 per page)
 - Typical cost per category: $0.50-2.00
@@ -1068,6 +1077,7 @@ scholarshipmanage/
 The deduplication engine is fully implemented in [src/deduplication/engine.py](scholarship-finder/src/deduplication/engine.py:1-147) with:
 
 **✅ Features Implemented:**
+
 - **Checksum/Fingerprint Generation**: SHA-256 hash of (organization + name + amount + deadline)
   - Handles both legacy `amount` field and new `min_award`/`max_award` fields
   - Case-insensitive and whitespace-normalized for consistency
@@ -1075,9 +1085,9 @@ The deduplication engine is fully implemented in [src/deduplication/engine.py](s
   1. **Exact checksum match** (fastest) - detects identical scholarships
   2. **URL matching** (fast) - detects same scholarship from different sources
   3. **Fuzzy string matching** (slower, comprehensive) - detects similar scholarships with name variations
-    - Uses SequenceMatcher with 85% similarity threshold
-    - Weighted: name (70%) + organization (30%)
-    - Only checks scholarships from same organization discovered in last 6 months (performance optimization)
+  - Uses SequenceMatcher with 85% similarity threshold
+  - Weighted: name (70%) + organization (30%)
+  - Only checks scholarships from same organization discovered in last 6 months (performance optimization)
 - **Smart Data Merging**: `merge_scholarship_data()` method
   - Keeps most complete information (longer descriptions, more details)
   - Updates to newer deadlines
@@ -1089,6 +1099,7 @@ The deduplication engine is fully implemented in [src/deduplication/engine.py](s
   - Upsert logic prevents duplicate entries
 
 **✅ Testing:**
+
 - Created comprehensive test suite: [test_deduplication.py](scholarship-finder/test_deduplication.py:1-259)
 - All 4 test categories passed:
   1. ✅ Checksum generation (including legacy field compatibility)
@@ -1097,6 +1108,7 @@ The deduplication engine is fully implemented in [src/deduplication/engine.py](s
   4. ✅ Data merging (preserves complete information)
 
 **✅ NEW: Date Normalization & Expiration Filtering:**
+
 - Created [src/utils_python/date_utils.py](scholarship-finder/src/utils_python/date_utils.py:1-134) for smart date handling:
   - **Dates without years** (e.g., "March 15") → automatically adds current or next year
   - **Month + year only** (e.g., "March 2025") → defaults to 1st of month
@@ -1112,6 +1124,7 @@ The deduplication engine is fully implemented in [src/deduplication/engine.py](s
   - Invalid dates handled gracefully with warnings
 
 **✅ Testing:**
+
 - [test_deduplication.py](scholarship-finder/test_deduplication.py:1-259) - 4/4 tests passed
 - [test_date_normalization.py](scholarship-finder/test_date_normalization.py:1-324) - 6/6 tests passed including:
   1. ✅ Partial date handling (no year)
@@ -1122,6 +1135,7 @@ The deduplication engine is fully implemented in [src/deduplication/engine.py](s
   6. ✅ Expired scholarship exclusion
 
 **Usage Example:**
+
 ```python
 from database.connection import DatabaseConnection
 from deduplication.engine import DeduplicationEngine
@@ -1165,6 +1179,7 @@ else:
 **Original JSON**: [src/config/source_categories.json](scholarship-finder/src/config/source_categories.json:1-107) (kept as fallback)
 
 **Why Migrate to Database:**
+
 - Enable/disable categories without code changes
 - Add new categories through admin interface
 - Track category usage and performance
@@ -1492,11 +1507,13 @@ class AIDiscoveryScraper:
 **✅ IMPLEMENTATION COMPLETED:**
 
 **Files Created:**
+
 - [api/src/migrations/013_add_category_tables.sql](api/src/migrations/013_add_category_tables.sql:1-107) - Database migration
 - [scholarship-finder/src/database/category_manager.py](scholarship-finder/src/database/category_manager.py:1-261) - CategoryManager class
 - [scholarship-finder/test_category_manager.py](scholarship-finder/test_category_manager.py:1-268) - Test suite
 
 **Database Changes:**
+
 - Created `scraper_categories` table with 6 seeded categories
 - Auto-generated IDs (SERIAL PRIMARY KEY) - not using JSON file IDs
 - 3 enabled categories: STEM, Arts, Music
@@ -1504,6 +1521,7 @@ class AIDiscoveryScraper:
 
 **Test Results:**
 All 5/5 tests passed:
+
 1. ✅ Get Enabled Categories (3 found: STEM, Arts, Music)
 2. ✅ Get Category by Slug
 3. ✅ Get Category Keywords (11 STEM keywords)
@@ -1511,6 +1529,7 @@ All 5/5 tests passed:
 5. ✅ Get All Categories (6 total: 3 enabled, 3 disabled)
 
 **CategoryManager Features:**
+
 - `get_enabled_categories()` - Fetch enabled categories with 5-min cache
 - `get_category_by_slug()` - Get specific category
 - `get_category_by_id()` - Get category by database ID
@@ -1546,6 +1565,7 @@ All 5/5 tests passed:
    - Purpose: Historical record of all finder executions
 
 **To get stats now:**
+
 ```sql
 -- Per category stats
 SELECT category, SUM(scholarships_found) as total, COUNT(*) as runs
@@ -1565,6 +1585,7 @@ LIMIT 10;
 ```
 
 **Files Updated:**
+
 - Migration 014 applied successfully
 - [CategoryManager](scholarship-finder/src/database/category_manager.py:1) updated - removed `update_category_stats()` method
 - [test_category_manager.py](scholarship-finder/test_category_manager.py:1) updated - all tests pass (5/5)
@@ -1572,10 +1593,12 @@ LIMIT 10;
 ---
 
 **Next Steps:**
+
 - Update AI discovery scraper to use `CategoryManager`
 - (Optional) Create admin API endpoints for category management
 
 **Benefits of Database Approach:**
+
 - ✅ Enable/disable categories without redeploying
 - ✅ Add new categories through admin UI
 - ✅ Track performance per category
@@ -1639,6 +1662,7 @@ cd scholarship-finder
 **Logs**: Stored in `scholarship-finder/logs/finder_YYYYMMDD.log`
 
 **To view/manage cron job:**
+
 ```bash
 # View current crontab
 crontab -l
@@ -1689,6 +1713,7 @@ jobs:
 ### 1. Scraper → Database
 
 The scraper writes directly to PostgreSQL:
+
 1. Insert raw data into `scholarship_raw_results` (if tracking raw data)
 2. Check for duplicates via checksum/fingerprint
 3. Insert/update `scholarships` table
@@ -1697,6 +1722,7 @@ The scraper writes directly to PostgreSQL:
 ### 2. Backend → Scraper Data
 
 Backend API reads from `scholarships` table:
+
 - Search endpoint uses fingerprint-deduplicated data
 - Users see only processed, cleaned scholarships
 - Admin endpoints can access raw scraper results for debugging
@@ -1704,6 +1730,7 @@ Backend API reads from `scholarships` table:
 ### 3. User → Scraped Data
 
 Users interact with scraped data through:
+
 - Search & discovery features
 - Browse scholarships page
 - Saved searches (notify when new scholarships match)
@@ -1713,16 +1740,19 @@ Users interact with scraped data through:
 ## Testing Strategy
 
 ### Unit Tests
+
 - Test fingerprint generation with various inputs
 - Test deduplication logic
 - Test data transformation (raw → processed)
 
 ### Integration Tests
+
 - Test database connection
 - Test full scrape → store workflow
 - Test error handling (network errors, malformed data)
 
 ### Manual Testing
+
 - Run scraper on small dataset
 - Verify no duplicates created
 - Verify data quality in database
@@ -1733,33 +1763,41 @@ Users interact with scraped data through:
 ## Implementation Status
 
 ### ✅ Phase 1 (Basic) - COMPLETED
+
 All Phase 1 objectives have been successfully implemented:
+
 - ✅ Multiple scrapers created (CollegeScholarships.org, CareerOneStop, General scraper)
 - ✅ Full PostgreSQL integration with connection pooling and upsert logic
 - ✅ Advanced 3-layer deduplication system (checksum, URL, fuzzy matching)
 - ✅ Automated scheduled runs via cron (6-hour intervals)
 
 **Key Files**:
+
 - `src/base_scraper.py` - Base scraper architecture
 - `src/utils_python/database_manager.py` - PostgreSQL integration
 - `src/deduplication/engine.py` - Deduplication system
 - `scripts/setup-cron.sh` - Scheduling configuration
 
 ### ⚠️ Phase 2 (Enhanced) - MOSTLY COMPLETED
+
 Core Phase 2 features implemented with some advanced features pending:
+
 - ✅ Multiple scholarship sources (4+ scrapers + AI discovery)
 - ⚠️ Data quality improvements (text normalization done, advanced ML models pending)
 - ✅ Database-backed categorization system with dynamic keyword management
 - ⚠️ Basic scholarship verification (URL validation and robots.txt compliance)
 
 **Key Files**:
+
 - `src/source_discovery_engine.py` - AI-powered source discovery
 - `src/database/category_manager.py` - Category management
 - `src/ethical_crawler.py` - Ethical crawling with robots.txt compliance
 - `src/expiration/manager.py` - Scholarship lifecycle management
 
 ### 📋 Phase 3 (Advanced) - See FUTURE.md
+
 Advanced features and enhancements have been moved to `FUTURE.md` for future development:
+
 - User-requested sources
 - Real-time scraping triggers (beyond scheduled cron)
 - Content change detection (beyond expiration tracking)
@@ -2396,12 +2434,14 @@ def run_advanced_discovery(location=None, field=None):
 ### Cost Estimates for Advanced Discovery
 
 **Google Custom Search API:**
+
 - 100 queries/day free
 - $5 per 1,000 queries after that
 - Estimated: 50-100 queries per discovery run
 - Monthly cost (daily runs): ~$0 (within free tier) to $15/month
 
 **OpenAI API:**
+
 - GPT-3.5-turbo: ~$0.001 per verification
 - GPT-4o-mini: ~$0.01 per extraction
 - Estimated: 100 verifications + 50 extractions per run
@@ -2412,6 +2452,7 @@ def run_advanced_discovery(location=None, field=None):
 ### Ethical & Legal Considerations
 
 **Important Notes:**
+
 1. **Robots.txt Compliance**: Always check robots.txt before scraping
 2. **Rate Limiting**: Implement delays between requests (1-2 seconds minimum)
 3. **Terms of Service**: Review ToS for each source
@@ -2454,5 +2495,5 @@ After this is working, move to **SCHOLARSHIP_SEARCH_IMPLEMENTATION.md** for the 
 - Existing scraper location: `/Users/teial/Tutorials/scholarship-tracker/scraper/`
 - Main implementation: `IMPLEMENTATION_PLAN.md`
 - Search & discovery: `SCHOLARSHIP_SEARCH_IMPLEMENTATION.md`
-- Google Custom Search API: https://developers.google.com/custom-search
-- OpenAI API: https://platform.openai.com/docs
+- Google Custom Search API: <https://developers.google.com/custom-search>
+- OpenAI API: <https://platform.openai.com/docs>

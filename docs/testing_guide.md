@@ -18,6 +18,7 @@ This document provides comprehensive testing guidance for the Scholarshipmanage 
 ## Overview
 
 This guide covers:
+
 - **End-to-End (E2E) Testing**: Setup and configuration for automated E2E tests
 - **Email Invitations Testing**: Detailed scenarios for testing the collaboration invitation system
 - **Reminder Testing**: Testing reminder logic and email notifications
@@ -119,6 +120,7 @@ jobs:
 **Objective**: Verify that collaboration invitations can be sent successfully.
 
 **Steps**:
+
 1. Create an application in the app
 2. Create a collaborator with a valid email address
 3. Create a collaboration linking the collaborator to the application
@@ -128,6 +130,7 @@ jobs:
 7. In the dialog, review the details and click "Send Now"
 
 **Expected Results**:
+
 - Success toast: "Invitation Sent - Invitation sent to [collaborator name]"
 - Collaboration status changes to "invited"
 - Email arrives at collaborator's inbox within 1-2 minutes
@@ -142,6 +145,7 @@ jobs:
   - Expiration notice (7 days)
 
 **Database Verification**:
+
 ```sql
 -- Check collaboration_invites record was created
 SELECT * FROM collaboration_invites
@@ -173,12 +177,14 @@ WHERE id = [collaboration_id];
 **Objective**: Verify that Resend webhooks update invitation delivery status.
 
 **Steps**:
+
 1. Send an invitation (follow Test 1)
 2. Wait 1-2 minutes for email delivery
 3. Check the Resend dashboard for webhook events
 4. Verify webhook endpoint is configured: `https://your-domain.com/api/webhooks/resend`
 
 **Expected Results**:
+
 - Webhook events received in order:
   - `email.sent` → delivery_status updates to 'sent'
   - `email.delivered` → delivery_status updates to 'delivered'
@@ -186,6 +192,7 @@ WHERE id = [collaboration_id];
   - (Optional) `email.clicked` → clicked_at timestamp set
 
 **Database Verification**:
+
 ```sql
 SELECT delivery_status, opened_at, clicked_at
 FROM collaboration_invites
@@ -198,6 +205,7 @@ WHERE collaboration_id = [collaboration_id];
 ```
 
 **Manual Webhook Testing** (if needed):
+
 1. Go to Resend Dashboard → Webhooks
 2. Find your webhook endpoint
 3. Click "Send Test Event"
@@ -213,6 +221,7 @@ WHERE collaboration_id = [collaboration_id];
 **Test 3a: Resend After 3 Days**
 
 **Setup**:
+
 ```sql
 -- Manually set sent_at to 4 days ago for testing
 UPDATE collaboration_invites
@@ -221,6 +230,7 @@ WHERE collaboration_id = [collaboration_id];
 ```
 
 **Steps**:
+
 1. Navigate to application detail page
 2. Verify "Resend Invite" appears in the collaboration actions menu
 3. Click "Resend Invite"
@@ -228,11 +238,13 @@ WHERE collaboration_id = [collaboration_id];
 5. Click "Resend Now"
 
 **Expected Results**:
+
 - Success toast: "Invitation Resent - Invitation resent to [collaborator name]"
 - New email sent with new invitation token
 - Database record updated with new token and sent_at
 
 **Database Verification**:
+
 ```sql
 SELECT invite_token, sent_at, expires_at, delivery_status
 FROM collaboration_invites
@@ -248,6 +260,7 @@ WHERE collaboration_id = [collaboration_id];
 **Test 3b: Resend on Bounced Email**
 
 **Setup**:
+
 ```sql
 -- Manually set delivery status to bounced
 UPDATE collaboration_invites
@@ -256,6 +269,7 @@ WHERE collaboration_id = [collaboration_id];
 ```
 
 **Steps**:
+
 1. Navigate to application detail page
 2. Verify "Resend Invite" appears immediately (even if < 3 days)
 3. Follow resend steps from Test 3a
@@ -269,6 +283,7 @@ WHERE collaboration_id = [collaboration_id];
 **Objective**: Verify that expired invitation tokens are rejected.
 
 **Setup**:
+
 ```sql
 -- Set expires_at to past date
 UPDATE collaboration_invites
@@ -277,11 +292,13 @@ WHERE collaboration_id = [collaboration_id];
 ```
 
 **Steps**:
+
 1. Copy the invitation link from the email
 2. Attempt to access the invitation link in browser
 3. Try to resend the invitation from the UI
 
 **Expected Results**:
+
 - Accessing expired link shows error: "This invitation has expired"
 - Attempting to resend shows error: "Invitation has expired. Please send a new invitation."
 - Must send a new invitation (not resend)
@@ -293,6 +310,7 @@ WHERE collaboration_id = [collaboration_id];
 **Objective**: Verify that invitations can be scheduled for future delivery.
 
 **Steps**:
+
 1. Navigate to application detail page
 2. Click "Send Invite" on a collaboration
 3. Click "Schedule for Later"
@@ -300,11 +318,13 @@ WHERE collaboration_id = [collaboration_id];
 5. Click "Schedule"
 
 **Expected Results**:
+
 - Success toast: "Invitation Scheduled - Invitation scheduled for [date/time]"
 - Database record created with pending status
 - Email will not be sent until scheduled time
 
 **Database Verification**:
+
 ```sql
 SELECT delivery_status, sent_at, expires_at
 FROM collaboration_invites
@@ -325,6 +345,7 @@ WHERE collaboration_id = [collaboration_id];
 **Objective**: Verify system handles multiple invitations correctly.
 
 **Steps**:
+
 1. Create 3 different collaborators
 2. Create 3 collaborations for the same application
 3. Send invitations to all 3
@@ -333,6 +354,7 @@ WHERE collaboration_id = [collaboration_id];
 6. Verify only that collaborator receives resend
 
 **Expected Results**:
+
 - Each invitation has unique token
 - Correct collaborator name in each email
 - Resend only affects intended collaboration
@@ -346,6 +368,7 @@ WHERE collaboration_id = [collaboration_id];
 **Note**: This test depends on TODO 6.7 (Collaborator Portal) which is not yet implemented.
 
 **Future Steps** (when TODO 6.7 is complete):
+
 1. Collaborator opens invitation email
 2. Clicks invitation link
 3. Creates account or logs in
@@ -358,6 +381,7 @@ WHERE collaboration_id = [collaboration_id];
 ## Testing Checklist
 
 ### Email Invitations
+
 - [ ] Send invitation successfully
 - [ ] Receive email with correct content
 - [ ] Email link works and redirects properly
@@ -376,6 +400,7 @@ WHERE collaboration_id = [collaboration_id];
 - [ ] History logs invitation actions
 
 ### Reminders
+
 - [ ] Reminder logic works with various due date scenarios
 - [ ] Email sending works correctly
 - [ ] Reminder history is logged correctly
@@ -383,11 +408,13 @@ WHERE collaboration_id = [collaboration_id];
 - [ ] Reminder preferences work (if implemented)
 
 ### E2E Tests
+
 - [ ] Authentication flow (registration and login)
 - [ ] Application lifecycle (create, edit, submit)
 - [ ] Collaboration flow (add collaborator, request recommendation)
 
 ### CI/CD
+
 - [ ] All tests pass in CI pipeline
 - [ ] Coverage thresholds met
 - [ ] Status badges display correctly
@@ -399,12 +426,14 @@ WHERE collaboration_id = [collaboration_id];
 ### Email Not Received
 
 **Possible Causes**:
+
 1. Invalid Resend API key → Check `.env` file
 2. Email in spam folder → Check spam/junk
 3. Invalid recipient email → Verify email address
 4. Resend account suspended → Check Resend dashboard
 
 **Debug Steps**:
+
 ```bash
 # Check API logs
 tail -f api/logs/app.log | grep "Resend"
@@ -418,12 +447,14 @@ ORDER BY created_at DESC;
 ### Webhook Not Updating Status
 
 **Possible Causes**:
+
 1. Webhook not configured in Resend dashboard
 2. Incorrect webhook URL
 3. Webhook signature verification failing
 4. Database connection issues
 
 **Debug Steps**:
+
 ```bash
 # Check webhook logs
 tail -f api/logs/app.log | grep "webhook"
@@ -437,12 +468,14 @@ curl -X POST https://your-domain.com/api/webhooks/resend \
 ### Resend Button Not Showing
 
 **Possible Causes**:
+
 1. Collaboration status is not 'invited'
 2. No invite record exists
 3. Less than 3 days since sent_at
 4. Delivery status not bounced/failed
 
 **Debug Steps**:
+
 ```sql
 -- Check collaboration and invite data
 SELECT
@@ -458,12 +491,14 @@ WHERE c.id = [collaboration_id];
 ### E2E Tests Failing
 
 **Possible Causes**:
+
 1. Playwright not installed correctly
 2. Test environment not configured
 3. Application not running
 4. Timeout issues
 
 **Debug Steps**:
+
 ```bash
 # Verify Playwright installation
 npx playwright --version
@@ -478,12 +513,14 @@ echo $NODE_ENV
 ### CI Pipeline Failing
 
 **Possible Causes**:
+
 1. Node version mismatch
 2. Missing dependencies
 3. Test failures
 4. Coverage thresholds not met
 
 **Debug Steps**:
+
 1. Check GitHub Actions logs
 2. Verify Node version in workflow file
 3. Run tests locally to reproduce
@@ -514,6 +551,7 @@ NODE_ENV=test
 ## Next Steps
 
 After all tests pass:
+
 1. Mark TODO 6.3.10 as complete
 2. Document any issues found
 3. Proceed to TODO 6.4 (Frontend Collaborator Management)
@@ -524,4 +562,3 @@ After all tests pass:
 ---
 
 **Last Updated**: 2024
-

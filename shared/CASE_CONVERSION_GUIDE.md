@@ -21,6 +21,7 @@ import { toCamelCase, toSnakeCase, mapDbResults, mapDbResult } from '@scholarshi
 Converts an object's keys from snake_case to camelCase.
 
 **Example:**
+
 ```typescript
 const dbRow = {
   user_id: 1,
@@ -38,6 +39,7 @@ const user: User = toCamelCase<User>(dbRow);
 Converts an object's keys from camelCase to snake_case.
 
 **Example:**
+
 ```typescript
 const user: User = {
   userId: 1,
@@ -54,6 +56,7 @@ const dbData = toSnakeCase(user);
 Type-safe wrapper for converting multiple database rows.
 
 **Example:**
+
 ```typescript
 const { data } = await supabase
   .from('users')
@@ -67,6 +70,7 @@ const users: User[] = mapDbResults<User>(data);
 Type-safe wrapper for converting a single database row.
 
 **Example:**
+
 ```typescript
 const { data } = await supabase
   .from('users')

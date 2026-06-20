@@ -32,6 +32,7 @@ This System Design Document (SDD) describes the architectural design and rationa
 ### 1.2 Scope
 
 This document covers:
+
 - High-level system architecture and design rationale
 - Architectural decisions and their justifications
 - System decomposition and component boundaries
@@ -40,6 +41,7 @@ This document covers:
 - Design constraints and assumptions
 
 **Out of Scope:**
+
 - Detailed implementation specifications (see Technical Design Document)
 - API endpoint specifications
 - Database schema details
@@ -48,6 +50,7 @@ This document covers:
 ### 1.3 Document Relationship
 
 This SDD is complemented by:
+
 - **Technical Design Document (TDD)**: Implementation details and technical approaches
 - **Database Schema Documentation**: Detailed database structure and relationships
 - **API Documentation**: Endpoint specifications and request/response formats
@@ -62,6 +65,7 @@ Scholarshipmanage is a scholarship application tracking system that helps studen
 
 **Core Problem Solved:**
 Students applying for scholarships need a centralized system to:
+
 - Track multiple scholarship applications and their deadlines
 - Manage essay writing with version control and review workflows
 - Coordinate with recommenders and essay reviewers
@@ -70,6 +74,7 @@ Students applying for scholarships need a centralized system to:
 ### 2.2 System Boundaries
 
 **In Scope:**
+
 - Application tracking and management
 - Essay management with review workflows
 - Collaboration system (recommenders and essay reviewers)
@@ -78,6 +83,7 @@ Students applying for scholarships need a centralized system to:
 - User profile management
 
 **Out of Scope:**
+
 - Scholarship search/discovery functionality
 - Payment processing
 - Document storage beyond text content
@@ -155,12 +161,14 @@ Students applying for scholarships need a centralized system to:
 **Decision**: Use NPM workspaces to organize frontend, backend, and shared code in a single repository.
 
 **Rationale**:
+
 - **Code Sharing**: Shared TypeScript types ensure consistency between frontend and backend
 - **Atomic Changes**: Changes to APIs and frontend can be made together in a single commit
 - **Simplified Development**: Single repository reduces setup complexity
 - **Type Safety**: Shared types prevent runtime errors from API contract mismatches
 
 **Alternatives Considered**:
+
 - Separate repositories: Rejected due to increased coordination overhead and type synchronization challenges
 - Monorepo tools (Turborepo, Nx): Considered but NPM workspaces sufficient for current scale
 
@@ -169,12 +177,14 @@ Students applying for scholarships need a centralized system to:
 **Decision**: Traditional client-server architecture with React frontend communicating with Express backend via RESTful API.
 
 **Rationale**:
+
 - **Simplicity**: Well-understood architecture pattern with extensive ecosystem support
 - **Separation of Concerns**: Clear boundary between presentation and business logic
 - **Stateless API**: RESTful API enables horizontal scaling and simplifies deployment
 - **Developer Experience**: Rich tooling and libraries available for both React and Express
 
 **Alternatives Considered**:
+
 - GraphQL: Considered but rejected due to added complexity; REST sufficient for current needs
 - Server-Side Rendering (Next.js): Considered but client-side rendering sufficient for this application
 - Microservices: Rejected due to unnecessary complexity for current scale
@@ -184,6 +194,7 @@ Students applying for scholarships need a centralized system to:
 **Decision**: Use PostgreSQL via Supabase for data storage and authentication.
 
 **Rationale**:
+
 - **Relational Data Model**: Scholarship applications have complex relationships (users, applications, essays, collaborations); relational model fits naturally
 - **Row Level Security**: Supabase provides built-in RLS policies for fine-grained access control
 - **Integrated Auth**: Supabase Auth eliminates need for custom authentication implementation
@@ -191,6 +202,7 @@ Students applying for scholarships need a centralized system to:
 - **ACID Compliance**: Strong transactional guarantees ensure data integrity
 
 **Alternatives Considered**:
+
 - MongoDB/NoSQL: Rejected due to complex relationships requiring joins and transactions
 - Self-hosted PostgreSQL: Rejected due to operational overhead
 - Firebase: Considered but PostgreSQL better fits relational data model
@@ -200,6 +212,7 @@ Students applying for scholarships need a centralized system to:
 **Decision**: Use TypeScript for both frontend and backend code.
 
 **Rationale**:
+
 - **Type Safety**: Catch errors at compile time rather than runtime
 - **Developer Experience**: Better IDE support with autocomplete and refactoring
 - **Documentation**: Types serve as inline documentation
@@ -207,6 +220,7 @@ Students applying for scholarships need a centralized system to:
 - **Shared Types**: TypeScript enables sharing types between frontend and backend via shared package
 
 **Alternatives Considered**:
+
 - JavaScript: Rejected due to lack of type safety
 - Other typed languages (Go, Rust): Considered but TypeScript provides better ecosystem integration
 
@@ -215,6 +229,7 @@ Students applying for scholarships need a centralized system to:
 **Decision**: Use JWT bearer tokens (via Supabase Auth) for authentication, sent via `Authorization` header.
 
 **Rationale**:
+
 - **Stateless**: No server-side session storage required
 - **Scalability**: Tokens can be verified without database lookup
 - **Security**: Bearer tokens not automatically sent by browsers (unlike cookies), reducing CSRF attack surface
@@ -222,6 +237,7 @@ Students applying for scholarships need a centralized system to:
 - **Supabase Integration**: Supabase Auth handles token generation, refresh, and validation
 
 **Alternatives Considered**:
+
 - Session-based auth (cookies): Rejected due to session storage overhead and CSRF protection requirements
 - OAuth 2.0 (third-party): Considered but email/password sufficient for initial version
 
@@ -230,6 +246,7 @@ Students applying for scholarships need a centralized system to:
 **Decision**: Organize backend into layers: Routes → Controllers → Services → Database.
 
 **Rationale**:
+
 - **Separation of Concerns**: Each layer has clear responsibility
 - **Testability**: Business logic in services can be tested independently
 - **Maintainability**: Changes to one layer don't cascade to others
@@ -237,6 +254,7 @@ Students applying for scholarships need a centralized system to:
 - **Standard Pattern**: Well-understood architecture pattern
 
 **Alternatives Considered**:
+
 - MVC: Similar pattern, but "Services" layer makes business logic more explicit
 - Hexagonal Architecture: Considered but overkill for current complexity
 
@@ -248,7 +266,7 @@ Students applying for scholarships need a centralized system to:
 
 The system is decomposed into the following major components:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Frontend (React)                          │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
@@ -286,6 +304,7 @@ The system is decomposed into the following major components:
 ### 6.2 Component Responsibilities
 
 #### Frontend Component
+
 - **Responsibility**: User interface and user experience
 - **Key Functions**:
   - Render UI components and pages
@@ -296,6 +315,7 @@ The system is decomposed into the following major components:
 - **Interfaces**: REST API (via HTTP)
 
 #### Backend API Component
+
 - **Responsibility**: Business logic and data access
 - **Key Functions**:
   - Process HTTP requests
@@ -307,6 +327,7 @@ The system is decomposed into the following major components:
 - **Interfaces**: REST API (HTTP), Database (PostgreSQL)
 
 #### Database Component
+
 - **Responsibility**: Data persistence and access control
 - **Key Functions**:
   - Store application data
@@ -316,6 +337,7 @@ The system is decomposed into the following major components:
 - **Interfaces**: SQL (via Supabase client)
 
 #### Shared Package Component
+
 - **Responsibility**: Type definitions and utilities shared between frontend and backend
 - **Key Functions**:
   - Define TypeScript types for domain entities
@@ -326,6 +348,7 @@ The system is decomposed into the following major components:
 ### 6.3 Data Flow
 
 **Typical Request Flow:**
+
 1. User interacts with frontend UI
 2. Frontend makes HTTP request to backend API
 3. Request passes through middleware (auth, validation, rate limiting)
@@ -346,6 +369,7 @@ The system is decomposed into the following major components:
 **Decision**: JWT bearer token authentication via Supabase Auth.
 
 **Rationale**:
+
 - **Stateless**: No server-side session storage required
 - **Scalable**: Token verification doesn't require database lookup
 - **Standard**: Industry-standard authentication mechanism
@@ -356,6 +380,7 @@ The system is decomposed into the following major components:
 **Decision**: CSRF protection is not implemented because it is unnecessary for this architecture.
 
 **Rationale**:
+
 - **Bearer Token Authentication**: Tokens are sent via `Authorization: Bearer <token>` header, not cookies
 - **Browser Behavior**: Browsers do NOT automatically include `Authorization` headers in cross-origin requests (unlike cookies)
 - **OWASP Guidance**: According to OWASP, CSRF protection is only needed when browsers automatically send credentials (cookies, HTTP auth, client certificates)
@@ -368,12 +393,14 @@ The system is decomposed into the following major components:
 **Decision**: Role-Based Access Control (RBAC) with Row Level Security (RLS).
 
 **Rationale**:
+
 - **Multi-Layer Security**: Authorization enforced at both application layer (middleware) and database layer (RLS)
 - **Defense in Depth**: Even if application logic has bugs, RLS policies prevent unauthorized access
 - **Fine-Grained Control**: RLS policies can enforce complex access rules (e.g., collaborators can only access their assigned collaborations)
 - **Database-Level Enforcement**: RLS policies work regardless of how data is accessed (API, direct database access, migrations)
 
 **Roles Defined**:
+
 - **student**: Can create and manage applications, essays, and collaborations
 - **recommender**: Can write recommendation letters for assigned collaborations
 - **collaborator**: Can review essays for assigned collaborations
@@ -383,6 +410,7 @@ The system is decomposed into the following major components:
 **Decision**: Comprehensive input validation (Zod schemas) and HTML sanitization (DOMPurify) at API boundaries.
 
 **Rationale**:
+
 - **Prevent Injection Attacks**: Input validation prevents SQL injection, command injection, and other injection attacks
 - **Prevent XSS Attacks**: HTML sanitization prevents cross-site scripting (XSS) attacks
 - **Type Safety**: Zod schemas provide runtime type checking and TypeScript type inference
@@ -390,6 +418,7 @@ The system is decomposed into the following major components:
 - **User Experience**: Clear validation error messages help users correct input errors
 
 **Approach**:
+
 - **Validation**: Zod schemas validate all request bodies, query parameters, and path parameters
 - **Sanitization**: DOMPurify sanitizes HTML content with whitelist approach (only allowed tags/attributes)
 - **Profiles**: Different sanitization profiles for different content types (strict for basic formatting, extended for rich text)
@@ -399,12 +428,14 @@ The system is decomposed into the following major components:
 **Decision**: Implement rate limiting with different limits for different endpoint types.
 
 **Rationale**:
+
 - **Prevent Abuse**: Protect against brute-force attacks, spam, and resource exhaustion
 - **Tiered Protection**: Different limits for different operations (stricter for auth, more lenient for reads)
 - **User Experience**: Balance security with usability (not too restrictive for legitimate users)
 - **Scalability**: Prevents single user or attacker from consuming all system resources
 
 **Rate Limit Tiers**:
+
 - **Authentication endpoints**: Stricter limits (5 requests per 15 minutes) to prevent brute-force
 - **Write operations**: Moderate limits (30 requests per 15 minutes) to prevent spam
 - **Read operations**: More lenient limits (100 requests per 15 minutes) for normal usage
@@ -414,12 +445,14 @@ The system is decomposed into the following major components:
 **Decision**: Implement comprehensive security headers via Helmet.js.
 
 **Rationale**:
+
 - **Defense in Depth**: Multiple security headers protect against various attack vectors
 - **Industry Standard**: Helmet.js implements OWASP-recommended security headers
 - **Browser Protection**: Headers instruct browsers to enforce security policies (CSP, HSTS, etc.)
 - **Minimal Overhead**: Headers add negligible performance cost
 
 **Key Headers**:
+
 - **Content Security Policy (CSP)**: Restricts resource loading to prevent XSS
 - **Strict-Transport-Security (HSTS)**: Forces HTTPS connections
 - **X-Frame-Options**: Prevents clickjacking attacks
@@ -468,6 +501,7 @@ The system is decomposed into the following major components:
 **Chosen**: Monolithic backend (single Express application)
 
 **Trade-offs**:
+
 - ✅ **Pros**: Simpler deployment, easier development, no network latency between services, easier debugging
 - ❌ **Cons**: Less scalable, tighter coupling, harder to scale individual components independently
 
@@ -478,6 +512,7 @@ The system is decomposed into the following major components:
 **Chosen**: PostgreSQL (relational/SQL database)
 
 **Trade-offs**:
+
 - ✅ **Pros**: Strong consistency, ACID transactions, complex queries with JOINs, mature ecosystem
 - ❌ **Cons**: Less flexible schema, requires migrations for schema changes, vertical scaling limitations
 
@@ -488,6 +523,7 @@ The system is decomposed into the following major components:
 **Chosen**: Client-side rendering (React SPA)
 
 **Trade-offs**:
+
 - ✅ **Pros**: Better interactivity, faster navigation after initial load, simpler deployment, better developer experience
 - ❌ **Cons**: Slower initial page load, requires JavaScript, SEO challenges (not relevant for authenticated app)
 
@@ -498,6 +534,7 @@ The system is decomposed into the following major components:
 **Chosen**: Managed services (Supabase, Railway, Cloudflare Pages)
 
 **Trade-offs**:
+
 - ✅ **Pros**: Reduced operational overhead, automatic backups, security updates, scaling handled by provider
 - ❌ **Cons**: Vendor lock-in, less control, ongoing costs, dependency on provider availability
 
@@ -508,6 +545,7 @@ The system is decomposed into the following major components:
 **Chosen**: TypeScript throughout stack
 
 **Trade-offs**:
+
 - ✅ **Pros**: Type safety, better IDE support, easier refactoring, documentation via types
 - ❌ **Cons**: Compilation step, steeper learning curve, additional build complexity
 
@@ -518,6 +556,7 @@ The system is decomposed into the following major components:
 **Chosen**: RESTful API
 
 **Trade-offs**:
+
 - ✅ **Pros**: Simpler, well-understood, better caching, easier debugging, standard HTTP semantics
 - ❌ **Cons**: Over-fetching/under-fetching, multiple round trips for related data, less flexible queries
 
@@ -536,6 +575,7 @@ This section tracks the implementation status of security features identified in
 ### 10.2 Completed Security Features
 
 #### Phase 1: Input Sanitization ✅ COMPLETE
+
 - ✅ Zod validation schemas created for all entities
 - ✅ Validation middleware implemented
 - ✅ All routes have validation applied
@@ -544,12 +584,14 @@ This section tracks the implementation status of security features identified in
 - ✅ Security headers (Helmet.js) configured
 
 #### Phase 2: JWT Security ✅ MOSTLY COMPLETE
+
 - ✅ Secure token storage (sessionStorage configured)
 - ✅ Token refresh error handling implemented
 - ✅ Helmet.js security headers configured
 - ✅ Logout endpoint implemented
 
 #### Phase 3: Rate Limiting ✅ COMPLETE
+
 - ✅ express-rate-limit installed and configured
 - ✅ Rate limiters created for all endpoint types
 - ✅ Rate limiters applied to all routes
@@ -559,7 +601,8 @@ This section tracks the implementation status of security features identified in
 
 #### JWT Security - Configuration & Verification
 
-**CORS Configuration**
+#### CORS Configuration
+
 - [ ] **Verify CORS configuration** in `api/src/index.ts`
   - Currently using default `cors()` - needs specific configuration
   - Set `credentials: false` (we don't use cookies)
@@ -567,20 +610,23 @@ This section tracks the implementation status of security features identified in
   - Expose rate limit headers: `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`
   - **Estimated Time**: 30 minutes
 
-**Token Expiration Settings**
+#### Token Expiration Settings
+
 - [ ] **Verify token expiration settings** in Supabase Dashboard
   - Check: Project Settings → Authentication → JWT Settings
   - Verify access token expiration: 1 hour (3600 seconds) recommended
   - Verify refresh token expiration: 7-30 days
   - **Estimated Time**: 15 minutes
 
-**JWT Claims Validation**
+#### JWT Claims Validation
+
 - [ ] **Add email verification check** in `api/src/middleware/auth.ts`
   - Check `user.email_confirmed_at` before allowing access
   - Return 403 with helpful message if email not verified
   - **Estimated Time**: 30 minutes
 
-**Session Invalidation on Password Change**
+#### Session Invalidation on Password Change
+
 - [ ] **Implement session invalidation** when password changes
   - In password change endpoint, invalidate all existing sessions
   - Use Supabase admin API to sign out user from all devices
@@ -588,7 +634,8 @@ This section tracks the implementation status of security features identified in
 
 #### Security Testing
 
-**JWT Security Tests**
+#### JWT Security Tests
+
 - [ ] Test token expiration and refresh flow
 - [ ] Test that expired tokens are rejected
 - [ ] Test that invalid tokens are rejected
@@ -598,7 +645,8 @@ This section tracks the implementation status of security features identified in
 - [ ] Test password change invalidates old sessions
 - **Estimated Time**: 4-6 hours
 
-**Input Sanitization Tests**
+#### Input Sanitization Tests
+
 - [ ] Test that malicious HTML is sanitized
 - [ ] Test that XSS payloads are blocked
 - [ ] Test that SQL injection attempts fail
@@ -608,7 +656,8 @@ This section tracks the implementation status of security features identified in
 - [ ] Test special character handling
 - **Estimated Time**: 4-6 hours
 
-**Rate Limiting Tests**
+#### Rate Limiting Tests
+
 - [ ] Test that rate limits are enforced
 - [ ] Test that 429 status is returned when limit exceeded
 - [ ] Test that limits reset after time window
@@ -616,7 +665,8 @@ This section tracks the implementation status of security features identified in
 - [ ] Test that rate limit headers are returned
 - **Estimated Time**: 2-3 hours
 
-**Unit, Integration, and Security Tests**
+#### Unit, Integration, and Security Tests
+
 - [ ] Test validation schemas with valid/invalid input
 - [ ] Test sanitization functions with malicious input
 - [ ] Test rate limiter configurations
@@ -633,7 +683,8 @@ This section tracks the implementation status of security features identified in
 
 #### Production Deployment
 
-**Pre-Deployment Checklist**
+#### Pre-Deployment Checklist
+
 - [ ] All tests passing
 - [ ] Security scan completed (no critical issues)
 - [ ] JWT claims validation implemented
@@ -641,12 +692,14 @@ This section tracks the implementation status of security features identified in
 - [ ] Error messages don't expose sensitive information
 - [ ] Supabase token expiration settings verified
 
-**Production Configuration**
+#### Production Configuration
+
 - [ ] Environment variables properly configured
 - [ ] HTTPS enforced (required for secure token transmission)
 - [ ] Rate limiting using Redis (for distributed systems - optional)
 
-**Post-Deployment**
+#### Post-Deployment
+
 - [ ] Monitor rate limit metrics
 - [ ] Monitor JWT token expiration and refresh patterns
 - [ ] Monitor validation error rates
@@ -656,14 +709,14 @@ This section tracks the implementation status of security features identified in
 
 ### 10.5 Progress Summary
 
-| Category | Status | Completion |
-|----------|--------|------------|
-| **Input Sanitization** | ✅ Complete | 100% |
-| **Rate Limiting** | ✅ Complete | 100% |
-| **JWT Security - Core** | ✅ Mostly Complete | 85% |
-| **JWT Security - Advanced** | ⏳ Pending | 30% |
-| **Testing** | ⏳ Pending | 0% |
-| **Production Deployment** | ⏳ Pending | 40% |
+| Category                    | Status          | Completion |
+| --------------------------- | --------------- | ---------- |
+| **Input Sanitization**      | Complete        | 100%       |
+| **Rate Limiting**           | Complete        | 100%       |
+| **JWT Security - Core**     | Mostly Complete | 85%        |
+| **JWT Security - Advanced** | Pending         | 30%        |
+| **Testing**                 | Pending         | 0%         |
+| **Production Deployment**   | Pending         | 40%        |
 
 ### 10.6 Recommended Next Steps
 
@@ -705,4 +758,3 @@ This section tracks the implementation status of security features identified in
 - Technical Design Document: `docs/scholarshipmanage_technical_design.md`
 - Database Schema Documentation: `docs/database-schema.md`
 - Related Documentation: See Technical Design Document for additional references
-

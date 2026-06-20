@@ -5,6 +5,7 @@ This document shows the expected format for your MySQL JSON export files.
 ## File Naming
 
 Place your JSON files in the `data/` directory with these names:
+
 - `users.json` or `user_profiles.json`
 - `recommenders.json`
 - `applications.json`
@@ -129,6 +130,7 @@ The conversion script handles common variations:
 ## Date Formats
 
 The script accepts various date formats:
+
 - ISO 8601: `"2024-01-01T00:00:00.000Z"`
 - MySQL datetime: `"2024-01-01 00:00:00"`
 - Date only: `"2024-01-01"`
@@ -136,6 +138,7 @@ The script accepts various date formats:
 ## Null Values
 
 Null values are automatically handled:
+
 - `null` in JSON → `NULL` in SQL
 - Missing fields → omitted from INSERT (PostgreSQL will use defaults)
 
@@ -149,4 +152,3 @@ Null values are automatically handled:
 - `recommendations.recommenderId` must reference an existing `collaborators.id` (after recommenders are converted)
 
 The import script handles the correct order automatically.
-

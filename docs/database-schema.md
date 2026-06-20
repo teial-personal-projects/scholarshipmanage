@@ -5,6 +5,7 @@ This document provides a comprehensive reference for the ScholarshipManage datab
 ## Overview
 
 The ScholarshipManage database is built on **PostgreSQL** (via Supabase) and uses:
+
 - **Row Level Security (RLS)** for data access control
 - **Foreign key constraints** for referential integrity
 - **Automatic timestamps** via triggers (`created_at`, `updated_at`)
@@ -27,11 +28,13 @@ All migrations are located in `api/src/migrations/` and should be run in order:
 **File**: `api/src/migrations/001_users_profiles.sql`
 
 ### Purpose
+
 Creates the foundation for user authentication and profiles. Extends Supabase's built-in `auth.users` table with additional profile information.
 
 ### Tables Created
 
 #### `user_profiles`
+
 Extended user account data linked to Supabase Auth.
 
 | Column | Type | Constraints | Description |
@@ -46,13 +49,16 @@ Extended user account data linked to Supabase Auth.
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **Indexes**:
+
 - `idx_user_profiles_auth_user_id` on `id`
 - `idx_user_profiles_email_address` on `email_address`
 
 **RLS Policies**:
+
 - Users can view, update, and insert their own profile
 
 #### `user_search_preferences`
+
 Normalized storage of user's scholarship search preferences.
 
 | Column | Type | Constraints | Description |
@@ -71,9 +77,11 @@ Normalized storage of user's scholarship search preferences.
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **RLS Policies**:
+
 - Users can view, update, and insert their own search preferences
 
 #### `user_roles`
+
 Tracks what roles a user has in the system. A user can have multiple roles.
 
 | Column | Type | Constraints | Description |
@@ -83,15 +91,18 @@ Tracks what roles a user has in the system. A user can have multiple roles.
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Role assignment timestamp |
 
 **Enum Type**: `user_role`
+
 - `'student'`
 - `'recommender'`
 - `'collaborator'`
 
 **Indexes**:
+
 - `idx_user_roles_user_id` on `user_id`
 - `idx_user_roles_role` on `role`
 
 **RLS Policies**:
+
 - Users can view and insert their own roles
 
 ### Functions & Triggers
@@ -107,11 +118,13 @@ Tracks what roles a user has in the system. A user can have multiple roles.
 **File**: `api/src/migrations/002_applications.sql`
 
 ### Purpose
+
 Creates the core applications table for tracking scholarship applications.
 
 ### Tables Created
 
 #### `applications`
+
 Scholarship applications tracked by students.
 
 | Column | Type | Constraints | Description |
@@ -140,18 +153,22 @@ Scholarship applications tracked by students.
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **Enum Types**:
+
 - `application_status`: 'Not Started', 'In Progress', 'Submitted', 'Awarded', 'Not Awarded'
 - `target_type`: 'Merit', 'Need', 'Both'
 
 **Indexes**:
+
 - `idx_applications_user_id` on `user_id`
 - `idx_applications_status` on `status`
 - `idx_applications_due_date` on `due_date`
 
 **RLS Policies**:
+
 - Users can view, insert, update, and delete their own applications
 
 **Triggers**:
+
 - `update_applications_updated_at` - Updates `updated_at` on row update
 
 ---
@@ -161,11 +178,13 @@ Scholarship applications tracked by students.
 **File**: `api/src/migrations/003_essays.sql`
 
 ### Purpose
+
 Creates the essays table for tracking essays associated with applications.
 
 ### Tables Created
 
 #### `essays`
+
 Essays associated with scholarship applications.
 
 | Column | Type | Constraints | Description |
@@ -180,12 +199,15 @@ Essays associated with scholarship applications.
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **Indexes**:
+
 - `idx_essays_application` on `application_id`
 
 **RLS Policies**:
+
 - Users can view, insert, update, and delete essays for their own applications
 
 **Triggers**:
+
 - `update_essays_updated_at` - Updates `updated_at` on row update
 
 ---
@@ -195,11 +217,13 @@ Essays associated with scholarship applications.
 **File**: `api/src/migrations/004_collaborators.sql`
 
 ### Purpose
+
 Creates a unified polymorphic system for managing collaborators (recommenders, essay reviewers, counselors) and their collaborations with applications.
 
 ### Tables Created
 
 #### `collaborators`
+
 People who help students with applications. No type field - same person can do multiple collaboration types.
 
 | Column | Type | Constraints | Description |
@@ -215,12 +239,15 @@ People who help students with applications. No type field - same person can do m
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **Indexes**:
+
 - `idx_collaborations_collaborator` on `collaborator_id` (via collaborations table)
 
 **RLS Policies**:
+
 - Users can view, insert, update, and delete their own collaborators
 
 #### `collaborations`
+
 Base table linking collaborators to applications with specific collaboration types. Contains common fields for all collaboration types.
 
 | Column | Type | Constraints | Description |
@@ -239,6 +266,7 @@ Base table linking collaborators to applications with specific collaboration typ
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **Enum Types**:
+
 - `collaboration_type`: 'recommendation', 'essayReview', 'guidance'
 - `collaboration_status`: 'pending', 'invited', 'in_progress', 'submitted', 'completed', 'declined'
 - `action_owner`: 'student', 'collaborator'
@@ -246,6 +274,7 @@ Base table linking collaborators to applications with specific collaboration typ
 **Unique Constraint**: `(collaborator_id, application_id, collaboration_type)` - A collaborator can only have one collaboration of each type per application
 
 **Indexes**:
+
 - `idx_collaborations_collaborator` on `collaborator_id`
 - `idx_collaborations_application` on `application_id`
 - `idx_collaborations_type` on `collaboration_type`
@@ -253,9 +282,11 @@ Base table linking collaborators to applications with specific collaboration typ
 - `idx_collaborations_action_owner` on `awaiting_action_from`
 
 **RLS Policies**:
+
 - Users can view their own collaborations (via collaborator ownership)
 
 #### `essay_review_collaborations`
+
 Type-specific data for essay review collaborations. One collaboration can review multiple essays.
 
 | Column | Type | Constraints | Description |
@@ -270,12 +301,15 @@ Type-specific data for essay review collaborations. One collaboration can review
 **Unique Constraint**: `(collaboration_id, essay_id)` - Prevents duplicate essay assignments
 
 **Indexes**:
+
 - `idx_essay_review_essay` on `essay_id`
 
 **RLS Policies**:
+
 - Users can view essay reviews for their own collaborations
 
 #### `recommendation_collaborations`
+
 Type-specific data for recommendation collaborations. One-to-one with collaboration.
 
 | Column | Type | Constraints | Description |
@@ -289,9 +323,11 @@ Type-specific data for recommendation collaborations. One-to-one with collaborat
 **Note**: The deadline for portal submission is tracked via `next_action_due_date` in the base `collaborations` table.
 
 **RLS Policies**:
+
 - Users can view recommendation collaborations for their own collaborations
 
 #### `guidance_collaborations`
+
 Type-specific data for guidance/counseling collaborations. One-to-one with collaboration.
 
 | Column | Type | Constraints | Description |
@@ -303,14 +339,17 @@ Type-specific data for guidance/counseling collaborations. One-to-one with colla
 | `scheduled_for` | TIMESTAMPTZ | | Scheduled meeting time |
 
 **Enum Type**: `session_type`
+
 - `'initial'`
 - `'followup'`
 - `'final'`
 
 **RLS Policies**:
+
 - Users can view guidance collaborations for their own collaborations
 
 #### `collaboration_history`
+
 Audit log of all collaboration actions.
 
 | Column | Type | Constraints | Description |
@@ -322,9 +361,11 @@ Audit log of all collaboration actions.
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Action timestamp |
 
 **RLS Policies**:
+
 - Users can view collaboration history for their own collaborations
 
 **Triggers**:
+
 - `update_collaborators_updated_at` - Updates `updated_at` on collaborators table
 - `update_collaborations_updated_at` - Updates `updated_at` on collaborations table
 
@@ -335,11 +376,13 @@ Audit log of all collaboration actions.
 **File**: `api/src/migrations/005_recommendations.sql`
 
 ### Purpose
+
 Creates a separate recommendations table for tracking recommendation letters. This provides a simpler alternative to the collaboration system for basic recommendation tracking.
 
 ### Tables Created
 
 #### `recommendations`
+
 Recommendation letters for scholarship applications.
 
 | Column | Type | Constraints | Description |
@@ -354,20 +397,24 @@ Recommendation letters for scholarship applications.
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
 
 **Enum Type**: `recommendation_status`
+
 - `'Pending'`
 - `'Submitted'`
 
 **Unique Constraint**: `(application_id, recommender_id)` - A recommender can only have one recommendation per application
 
 **Indexes**:
+
 - `idx_recommendations_application_id` on `application_id`
 - `idx_recommendations_recommender_id` on `recommender_id`
 - `idx_recommendations_status` on `status`
 
 **RLS Policies**:
+
 - Users can view, insert, update, and delete recommendations for their own applications
 
 **Triggers**:
+
 - `update_recommendations_updated_at` - Updates `updated_at` on row update
 
 ---
@@ -431,6 +478,7 @@ supabase db push
 ## Row Level Security (RLS)
 
 All tables have RLS enabled. Policies ensure:
+
 - Users can only access their own data
 - Foreign key relationships are respected
 - Collaborators can only see collaborations for applications they're involved with
@@ -438,6 +486,7 @@ All tables have RLS enabled. Policies ensure:
 ### Policy Pattern
 
 Most policies follow this pattern:
+
 ```sql
 CREATE POLICY "Users can view own [resource]" ON public.[table]
   FOR SELECT USING (
@@ -500,4 +549,3 @@ When adding new migrations:
 - [Supabase Documentation](https://supabase.com/docs)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Row Level Security Guide](https://supabase.com/docs/guides/auth/row-level-security)
-

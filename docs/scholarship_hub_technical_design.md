@@ -32,6 +32,7 @@ This Technical Design Document (TDD) describes the implementation details and te
 ### 1.2 Scope
 
 This document covers:
+
 - Detailed technical specifications and implementation approaches
 - Technology stack and library choices
 - Code organization and project structure
@@ -42,6 +43,7 @@ This document covers:
 - Deployment procedures
 
 **Out of Scope:**
+
 - High-level architectural decisions (see System Design Document)
 - Business requirements and use cases
 - User interface design specifications
@@ -49,6 +51,7 @@ This document covers:
 ### 1.3 Document Relationship
 
 This TDD complements:
+
 - **System Design Document (SDD)**: High-level architectural decisions and rationale
 - **Database Schema Documentation**: Detailed database structure
 - **API Documentation**: Endpoint specifications (may be auto-generated from code)
@@ -60,46 +63,57 @@ This TDD complements:
 ### 2.1 Frontend Technologies
 
 #### Core Framework
+
 - **React 18**: Declarative UI library for building component-based user interfaces
 - **TypeScript**: Adds static typing to JavaScript to catch errors at compile time
 - **Vite**: Fast build tool and dev server with instant Hot Module Replacement
 
 #### Routing
+
 - **React Router DOM**: Enables client-side routing and navigation without page reloads
 
 #### UI Library
+
 - **Chakra UI**: Pre-built, accessible React components with consistent styling
 
 #### State Management & Data Fetching
+
 - **TanStack Query (React Query)**: Manages server state with automatic caching, refetching, and loading/error states
 - **React Context**: Built-in React feature for sharing state across components without prop drilling
 
 #### HTTP Client
+
 - **Axios**: Promise-based HTTP client with request/response interceptors for API calls
 
 #### Build Tools
+
 - **Vite**: Bundles and optimizes code for production with fast development experience
 - **TypeScript Compiler**: Transpiles TypeScript to JavaScript and performs type checking
 
 ### 2.2 Backend Technologies
 
 #### Runtime & Framework
+
 - **Node.js 24.12+**: JavaScript runtime that executes server-side code
 - **Express**: Minimal web framework for building HTTP servers and REST APIs
 - **TypeScript**: Adds type safety to Node.js code for better maintainability
 
 #### Database & Authentication
+
 - **Supabase**: Managed PostgreSQL database with built-in authentication, RLS policies, and client SDK
 
 #### Validation & Sanitization
+
 - **Zod**: Runtime schema validation library that validates and infers TypeScript types
 - **DOMPurify (isomorphic-dompurify)**: Removes malicious HTML/JavaScript to prevent XSS attacks
 
 #### Security
+
 - **Helmet.js**: Sets security HTTP headers (CSP, HSTS, etc.) to protect against common attacks
 - **express-rate-limit**: Prevents abuse by limiting the number of requests per IP/endpoint
 
 #### Testing
+
 - **Vitest**: Fast, Vite-native testing framework with TypeScript support
 - **Supertest**: Makes HTTP assertions to test Express routes and middleware
 
@@ -204,10 +218,12 @@ scholarshipmanage/
 ### 3.2 Package Dependencies
 
 **Root Workspace:**
+
 - Defines workspace packages: `web`, `api`, `shared`
 - Contains shared scripts and configuration
 
 **Web Package:**
+
 - React and React DOM
 - React Router DOM
 - Chakra UI
@@ -216,6 +232,7 @@ scholarshipmanage/
 - Vite and plugins
 
 **API Package:**
+
 - Express
 - Supabase client
 - Zod
@@ -225,6 +242,7 @@ scholarshipmanage/
 - Vitest and testing utilities
 
 **Shared Package:**
+
 - TypeScript types only (no runtime dependencies)
 - Zod schemas (shared validation)
 
@@ -237,6 +255,7 @@ scholarshipmanage/
 Routes are defined in `web/src/App.tsx`:
 
 **Public Routes:**
+
 - `/login` - User login page
 - `/register` - User registration page
 - `/forgot-password` - Password reset request page
@@ -244,6 +263,7 @@ Routes are defined in `web/src/App.tsx`:
 - `/invite/:token` - Collaborator invitation acceptance page
 
 **Protected Routes (require authentication):**
+
 - `/dashboard` - Main dashboard (students)
 - `/applications` - List of applications
 - `/applications/new` - Create new application
@@ -254,17 +274,20 @@ Routes are defined in `web/src/App.tsx`:
 - `/profile` - User profile settings
 
 **Root Route:**
+
 - `/` - Redirects to `/dashboard` (if authenticated) or `/login`
 
 ### 4.2 State Management
 
 #### Authentication State
+
 - **React Context** (`AuthContext`): Manages user authentication state
   - Stores current user session
   - Provides login/logout functions
   - Syncs with Supabase Auth
 
 #### Server State
+
 - **TanStack Query**: Manages all API data
   - Automatic caching and background refetching
   - Loading and error states
@@ -272,6 +295,7 @@ Routes are defined in `web/src/App.tsx`:
   - Query invalidation for cache updates
 
 #### Local State
+
 - **React useState**: Component-specific state
   - Form inputs
   - UI state (modals, dropdowns, etc.)
@@ -282,6 +306,7 @@ Routes are defined in `web/src/App.tsx`:
 #### Component Hierarchy
 
 The application structure follows this hierarchy:
+
 - **App.tsx** (root component)
   - **AuthContext.Provider** (authentication context)
   - **Router** (routing component)
@@ -297,20 +322,24 @@ The application structure follows this hierarchy:
 #### Component Types
 
 **Pages** (`pages/`):
+
 - Route-level components
 - Compose multiple components
 - Handle route-specific logic
 
 **Components** (`components/`):
+
 - Reusable UI components
 - Presentational components (receive props, render UI)
 - Container components (manage state, fetch data)
 
 **Contexts** (`contexts/`):
+
 - Global state providers
 - Authentication context
 
 **Hooks** (`hooks/`):
+
 - Custom React hooks
 - Reusable logic (e.g., `useAuth`, `useApplications`)
 
@@ -319,6 +348,7 @@ The application structure follows this hierarchy:
 **Location**: `web/src/services/api.ts`
 
 **Features**:
+
 - Axios instance with base URL configuration
 - Request interceptors: Adds JWT token to Authorization header
 - Response interceptors: Handles 401 errors, attempts token refresh
@@ -326,6 +356,7 @@ The application structure follows this hierarchy:
 - TypeScript types: Uses shared types from `@scholarshipmanage/shared`
 
 **Token Refresh Flow**:
+
 1. API request returns 401 (unauthorized)
 2. Interceptor calls `refreshAccessToken()`
 3. Supabase refreshes the session
@@ -335,22 +366,26 @@ The application structure follows this hierarchy:
 ### 4.5 Key Components
 
 #### Navigation
+
 - Top navigation bar with user menu
 - Protected route navigation
 - Logout functionality
 
 #### ProtectedRoute
+
 - Route guard component
 - Checks authentication state
 - Redirects to login if not authenticated
 
 #### ApplicationForm
+
 - Form for creating/editing applications
 - Uses React Hook Form (if implemented) or controlled inputs
 - Validation with Zod schemas
 - Error display for validation errors
 
 #### DashboardReminders
+
 - Displays upcoming deadline reminders
 - Fetches reminders via TanStack Query
 - Updates in real-time (via query refetching)
@@ -403,6 +438,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Function**: Verifies JWT token from Authorization header
 
 **Process**:
+
 1. Extracts token from `req.headers.authorization` (Bearer token format)
 2. Uses Supabase `getUser()` to verify token
 3. Attaches user object to `req.user`
@@ -415,6 +451,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Function**: Enforces role-based access control
 
 **Process**:
+
 1. Checks `req.user.roles` array
 2. Verifies user has required role
 3. Calls `next()` if authorized, returns 403 if not
@@ -424,11 +461,13 @@ Requests flow downward through these layers, and responses flow back up.
 #### Validation Middleware (`middleware/validate.ts`)
 
 **Functions**:
+
 - `validateBody(schema)`: Validates request body
 - `validateParams(schema)`: Validates path parameters
 - `validateQuery(schema)`: Validates query parameters
 
 **Process**:
+
 1. Uses Zod `safeParseAsync()` for validation
 2. Returns 400 with validation errors if invalid
 3. Calls `next()` if valid
@@ -440,6 +479,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Function**: Global error handler for unhandled errors
 
 **Process**:
+
 1. Catches errors from controllers/services
 2. Logs error details
 3. Returns appropriate HTTP status code and error message
@@ -450,6 +490,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Purpose**: Encapsulate business logic separate from HTTP concerns
 
 **Structure**:
+
 - One service file per domain entity (e.g., `applications.service.ts`)
 - Methods correspond to business operations
 - Services use Supabase client to query database
@@ -462,6 +503,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Location**: `api/src/config/supabase.ts`
 
 **Configuration**:
+
 - Creates Supabase client with service role key for backend
 - Service role key bypasses RLS (use with caution)
 - Client used by services to query database
@@ -530,6 +572,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Location**: `api/src/migrations/`
 
 **Migration Files**:
+
 - `001_users_profiles.sql`: User profiles table and RLS policies
 - `002_applications.sql`: Applications table and relationships
 - `003_essays.sql`: Essays table and relationships
@@ -537,6 +580,7 @@ Requests flow downward through these layers, and responses flow back up.
 - `005_recommendations.sql`: Recommendations table
 
 **Migration Process**:
+
 1. Create migration SQL file with incremental number
 2. Define tables, indexes, constraints, RLS policies
 3. Run migrations against database (manual or via script)
@@ -545,6 +589,7 @@ Requests flow downward through these layers, and responses flow back up.
 ### 6.4 Indexes
 
 **Key Indexes**:
+
 - `user_profiles.auth_user_id`: Unique index for auth user lookup
 - `user_profiles.email_address`: Unique index for email lookup
 - `applications.user_id`: Index for user's applications queries
@@ -720,14 +765,17 @@ Requests flow downward through these layers, and responses flow back up.
 ### 7.9 Error Response Format
 
 **Standard Error Response**:
+
 - Structure: `{ error: { message, code, details } }`
 - Contains error message, error code, and optional details object
 
 **Validation Error Response**:
+
 - Structure: `{ error: { message: "Validation failed", code: "VALIDATION_ERROR", details: { field: ["error messages"] } } }`
 - Contains field-specific validation error messages
 
 **Rate Limit Error Response**:
+
 - Structure: `{ error: { message: "Too many requests", code: "RATE_LIMIT_EXCEEDED", details: { retryAfter: seconds } } }`
 - Includes retry-after time in seconds
 
@@ -742,6 +790,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Location**: `api/src/schemas/`
 
 **Schema Structure**:
+
 - Separate input and output schemas for each entity
 - Input schemas use `.strict()` to reject unknown fields
 - Output schemas may include additional computed fields
@@ -749,6 +798,7 @@ Requests flow downward through these layers, and responses flow back up.
 **Example Schema**: `createApplicationSchema` - Defines validation rules for application creation (scholarshipName, deadline, amount). `applicationResponseSchema` - Extends creation schema with additional fields (id, userId, createdAt, updatedAt) for API responses
 
 **Validation Middleware**:
+
 - `validateBody()`: Validates request body against schema
 - `validateParams()`: Validates path parameters
 - `validateQuery()`: Validates query parameters
@@ -758,7 +808,8 @@ Requests flow downward through these layers, and responses flow back up.
 
 **Library**: DOMPurify (isomorphic-dompurify for server-side)
 
-**Location**: 
+**Location**:
+
 - Server: `api/src/utils/sanitize-html.ts`
 - Client: `web/src/utils/sanitize-html.ts`
 
@@ -777,6 +828,7 @@ Requests flow downward through these layers, and responses flow back up.
    - Use case: Essays, detailed documentation
 
 **Security Features**:
+
 - Whitelist approach (only allowed tags/attributes)
 - All links automatically get `target="_blank"` and `rel="noopener noreferrer"`
 - Removes scripts, event handlers, and dangerous attributes
@@ -792,23 +844,27 @@ Requests flow downward through these layers, and responses flow back up.
 **Rate Limiter Configurations**:
 
 **Authentication Limiters**:
+
 - `authRateLimiters.login`: 5 requests per 15 minutes
 - `authRateLimiters.register`: 3 requests per hour
 - `authRateLimiters.passwordReset`: 3 requests per hour
 - `authRateLimiters.emailVerify`: 5 requests per hour
 
 **Operation Limiters**:
+
 - `writeRateLimiters.createUpdate`: 30 requests per 15 minutes (POST/PATCH)
 - `writeRateLimiters.delete`: 10 requests per 15 minutes (DELETE)
 - `readRateLimiters.read`: 100 requests per 15 minutes (GET single resource)
 - `readRateLimiters.list`: 50 requests per 15 minutes (GET lists)
 
 **General Limiters**:
+
 - `generalApiLimiter`: 150 requests per 15 minutes (baseline for all routes)
 - `publicEndpointLimiter`: 60 requests per 15 minutes (health checks)
 - `webhookLimiter`: 100 requests per 15 minutes (webhooks)
 
 **Implementation Details**:
+
 - Limiters skip automatically in test environment
 - Returns 429 status with `Retry-After` header when limit exceeded
 - Standardized JSON error response format
@@ -850,23 +906,27 @@ Requests flow downward through these layers, and responses flow back up.
    - Disables unnecessary features (camera, microphone, etc.)
 
 **Implementation**:
+
 - Headers applied via Helmet middleware in `api/src/index.ts`
 - Environment-aware configuration (different CSP for dev/prod)
 
 ### 8.5 JWT Token Handling
 
 **Token Storage** (Frontend):
+
 - Storage: `sessionStorage` (more secure than localStorage)
 - Trade-off: Requires re-login on new tabs
 - Location: Managed by Supabase client (`web/src/config/supabase.ts`)
 
 **Token Refresh** (Frontend):
+
 - Automatic refresh on 401 errors
 - Promise deduplication prevents multiple simultaneous refresh attempts
 - Redirects to login if refresh fails
 - Implementation: `web/src/services/api.ts`
 
 **Token Verification** (Backend):
+
 - Extracts token from `Authorization: Bearer <token>` header
 - Verifies token via Supabase `getUser()`
 - Attaches user to request object
@@ -884,12 +944,14 @@ Requests flow downward through these layers, and responses flow back up.
 ### 9.2 Backend Testing
 
 #### Unit Tests
+
 - **Services**: Test business logic with mocked database
 - **Utils**: Test utility functions (sanitization, validation)
 - **Middleware**: Test middleware functions with mocked requests
 - **Schemas**: Test Zod schemas with valid/invalid input
 
 #### Integration Tests
+
 - **API Endpoints**: Test full request/response cycle
   - Use test database or mocked Supabase client
   - Test authentication and authorization
@@ -898,6 +960,7 @@ Requests flow downward through these layers, and responses flow back up.
 - **Authentication Flow**: Test login, registration, token refresh
 
 #### Test Structure
+
 ```
 api/src/test/
 ├── fixtures/          # Test data fixtures
@@ -911,18 +974,21 @@ api/src/test/
 ### 9.3 Frontend Testing
 
 #### Component Tests
+
 - Test component rendering
 - Test user interactions
 - Test component state changes
 - Use React Testing Library for user-centric tests
 
 #### Integration Tests
+
 - Test page-level components
 - Test API integration (with mocked API client)
 - Test routing and navigation
 - Test authentication flow
 
 #### Test Structure
+
 ```
 web/src/test/
 ├── fixtures/          # Test data fixtures
@@ -940,6 +1006,7 @@ web/src/test/
 ### 9.5 Security Testing
 
 **Types of Security Tests**:
+
 - **XSS Attempts**: Verify HTML sanitization blocks malicious scripts
 - **SQL Injection**: Verify input validation prevents SQL injection
 - **Authorization**: Verify users cannot access unauthorized resources
@@ -965,6 +1032,7 @@ web/src/test/
    - Required: Node.js 24.12+
 
 3. **Environment Variables**:
+
    ```
    SUPABASE_URL=<supabase-project-url>
    SUPABASE_ANON_KEY=<supabase-anon-key>
@@ -1006,6 +1074,7 @@ web/src/test/
    - Build output directory: `web/dist`
 
 3. **Environment Variables**:
+
    ```
    VITE_API_URL=<backend-api-url>
    VITE_SUPABASE_URL=<supabase-project-url>
@@ -1025,6 +1094,7 @@ web/src/test/
 **Platform**: Supabase (managed PostgreSQL)
 
 **Configuration**:
+
 - Database already hosted on Supabase
 - Run migrations via Supabase SQL editor or migration scripts
 - Configure RLS policies via migrations
@@ -1033,6 +1103,7 @@ web/src/test/
 ### 10.4 Environment Variables Reference
 
 **Backend (.env.production)**:
+
 - `NODE_ENV=production`
 - `PORT=3000`
 - `SUPABASE_URL` - Supabase project URL
@@ -1041,6 +1112,7 @@ web/src/test/
 - `RESEND_API_KEY` - Resend email service API key
 
 **Frontend (.env.production)**:
+
 - `VITE_API_URL` - Backend API URL
 - `VITE_SUPABASE_URL` - Supabase project URL
 - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
@@ -1048,6 +1120,7 @@ web/src/test/
 ### 10.5 Deployment Checklist
 
 **Pre-Deployment**:
+
 - [ ] All tests passing
 - [ ] Environment variables configured
 - [ ] Database migrations applied
@@ -1056,6 +1129,7 @@ web/src/test/
 - [ ] SSL certificates active
 
 **Post-Deployment Verification**:
+
 - [ ] Verify all pages load correctly
 - [ ] Test authentication flow (login, register, password reset)
 - [ ] Test core features (applications, collaborations, essays)
@@ -1087,4 +1161,3 @@ web/src/test/
 - [React Documentation](https://react.dev/)
 - [Zod Documentation](https://zod.dev/)
 - [Helmet.js Documentation](https://helmetjs.github.io/)
-
