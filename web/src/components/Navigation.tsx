@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { GraduationCap, LayoutDashboard, LibraryBig, UserRound, UsersRound, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastHelpers } from '../utils/toast';
 
@@ -32,7 +33,17 @@ export function Navigation() {
 
   const initials = user.email ? user.email.slice(0, 2).toUpperCase() : 'U';
 
-  const NavLink = ({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) => {
+  const NavLink = ({
+    to,
+    icon: Icon,
+    children,
+    onClick,
+  }: {
+    to: string;
+    icon: LucideIcon;
+    children: React.ReactNode;
+    onClick?: () => void;
+  }) => {
     const active = isActive(to);
     return (
       <Link
@@ -40,6 +51,7 @@ export function Navigation() {
         onClick={onClick}
         className={`nav-link ${active ? 'nav-link-active' : ''}`}
       >
+        <Icon size={14} className="shrink-0" />
         {children}
       </Link>
     );
@@ -47,8 +59,8 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="bg-brand-500 shadow-md sticky top-0 z-50">
-        <div className="max-w-full mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 px-4 py-3">
+        <div className="max-w-full mx-auto bg-brand-500 rounded-lg px-4 md:px-5 py-2.5 flex items-center justify-between shadow-md">
           {/* Left: Logo and Mobile Menu Button */}
           <div className="flex items-center gap-3">
             <button
@@ -58,9 +70,9 @@ export function Navigation() {
             >
               <span className="text-xl">☰</span>
             </button>
-            <Link to="/dashboard" className="no-underline flex items-center gap-3 hover:opacity-90 transition-opacity">
-              <img src="/favicon.ico" alt="Scholarship Manage" className="w-6 h-6 md:w-7 md:h-7 rounded-sm" />
-              <span className="text-white font-bold text-base md:text-lg">Scholarship Manage</span>
+            <Link to="/dashboard" className="no-underline flex items-center gap-2 hover:opacity-90 transition-opacity">
+              <GraduationCap size={18} className="text-white shrink-0" />
+              <span className="text-white font-bold text-sm md:text-base">Scholarship Manage</span>
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/20 text-white/80">
                 v{import.meta.env.VITE_APP_VERSION}
               </span>
@@ -68,14 +80,11 @@ export function Navigation() {
           </div>
 
           {/* Center: Nav Links (Desktop) */}
-          <div className="hidden md:flex items-center gap-1">
-            <NavLink to="/dashboard">DASHBOARD</NavLink>
-            <div className="w-px h-6 bg-white/30" />
-            <NavLink to="/collaborators">COLLABORATORS</NavLink>
-            <div className="w-px h-6 bg-white/30" />
-            <NavLink to="/resources">RESOURCES</NavLink>
-            <div className="w-px h-6 bg-white/30" />
-            <NavLink to="/profile">PROFILE</NavLink>
+          <div className="hidden md:flex items-center gap-4">
+            <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
+            <NavLink to="/collaborators" icon={UsersRound}>Collaborators</NavLink>
+            <NavLink to="/resources" icon={LibraryBig}>Resources</NavLink>
+            <NavLink to="/profile" icon={UserRound}>Profile</NavLink>
           </div>
 
           {/* Right: User Menu */}
@@ -84,11 +93,9 @@ export function Navigation() {
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             >
-              <div className="w-8 h-8 rounded-full bg-brand-400 flex items-center justify-center text-white text-sm font-semibold">
+              <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-sm font-semibold">
                 {initials}
               </div>
-              <span className="text-white font-medium hidden md:block">User</span>
-              <span className="text-white text-xs hidden md:block">▼</span>
             </button>
             {isUserMenuOpen && (
               <>
@@ -132,10 +139,10 @@ export function Navigation() {
               </button>
             </div>
             <div className="flex flex-col gap-2 p-4 mt-2">
-              <NavLink to="/dashboard" onClick={() => setIsDrawerOpen(false)}>DASHBOARD</NavLink>
-              <NavLink to="/collaborators" onClick={() => setIsDrawerOpen(false)}>COLLABORATORS</NavLink>
-              <NavLink to="/resources" onClick={() => setIsDrawerOpen(false)}>RESOURCES</NavLink>
-              <NavLink to="/profile" onClick={() => setIsDrawerOpen(false)}>PROFILE</NavLink>
+              <NavLink to="/dashboard" icon={LayoutDashboard} onClick={() => setIsDrawerOpen(false)}>Dashboard</NavLink>
+              <NavLink to="/collaborators" icon={UsersRound} onClick={() => setIsDrawerOpen(false)}>Collaborators</NavLink>
+              <NavLink to="/resources" icon={LibraryBig} onClick={() => setIsDrawerOpen(false)}>Resources</NavLink>
+              <NavLink to="/profile" icon={UserRound} onClick={() => setIsDrawerOpen(false)}>Profile</NavLink>
               <hr className="border-white/30 my-2" />
               <button
                 className="nav-link text-left"
