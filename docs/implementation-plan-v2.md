@@ -334,16 +334,16 @@ Edit Application page.
 
 Secondary toggle for scanning and sorting. Adapted from the existing table.
 
-### [ ] 10.1 Columns and behavior
+### [x] 10.1 Columns and behavior
 
-- [ ] 10.1.1 Columns: Scholarship Name, Organization, Status, Due Date, Award Amount,
+- [x] 10.1.1 Columns: Scholarship Name, Organization, Status, Due Date, Award Amount,
   Current Action, Actions.
-- [ ] 10.1.2 Clicking a column header cycles ascending, descending, unsorted. Unsorted
+- [x] 10.1.2 Clicking a column header cycles ascending, descending, unsorted. Unsorted
   falls back to API order by `createdAt` desc. Show a sort indicator on the
   active column. Sorting is desktop only.
-- [ ] 10.1.3 Apply the deadline urgency row treatments: a subtle row tint by tier, an
+- [x] 10.1.3 Apply the deadline urgency row treatments: a subtle row tint by tier, an
   urgency icon before the name, and a colored due date cell.
-- [ ] 10.1.4 A row click opens the same `ApplicationPanel` used by the feed.
+- [x] 10.1.4 A row click opens the same `ApplicationPanel` used by the feed.
 
 ### [ ] 10.2 Filtering
 
