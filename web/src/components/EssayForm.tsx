@@ -127,7 +127,7 @@ function EssayForm({ isOpen, onClose, applicationId, essay, onSuccess }: EssayFo
               <select className="field-select" value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="not_started">Not Started</option>
                 <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
+                <option value="completed">Complete</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">Current status of this essay</p>
             </div>

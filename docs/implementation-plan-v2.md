@@ -84,20 +84,20 @@ Pattern copied from `/Users/teial/Projects/internship-tracker`.
 This is the foundation. Every action label, the essay progress bar, and the
 radar counts all read from one predicate, so it gets pinned down first.
 
-### [ ] 3.1 The predicate
+### [x] 3.1 The predicate
 
-- [ ] 3.1.1 Define the essay status enum as a union type:
+- [x] 3.1.1 Define the essay status enum as a union type:
 
   ```typescript
-  type EssayStatus = 'Not Started' | 'In Progress' | 'Completed';
+  type EssayStatus = 'not_started' | 'in_progress' | 'completed';
   ```
 
-- [ ] 3.1.2 Define a single completion function. Only `Completed` counts. Do not
+- [x] 3.1.2 Define a single completion function. Only `Complete` counts. Do not
   factor in word count, so an essay cannot be done by length and not done by
   status at the same time.
 
   ```typescript
-  const isEssayComplete = (essay: Essay) => essay.status === 'Completed';
+  const isEssayComplete = (essay: Essay) => essay.status === 'completed';
 
   const essayProgress = (app: ApplicationResponse) => ({
     done: app.essays.filter(isEssayComplete).length,
@@ -105,7 +105,7 @@ radar counts all read from one predicate, so it gets pinned down first.
   });
   ```
 
-- [ ] 3.1.3 Route the progress bar, the radar counts, and the "Finish N of M essays"
+- [x] 3.1.3 Route the progress bar, the radar counts, and the "Finish N of M essays"
   label through `essayProgress`. No other place computes essay completion.
 
 ### [ ] 3.2 Reconcile existing data

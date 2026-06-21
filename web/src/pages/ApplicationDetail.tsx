@@ -2,7 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2, ExternalLink, History, Mail, Check } from 'lucide-react';
 import { apiGet, apiDelete, apiPatch } from '../services/api';
-import type { ApplicationResponse, EssayResponse, CollaborationResponse, CollaboratorResponse } from '@scholarshipmanage/shared';
+import {
+  essayProgress,
+  type ApplicationResponse,
+  type EssayResponse,
+  type CollaborationResponse,
+  type CollaboratorResponse,
+} from '@scholarshipmanage/shared';
 import EssayForm from '../components/EssayForm';
 import SendInviteDialog from '../components/SendInviteDialog';
 import CollaborationHistory from '../components/CollaborationHistory';
@@ -479,22 +485,14 @@ function ApplicationDetail() {
   })();
 
   const getEssayStatus = (essay: EssayResponse) => {
-    // Prefer explicit status if present (some environments may add it),
-    // otherwise derive from existing fields.
-    if (essay.status === 'completed') return { label: 'Completed', colorClass: 'badge-green' };
+    if (essay.status === 'completed') return { label: 'Complete', colorClass: 'badge-green' };
     if (essay.status === 'in_progress') return { label: 'In progress', colorClass: 'badge-blue' };
-    if (essay.status === 'not_started') return { label: 'Not started', colorClass: 'badge-gray' };
-
-    if (essay.essayLink) return { label: 'Linked', colorClass: 'badge-green' };
-    if (essay.wordCount && essay.wordCount > 0) return { label: 'Draft', colorClass: 'badge-yellow' };
-    return { label: 'Needs link', colorClass: 'badge-gray' };
+    return { label: 'Not started', colorClass: 'badge-gray' };
   };
 
   // Progress counts
-  // Essays: treat "complete" as status === completed when present, otherwise having a document link
-  const essaysCompleteCount = essays.filter((e) => e && (e.status === 'completed' || Boolean(e.essayLink))).length;
-  const essaysTotalCount = essays.length;
-  const essaysUncompletedCount = Math.max(essaysTotalCount - essaysCompleteCount, 0);
+  const { done: essaysCompleteCount, total: essaysTotalCount } = essayProgress({ essays });
+  const essaysUncompletedCount = essaysTotalCount - essaysCompleteCount;
 
   // Recommendations: treat "complete" as collaboration status === 'completed'
   const recommendationCollabs = collaborations.filter((c) => c.collaborationType === 'recommendation');
@@ -662,7 +660,7 @@ function ApplicationDetail() {
 
           {/* Hero summary */}
           <div className="card overflow-hidden">
-            <div className="px-4 md:px-6 pt-4 md:pt-6 pb-4 bg-gradient-to-r from-green-50 to-white border-b border-black/5">
+            <div className="px-4 md:px-6 pt-4 md:pt-6 pb-4 bg-linear-to-r from-green-50 to-white border-b border-black/5">
               <div className="flex flex-col gap-4">
                 {/* Title row */}
                 <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
@@ -762,14 +760,14 @@ function ApplicationDetail() {
 
                 {/* Progress summary */}
                 {(recommendationsTotalCount > 0 || essayReviewsTotalCount > 0 || essaysTotalCount > 0) && (
-                  <div className="rounded-2xl border border-black/5 bg-gradient-to-br from-green-50 to-white shadow-sm p-4 md:p-5">
+                  <div className="rounded-2xl border border-black/5 bg-linear-to-br from-green-50 to-white shadow-sm p-4 md:p-5">
                     <div className="flex items-start gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
                         <span className="text-lg" aria-hidden>✨</span>
                       </div>
                       <div>
                         <p className="text-sm text-gray-700 font-semibold tracking-tight">Next steps</p>
-                        <h2 className="text-sm font-bold text-[#245540] mt-0.5">Current action</h2>
+                        <h2 className="text-sm font-bold text-brand-800 mt-0.5">Current action</h2>
                         <p className="text-sm text-gray-600 mt-1">
                           Quick view of what's left across recommendations, reviews, and essays.
                         </p>
@@ -852,7 +850,7 @@ function ApplicationDetail() {
                             <div
                               className={`h-2 rounded-full ${essaysUncompletedCount === 0 ? 'bg-green-500' : 'bg-purple-500'}`}
                               style={{
-                                width: `${essaysTotalCount === 0 ? 0 : ((essaysTotalCount - essaysUncompletedCount) / essaysTotalCount) * 100}%`,
+                                width: `${essaysTotalCount === 0 ? 0 : (essaysCompleteCount / essaysTotalCount) * 100}%`,
                               }}
                             />
                           </div>
@@ -878,13 +876,13 @@ function ApplicationDetail() {
               <div className="card-body">
                 <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <dt className="font-bold text-[#27500A] mb-1">Organization</dt>
+                    <dt className="font-bold text-brand-700 mb-1">Organization</dt>
                     <dd>{application.organization || 'Not specified'}</dd>
                   </div>
 
                   {application.orgWebsite && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Organization Website</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Organization Website</dt>
                       <dd>
                         <a
                           href={application.orgWebsite}
@@ -901,28 +899,28 @@ function ApplicationDetail() {
 
                   {application.targetType && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Target Type</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Target Type</dt>
                       <dd className="capitalize">{application.targetType}</dd>
                     </div>
                   )}
 
                   {application.platform && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Platform</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Platform</dt>
                       <dd>{application.platform}</dd>
                     </div>
                   )}
 
                   {application.theme && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Theme/Focus</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Theme/Focus</dt>
                       <dd>{application.theme}</dd>
                     </div>
                   )}
 
                   {(application.minAward || application.maxAward) && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Award Amount</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Award Amount</dt>
                       <dd className="font-semibold text-green-600">
                         {application.minAward && application.maxAward
                           ? `$${application.minAward.toLocaleString()} - $${application.maxAward.toLocaleString()}`
@@ -937,21 +935,21 @@ function ApplicationDetail() {
 
                   {application.openDate && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Open Date</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Open Date</dt>
                       <dd>{formatDateNoTimezone(application.openDate)}</dd>
                     </div>
                   )}
 
                   {application.submissionDate && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Submission Date</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Submission Date</dt>
                       <dd>{formatDateNoTimezone(application.submissionDate)}</dd>
                     </div>
                   )}
 
                   {application.currentAction && (
                     <div>
-                      <dt className="font-bold text-[#27500A] mb-1">Current Action</dt>
+                      <dt className="font-bold text-brand-700 mb-1">Current Action</dt>
                       <dd>{application.currentAction}</dd>
                     </div>
                   )}
@@ -961,7 +959,7 @@ function ApplicationDetail() {
                   <>
                     <hr className="border-gray-200 my-6" />
                     <div>
-                      <p className="font-bold text-[#27500A] mb-2">Requirements</p>
+                      <p className="font-bold text-brand-700 mb-2">Requirements</p>
                       <p className="whitespace-pre-wrap">{application.requirements}</p>
                     </div>
                   </>
@@ -971,15 +969,15 @@ function ApplicationDetail() {
                   <>
                     <hr className="border-gray-200 my-6" />
                     <div>
-                      <p className="font-bold text-[#27500A] mb-3">Renewable Information</p>
+                      <p className="font-bold text-brand-700 mb-3">Renewable Information</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <p className="font-semibold text-sm text-[#27500A] mb-1">Renewable</p>
+                          <p className="font-semibold text-sm text-brand-700 mb-1">Renewable</p>
                           <p>{application.renewable ? 'Yes' : 'No'}</p>
                         </div>
                         {application.renewableTerms && (
                           <div>
-                            <p className="font-semibold text-sm text-[#27500A] mb-1">Renewal Terms</p>
+                            <p className="font-semibold text-sm text-brand-700 mb-1">Renewal Terms</p>
                             <p className="whitespace-pre-wrap">{application.renewableTerms}</p>
                           </div>
                         )}
@@ -1151,7 +1149,7 @@ function ApplicationDetail() {
                       <button
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                           activeCollabTab === 'recommendations'
-                            ? 'border-[#3B6D11] text-[#27500A]'
+                            ? 'border-brand-500 text-brand-700'
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                         onClick={() => setActiveCollabTab('recommendations')}
@@ -1162,7 +1160,7 @@ function ApplicationDetail() {
                       <button
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                           activeCollabTab === 'essayReviews'
-                            ? 'border-[#3B6D11] text-[#27500A]'
+                            ? 'border-brand-500 text-brand-700'
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                         onClick={() => setActiveCollabTab('essayReviews')}
@@ -1173,7 +1171,7 @@ function ApplicationDetail() {
                       <button
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                           activeCollabTab === 'guidance'
-                            ? 'border-[#3B6D11] text-[#27500A]'
+                            ? 'border-brand-500 text-brand-700'
                             : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                         onClick={() => setActiveCollabTab('guidance')}
