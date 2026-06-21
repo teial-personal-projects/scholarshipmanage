@@ -199,23 +199,23 @@ manual `currentAction` text used only as a fallback.
 
 ---
 
-## [ ] 6. Deadline Radar
+## [x] 6. Deadline Radar
 
 The altitude view. Always visible above the feed.
 
-### [ ] 6.1 Component
+### [x] 6.1 Component
 
-- [ ] 6.1.1 Create `web/src/components/DeadlineRadar.tsx`.
+- [x] 6.1.1 Create `web/src/components/DeadlineRadar.tsx`.
   Props: `applications: ApplicationResponse[]`. Computes counts internally.
 
-- [ ] 6.1.2 Render four count tiles: Overdue, Due this week, Next two weeks, and Not
+- [x] 6.1.2 Render four count tiles: Overdue, Due this week, Next two weeks, and Not
   started. The first three are deadline tiers. Not started is an informational
   count, styled in blue rather than an urgency color, since these are
   opportunities and not fires.
 
-- [ ] 6.1.3 Each tile is clickable and filters the feed to that group.
+- [x] 6.1.3 Each tile is clickable and filters the feed to that group.
 
-- [ ] 6.1.4 Keep the radar visually compact: one row on desktop, two columns on
+- [x] 6.1.4 Keep the radar visually compact: one row on desktop, two columns on
   narrow mobile, with the view toggle aligned to the right of the section
   header when space allows.
 

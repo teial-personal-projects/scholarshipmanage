@@ -2,8 +2,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import DeadlineRadar from '../components/DeadlineRadar';
 import DashboardReminders from '../components/DashboardReminders';
 import { isApplicationDone, type UserProfile, type ApplicationResponse } from '@scholarshipmanage/shared';
+import { filterApplicationsByRadar, type DeadlineRadarFilter } from '../utils/deadlineRadar';
 import { useToastHelpers } from '../utils/toast';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -85,6 +87,7 @@ function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<'inProgress' | 'submitted'>('inProgress');
+  const [radarFilter, setRadarFilter] = useState<DeadlineRadarFilter | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -114,9 +117,10 @@ function Dashboard() {
     [applications]);
 
   const filteredApplications = useMemo(() => {
+    if (radarFilter) return filterApplicationsByRadar(applications, radarFilter);
     if (activeTab === 'inProgress') return applications.filter(a => a.status === 'In Progress');
     return applications.filter(a => isApplicationDone(a.status));
-  }, [applications, activeTab]);
+  }, [applications, activeTab, radarFilter]);
 
   const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
   const paginatedApplications = useMemo(() => {
@@ -124,7 +128,12 @@ function Dashboard() {
     return filteredApplications.slice(start, start + itemsPerPage);
   }, [filteredApplications, currentPage]);
 
-  useEffect(() => { setCurrentPage(1); }, [applications.length, activeTab]);
+  useEffect(() => { setCurrentPage(1); }, [applications.length, activeTab, radarFilter]);
+
+  const handleRadarFilterChange = (filter: DeadlineRadarFilter | null) => {
+    setRadarFilter(filter);
+    if (filter) setActiveTab('inProgress');
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -242,7 +251,30 @@ function Dashboard() {
         {/* Applications */}
         <div className="card">
           <div className="card-header">
-            <h2 className="section-heading">Your Applications</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+              <h2 className="section-heading">Your Applications</h2>
+              <div className="flex gap-1 border-b border-gray-200 sm:border-b-0">
+                {(['inProgress', 'submitted'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                      !radarFilter && activeTab === tab
+                        ? 'border-brand-500 text-brand-700'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                    onClick={() => {
+                      setActiveTab(tab);
+                      setRadarFilter(null);
+                    }}
+                  >
+                    {tab === 'inProgress' ? 'In Progress' : 'Submitted'}
+                    <span className={`badge text-xs ${!radarFilter && activeTab === tab ? 'badge-green' : 'badge-gray'}`}>
+                      {tab === 'inProgress' ? inProgressCount : submittedCount}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="card-body">
             {applications.length === 0 ? (
@@ -258,31 +290,21 @@ function Dashboard() {
               </div>
             ) : (
               <>
-                {/* Tabs */}
-                <div className="flex gap-1 mb-6 border-b border-gray-200">
-                  {(['inProgress', 'submitted'] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-                        activeTab === tab
-                          ? 'border-brand-500 text-brand-700'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                      }`}
-                      onClick={() => setActiveTab(tab)}
-                    >
-                      {tab === 'inProgress' ? 'In Progress' : 'Submitted'}
-                      <span className={`badge text-xs ${activeTab === tab ? 'badge-green' : 'badge-gray'}`}>
-                        {tab === 'inProgress' ? inProgressCount : submittedCount}
-                      </span>
-                    </button>
-                  ))}
+                <div className="mb-6">
+                  <DeadlineRadar
+                    applications={applications}
+                    selectedFilter={radarFilter}
+                    onFilterChange={handleRadarFilterChange}
+                  />
                 </div>
 
                 {filteredApplications.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-4xl mb-3">{activeTab === 'inProgress' ? '📝' : '✅'}</div>
                     <p className="text-gray-600 text-sm">
-                      {activeTab === 'inProgress' ? 'No applications in progress yet.' : 'No submitted applications yet.'}
+                      {radarFilter
+                        ? 'No applications match this radar filter.'
+                        : activeTab === 'inProgress' ? 'No applications in progress yet.' : 'No submitted applications yet.'}
                     </p>
                   </div>
                 ) : (
