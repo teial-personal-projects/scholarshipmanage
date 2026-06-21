@@ -291,24 +291,24 @@ Pinned so new opportunities are always visible regardless of deadline.
 One editable surface. Opens from a feed row or a grid row. Retires the separate
 Edit Application page.
 
-### [ ] 9.1 Component
+### [x] 9.1 Component
 
-- [ ] 9.1.1 Create `web/src/components/ApplicationPanel.tsx`.
+- [x] 9.1.1 Create `web/src/components/ApplicationPanel.tsx`.
   Props: `application: ApplicationResponse`, `onClose`. Renders as a right side
   drawer.
 
-- [ ] 9.1.2 Top of the panel shows the scholarship title, organization, and close
+- [x] 9.1.2 Top of the panel shows the scholarship title, organization, and close
   button.
 
-- [ ] 9.1.3 Below the title, show a read only smart summary card: the next action,
+- [x] 9.1.3 Below the title, show a read only smart summary card: the next action,
   urgency pill, and essay progress bar. This is computed, never edited
   directly.
 
-- [ ] 9.1.4 Below the summary, application fields are directly editable in place:
+- [x] 9.1.4 Below the summary, application fields are directly editable in place:
   status, due date, award amount, current action, and the rest. There is no
   separate edit mode and no Edit button.
 
-- [ ] 9.1.5 A sticky save bar appears only when a field changes, offering Save and
+- [x] 9.1.5 A sticky save bar appears only when a field changes, offering Save and
   Discard. The save bar should clearly say unsaved changes are present.
   Autosave on blur is optional, but the explicit Save and Discard path is
   required.
