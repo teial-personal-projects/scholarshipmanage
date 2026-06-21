@@ -365,14 +365,14 @@ Secondary toggle for scanning and sorting. Adapted from the existing table.
 
 ---
 
-## [ ] 11. View Toggle
+## [x] 11. View Toggle
 
-### [ ] 11.1 Component
+### [x] 11.1 Component
 
-- [ ] 11.1.1 Create `web/src/components/ViewToggle.tsx`.
+- [x] 11.1.1 Create `web/src/components/ViewToggle.tsx`.
   Props: `view: 'feed' | 'grid'`, `onChange`.
-- [ ] 11.1.2 Persist to `localStorage` under key `"dashboard-view"`. Default `"feed"`.
-- [ ] 11.1.3 Use compact Feed and Grid controls with icons, matching the dashboard
+- [x] 11.1.2 Persist to `localStorage` under key `"dashboard-view"`. Default `"feed"`.
+- [x] 11.1.3 Use compact Feed and Grid controls with icons, matching the dashboard
   header placement shown in the design.
 
 ---

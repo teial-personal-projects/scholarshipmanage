@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Grid2X2, List, Plus } from 'lucide-react';
+import { GraduationCap, Plus } from 'lucide-react';
 import { apiGet } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import ActionFeed from '../components/ActionFeed';
@@ -8,7 +8,9 @@ import ApplicationPanel from '../components/ApplicationPanel';
 import DeadlineRadar from '../components/DeadlineRadar';
 import DashboardReminders from '../components/DashboardReminders';
 import GridView from '../components/GridView';
+import ViewToggle from '../components/ViewToggle';
 import { isApplicationDone, type UserProfile, type ApplicationResponse } from '@scholarshipmanage/shared';
+import { getStoredDashboardView, type DashboardView } from '../utils/dashboardView';
 import { filterApplicationsByRadar, type DeadlineRadarFilter } from '../utils/deadlineRadar';
 import { useToastHelpers } from '../utils/toast';
 
@@ -31,7 +33,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [radarFilter, setRadarFilter] = useState<DeadlineRadarFilter | null>(null);
-  const [viewMode, setViewMode] = useState<'feed' | 'grid'>('feed');
+  const [viewMode, setViewMode] = useState<DashboardView>(getStoredDashboardView);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
 
   useEffect(() => {
@@ -128,30 +130,7 @@ function Dashboard() {
         <div className="card">
           <div className="card-header flex items-center justify-between gap-3">
             <h2 className="section-heading shrink-0">Your Applications</h2>
-            <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5 shadow-sm shrink-0">
-              <button
-                type="button"
-                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ${
-                  viewMode === 'feed' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
-                }`}
-                aria-pressed={viewMode === 'feed'}
-                onClick={() => setViewMode('feed')}
-              >
-                <List size={13} />
-                Feed
-              </button>
-              <button
-                type="button"
-                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ${
-                  viewMode === 'grid' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
-                }`}
-                aria-pressed={viewMode === 'grid'}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid2X2 size={13} />
-                Grid
-              </button>
-            </div>
+            <ViewToggle view={viewMode} onChange={setViewMode} />
           </div>
           <div className="card-body">
             {applications.length === 0 ? (
