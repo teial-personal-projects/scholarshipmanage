@@ -8,6 +8,7 @@ import { deriveNextAction, type ActionKind } from '../utils/deriveNextAction';
 
 interface ActionRowProps {
   application: ApplicationResponse;
+  onOpen?: (application: ApplicationResponse) => void;
 }
 
 const urgencyStyles: Record<DeadlineUrgency, string> = {
@@ -47,7 +48,7 @@ function getActionIcon(kind: ActionKind, urgency: DeadlineUrgency) {
   return Clock;
 }
 
-export default function ActionRow({ application }: ActionRowProps) {
+export default function ActionRow({ application, onOpen }: ActionRowProps) {
   const navigate = useNavigate();
   const urgency = getDeadlineUrgency(application.dueDate, application.status);
   const urgencyLabel = getDeadlineBadgeLabel(application.dueDate, application.status);
@@ -61,7 +62,14 @@ export default function ActionRow({ application }: ActionRowProps) {
       className={`w-full text-left border border-l-4 rounded-lg bg-white px-4 py-3 transition-colors hover:border-gray-300 hover:bg-gray-50 ${
         urgencyStyles[urgency]
       } ${isWaiting ? 'opacity-75' : ''}`}
-      onClick={() => navigate(`/applications/${application.id}`)}
+      onClick={() => {
+        if (onOpen) {
+          onOpen(application);
+          return;
+        }
+
+        navigate(`/applications/${application.id}`);
+      }}
     >
       <div className="flex items-center gap-3">
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${getIconContainerStyle(
@@ -73,22 +81,26 @@ export default function ActionRow({ application }: ActionRowProps) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-            <div className="min-w-0">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div className="min-w-0 flex items-baseline gap-2">
               <p className="font-semibold text-gray-900 truncate">{application.scholarshipName}</p>
               {application.organization && (
-                <p className="text-sm text-gray-600 truncate">{application.organization}</p>
+                <p className="text-sm text-gray-600 truncate shrink-0 max-w-[45%]">
+                  {application.organization}
+                </p>
               )}
             </div>
-            {urgencyLabel && (
-              <span className="badge badge-gray shrink-0 self-start">{urgencyLabel}</span>
-            )}
+            <div className="min-w-0 flex items-center gap-2 sm:justify-end sm:shrink-0 sm:max-w-[52%]">
+              {nextAction.label && (
+                <p className={`text-sm truncate ${isWaiting ? 'text-gray-500' : 'text-brand-700 font-medium'}`}>
+                  {nextAction.label}
+                </p>
+              )}
+              {urgencyLabel && (
+                <span className="badge badge-gray shrink-0">{urgencyLabel}</span>
+              )}
+            </div>
           </div>
-          {nextAction.label && (
-            <p className={`text-sm mt-1 ${isWaiting ? 'text-gray-500' : 'text-brand-700 font-medium'}`}>
-              {nextAction.label}
-            </p>
-          )}
         </div>
 
         <ChevronRight size={18} className="text-gray-400 shrink-0" aria-hidden />

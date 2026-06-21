@@ -330,7 +330,7 @@ Edit Application page.
 
 ---
 
-## [ ] 10. Grid View
+## [x] 10. Grid View
 
 Secondary toggle for scanning and sorting. Adapted from the existing table.
 
@@ -356,9 +356,9 @@ Secondary toggle for scanning and sorting. Adapted from the existing table.
   `deriveNextAction(app).kind === 'waiting'`.
 - [x] 10.2.4 All includes every application, including submitted and decided records.
 
-### [ ] 10.3 Component
+### [x] 10.3 Component
 
-- [ ] 10.3.1 Create `web/src/components/GridView.tsx`.
+- [x] 10.3.1 Create `web/src/components/GridView.tsx`.
   Props: `applications: ApplicationResponse[]`. Manages sort and filter state
   internally. Extracts the table and pagination logic out of the old
   `Dashboard.tsx`.

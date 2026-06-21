@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import ActionFeed from './ActionFeed';
@@ -109,6 +109,33 @@ describe('ActionFeed', () => {
     expect(text.indexOf('Ready to start')).toBeLessThan(text.indexOf('Due this week'));
     expect(text.indexOf('Pinned Scholarship')).toBeLessThan(text.indexOf('Due this week'));
     expect(text.indexOf('Urgent Start Scholarship')).toBeGreaterThan(text.indexOf('Due this week'));
+
+    vi.useRealTimers();
+  });
+
+  it('previews long later groups and expands on request', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 21));
+
+    renderFeed([
+      makeApplication({ id: 1, scholarshipName: 'Later Scholarship A', dueDate: '2026-07-20' }),
+      makeApplication({ id: 2, scholarshipName: 'Later Scholarship B', dueDate: '2026-07-21' }),
+      makeApplication({ id: 3, scholarshipName: 'Later Scholarship C', dueDate: '2026-07-22' }),
+      makeApplication({ id: 4, scholarshipName: 'Later Scholarship D', dueDate: '2026-07-23' }),
+      makeApplication({ id: 5, scholarshipName: 'Later Scholarship E', dueDate: '2026-07-24' }),
+      makeApplication({ id: 6, scholarshipName: 'Later Scholarship F', dueDate: '2026-07-25' }),
+    ]);
+
+    expect(screen.getByRole('heading', { name: 'Later (6)' })).toBeInTheDocument();
+    expect(screen.getByText('Later Scholarship A')).toBeInTheDocument();
+    expect(screen.getByText('Later Scholarship D')).toBeInTheDocument();
+    expect(screen.queryByText('Later Scholarship E')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show 2 more' }));
+
+    expect(screen.getByText('Later Scholarship E')).toBeInTheDocument();
+    expect(screen.getByText('Later Scholarship F')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show fewer' })).toBeInTheDocument();
 
     vi.useRealTimers();
   });

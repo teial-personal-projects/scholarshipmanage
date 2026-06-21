@@ -10,6 +10,7 @@ import ReadyToStart from './ReadyToStart';
 
 interface ActionFeedProps {
   applications: ApplicationResponse[];
+  onApplicationOpen?: (application: ApplicationResponse) => void;
 }
 
 interface FeedGroup {
@@ -17,6 +18,8 @@ interface FeedGroup {
   title: string;
   applications: ApplicationResponse[];
 }
+
+const LATER_PREVIEW_LIMIT = 4;
 
 function compareApplications(first: ApplicationResponse, second: ApplicationResponse): number {
   const firstAction = deriveNextAction(first);
@@ -69,8 +72,9 @@ function groupApplications(applications: ApplicationResponse[]): FeedGroup[] {
     .filter((group) => group.applications.length > 0);
 }
 
-export default function ActionFeed({ applications }: ActionFeedProps) {
+export default function ActionFeed({ applications, onApplicationOpen }: ActionFeedProps) {
   const [showDecided, setShowDecided] = useState(false);
+  const [showAllLater, setShowAllLater] = useState(false);
   const decidedApplications = applications.filter((application) => isApplicationDone(application.status));
   const readyApplications = applications.filter(isReadyToStartApplication);
   const groups = groupApplications(applications);
@@ -91,16 +95,44 @@ export default function ActionFeed({ applications }: ActionFeedProps) {
       <ReadyToStart applications={applications} />
 
       {hasActionableApplications ? (
-        groups.map((group) => (
-          <section key={group.key} className="space-y-2">
-            <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide">{group.title}</h3>
-            <div className="space-y-2">
-              {group.applications.map((application) => (
-                <ActionRow key={application.id} application={application} />
-              ))}
-            </div>
-          </section>
-        ))
+        groups.map((group) => {
+          const canCollapse = group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT;
+          const visibleApplications = canCollapse && !showAllLater
+            ? group.applications.slice(0, LATER_PREVIEW_LIMIT)
+            : group.applications;
+          const hiddenApplicationCount = group.applications.length - visibleApplications.length;
+
+          return (
+            <section key={group.key} className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide">
+                  {group.title}
+                  {group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT
+                    ? ` (${group.applications.length})`
+                    : ''}
+                </h3>
+                {canCollapse && (
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-brand-700 hover:text-brand-900"
+                    onClick={() => setShowAllLater((current) => !current)}
+                  >
+                    {showAllLater ? 'Show fewer' : `Show ${hiddenApplicationCount} more`}
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {visibleApplications.map((application) => (
+                  <ActionRow
+                    key={application.id}
+                    application={application}
+                    onOpen={onApplicationOpen}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })
       ) : (
         !hasReadyApplications && <div className="text-center py-10">
           <h3 className="font-semibold text-brand-700 text-lg mb-2">Nothing needs action</h3>
@@ -123,7 +155,11 @@ export default function ActionFeed({ applications }: ActionFeedProps) {
           {showDecided && (
             <div className="mt-3 space-y-2">
               {decidedApplications.map((application) => (
-                <ActionRow key={application.id} application={application} />
+                <ActionRow
+                  key={application.id}
+                  application={application}
+                  onOpen={onApplicationOpen}
+                />
               ))}
             </div>
           )}
