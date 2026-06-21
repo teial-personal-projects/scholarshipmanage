@@ -17,17 +17,17 @@ write path.
 
 ---
 
-## [ ] 1. Versioning
+## [x] 1. Versioning
 
 Pattern copied from `/Users/teial/Projects/internship-tracker`.
 
-### [ ] 1.1 Files to create
+### [x] 1.1 Files to create
 
-- [ ] 1.1.1 Create `version.txt` at the repo root with initial value `2.0.0`.
+- [x] 1.1.1 Create `version.txt` at the repo root with initial value `2.0.0`.
 
-### [ ] 1.2 Files to modify
+### [x] 1.2 Files to modify
 
-- [ ] 1.2.1 Update `web/vite.config.ts` to read `version.txt` and inject via `define`:
+- [x] 1.2.1 Update `web/vite.config.ts` to read `version.txt` and inject via `define`:
 
   ```typescript
   import { readFileSync } from 'fs';
@@ -43,7 +43,7 @@ Pattern copied from `/Users/teial/Projects/internship-tracker`.
   });
   ```
 
-- [ ] 1.2.2 Update `web/src/vite-env.d.ts` to add `VITE_APP_VERSION` to `ImportMetaEnv`:
+- [x] 1.2.2 Update `web/src/vite-env.d.ts` to add `VITE_APP_VERSION` to `ImportMetaEnv`:
 
   ```typescript
   interface ImportMetaEnv {
@@ -54,8 +54,8 @@ Pattern copied from `/Users/teial/Projects/internship-tracker`.
   }
   ```
 
-- [ ] 1.2.3 Update `web/src/components/Navigation.tsx` to add a version badge next to
-  "Scholarship Hub" in the logo `<Link>`:
+- [x] 1.2.3 Update `web/src/components/Navigation.tsx` to add a version badge next to
+  "Scholarship Manage" in the logo `<Link>`:
 
   ```tsx
   <span className="text-white font-bold text-base md:text-lg">Scholarship Manage</span>

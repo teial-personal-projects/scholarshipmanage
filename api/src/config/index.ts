@@ -53,7 +53,7 @@ export const config: Config = {
     apiKey: process.env.RESEND_API_KEY || '',
     webhookSecret: process.env.RESEND_WEBHOOK_SECRET || '',
     fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
-    fromName: process.env.RESEND_FROM_NAME || 'Scholarship Hub',
+    fromName: process.env.RESEND_FROM_NAME || 'Scholarship Manage',
   },
   app: {
     url: process.env.APP_URL || 'http://localhost:5173',

@@ -59,8 +59,11 @@ export function Navigation() {
               <span className="text-xl">☰</span>
             </button>
             <Link to="/dashboard" className="no-underline flex items-center gap-3 hover:opacity-90 transition-opacity">
-              <img src="/favicon.ico" alt="Scholarship Hub" className="w-6 h-6 md:w-7 md:h-7 rounded-sm" />
-              <span className="text-white font-bold text-base md:text-lg">Scholarship Hub</span>
+              <img src="/favicon.ico" alt="Scholarship Manage" className="w-6 h-6 md:w-7 md:h-7 rounded-sm" />
+              <span className="text-white font-bold text-base md:text-lg">Scholarship Manage</span>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/20 text-white/80">
+                v{import.meta.env.VITE_APP_VERSION}
+              </span>
             </Link>
           </div>
 
