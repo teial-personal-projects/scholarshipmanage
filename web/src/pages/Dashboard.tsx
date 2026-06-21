@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GraduationCap, Grid2X2, List, Plus } from 'lucide-react';
 import { apiGet } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DeadlineRadar from '../components/DeadlineRadar';
@@ -86,8 +87,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<'inProgress' | 'submitted'>('inProgress');
   const [radarFilter, setRadarFilter] = useState<DeadlineRadarFilter | null>(null);
+  const [viewMode, setViewMode] = useState<'feed' | 'grid'>('feed');
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -118,9 +119,8 @@ function Dashboard() {
 
   const filteredApplications = useMemo(() => {
     if (radarFilter) return filterApplicationsByRadar(applications, radarFilter);
-    if (activeTab === 'inProgress') return applications.filter(a => a.status === 'In Progress');
-    return applications.filter(a => isApplicationDone(a.status));
-  }, [applications, activeTab, radarFilter]);
+    return applications.filter(a => !isApplicationDone(a.status));
+  }, [applications, radarFilter]);
 
   const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
   const paginatedApplications = useMemo(() => {
@@ -128,11 +128,10 @@ function Dashboard() {
     return filteredApplications.slice(start, start + itemsPerPage);
   }, [filteredApplications, currentPage]);
 
-  useEffect(() => { setCurrentPage(1); }, [applications.length, activeTab, radarFilter]);
+  useEffect(() => { setCurrentPage(1); }, [applications.length, radarFilter]);
 
   const handleRadarFilterChange = (filter: DeadlineRadarFilter | null) => {
     setRadarFilter(filter);
-    if (filter) setActiveTab('inProgress');
   };
 
   const handlePageChange = (page: number) => {
@@ -224,65 +223,98 @@ function Dashboard() {
     </>
   );
 
+  const AppGrid = ({ apps }: { apps: ApplicationResponse[] }) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      {apps.map((app) => (
+        <button
+          key={app.id}
+          type="button"
+          className="rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-brand-300 hover:shadow-md transition-all"
+          onClick={() => navigate(`/applications/${app.id}`)}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-bold text-brand-700 truncate">{app.scholarshipName}</p>
+              <p className="text-sm text-gray-600 mt-0.5 truncate">{app.organization || 'No organization set'}</p>
+            </div>
+            <span className={STATUS_BADGE[app.status] ?? 'badge badge-gray'}>{app.status}</span>
+          </div>
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-700">
+            <span className="font-semibold">Due</span>
+            <span>{app.dueDate ? new Date(app.dueDate).toLocaleDateString() : '-'}</span>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen pb-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-5 space-y-4">
-        {/* Welcome Banner */}
-        <div className="page-header flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 md:p-4 mb-0">
-          <div className="flex-1">
-            <h1 className="text-lg md:text-xl font-bold leading-tight">Welcome back, {firstName}!</h1>
-            <p className="text-white/90 text-xs md:text-sm mt-0.5">
-              {applications.length === 0
-                ? 'Get started by creating your first scholarship application'
-                : `You have ${applications.length} application${applications.length !== 1 ? 's' : ''} · ${inProgressCount} in progress · ${submittedCount} submitted`}
-            </p>
+        <div className="rounded-lg border border-stone-200 border-l-4 border-l-brand-500 bg-[#F8F5EC] px-5 py-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
+              <GraduationCap size={23} />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold leading-tight text-gray-900">Welcome back, {firstName}!</h1>
+              <p className="text-gray-700 text-xs md:text-sm mt-0.5">
+                {applications.length === 0
+                  ? 'Get started by creating your first scholarship application'
+                  : `${applications.length} application${applications.length !== 1 ? 's' : ''} · ${inProgressCount} in progress · ${submittedCount} submitted`}
+              </p>
+            </div>
           </div>
           <button
-            className="bg-white text-brand-600 font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-gray-50 transition-colors text-sm"
+            className="bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-brand-700 transition-colors text-sm inline-flex items-center justify-center gap-1.5 md:self-center"
             onClick={() => navigate('/applications/new')}
           >
-            + New Application
+            <Plus size={16} />
+            New Application
           </button>
         </div>
 
         {/* Reminders */}
         <DashboardReminders />
 
+        {applications.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="text-[11px] font-bold uppercase tracking-wide text-gray-700">Deadline Radar</h2>
+            <DeadlineRadar
+              applications={applications}
+              selectedFilter={radarFilter}
+              onFilterChange={handleRadarFilterChange}
+            />
+          </section>
+        )}
+
         {/* Applications */}
         <div className="card">
-          <div className="card-header">
-            <div className="flex flex-col xl:flex-row xl:items-center gap-3 w-full">
-              <h2 className="section-heading shrink-0">Your Applications</h2>
-              {applications.length > 0 && (
-                <div className="flex-1">
-                  <DeadlineRadar
-                    applications={applications}
-                    selectedFilter={radarFilter}
-                    onFilterChange={handleRadarFilterChange}
-                  />
-                </div>
-              )}
-              <div className="flex gap-1 border-b border-gray-200 sm:border-b-0 shrink-0">
-                {(['inProgress', 'submitted'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    className={`px-3 py-1.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-                      !radarFilter && activeTab === tab
-                        ? 'border-brand-500 text-brand-700'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                    onClick={() => {
-                      setActiveTab(tab);
-                      setRadarFilter(null);
-                    }}
-                  >
-                    {tab === 'inProgress' ? 'In Progress' : 'Submitted'}
-                    <span className={`badge text-xs ${!radarFilter && activeTab === tab ? 'badge-green' : 'badge-gray'}`}>
-                      {tab === 'inProgress' ? inProgressCount : submittedCount}
-                    </span>
-                  </button>
-                ))}
-              </div>
+          <div className="card-header flex items-center justify-between gap-3">
+            <h2 className="section-heading shrink-0">Your Applications</h2>
+            <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5 shadow-sm shrink-0">
+              <button
+                type="button"
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ${
+                  viewMode === 'feed' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-pressed={viewMode === 'feed'}
+                onClick={() => setViewMode('feed')}
+              >
+                <List size={13} />
+                Feed
+              </button>
+              <button
+                type="button"
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ${
+                  viewMode === 'grid' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-pressed={viewMode === 'grid'}
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid2X2 size={13} />
+                Grid
+              </button>
             </div>
           </div>
           <div className="card-body">
@@ -301,16 +333,20 @@ function Dashboard() {
               <>
                 {filteredApplications.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="text-4xl mb-3">{activeTab === 'inProgress' ? '📝' : '✅'}</div>
+                    <div className="text-4xl mb-3">📝</div>
                     <p className="text-gray-600 text-sm">
                       {radarFilter
                         ? 'No applications match this radar filter.'
-                        : activeTab === 'inProgress' ? 'No applications in progress yet.' : 'No submitted applications yet.'}
+                        : 'No active applications yet.'}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <AppTable apps={paginatedApplications} />
+                    {viewMode === 'feed' ? (
+                      <AppTable apps={paginatedApplications} />
+                    ) : (
+                      <AppGrid apps={paginatedApplications} />
+                    )}
                     {totalPages > 1 && (
                       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
                     )}
