@@ -79,7 +79,7 @@ Pattern copied from `/Users/teial/Projects/internship-tracker`.
 
 ---
 
-## [ ] 3. Essay Completion
+## [x] 3. Essay Completion
 
 This is the foundation. Every action label, the essay progress bar, and the
 radar counts all read from one predicate, so it gets pinned down first.
@@ -108,9 +108,9 @@ radar counts all read from one predicate, so it gets pinned down first.
 - [x] 3.1.3 Route the progress bar, the radar counts, and the "Finish N of M essays"
   label through `essayProgress`. No other place computes essay completion.
 
-### [ ] 3.2 Reconcile existing data
+### [x] 3.2 Reconcile existing data
 
-- [ ] 3.2.1 The current detail card reads one of three complete while all three essay
+- [x] 3.2.1 The current detail card reads one of three complete while all three essay
   rows read Not Started. Find the second definition of done that is causing
   this, usually a stale `completedCount` field or a word count check, and
   remove it. The number and the statuses must agree before anything is built
