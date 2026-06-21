@@ -143,14 +143,14 @@ the grid, and the Ready to start group.
 
 ---
 
-## [ ] 5. Next Action Derivation
+## [x] 5. Next Action Derivation
 
 The next action line is the product. It is computed from the record, with the
 manual `currentAction` text used only as a fallback.
 
-### [ ] 5.1 The function
+### [x] 5.1 The function
 
-- [ ] 5.1.1 Create `web/src/utils/deriveNextAction.ts`:
+- [x] 5.1.1 Create `web/src/utils/deriveNextAction.ts`:
 
   ```typescript
   type ActionKind = 'essays' | 'submit' | 'start' | 'waiting' | 'none';
@@ -191,7 +191,7 @@ manual `currentAction` text used only as a fallback.
   }
   ```
 
-- [ ] 5.1.2 Implement `looksLikeWaiting(text)` as a small keyword check against the
+- [x] 5.1.2 Implement `looksLikeWaiting(text)` as a small keyword check against the
   manual current action, matching terms like `waiting`, `recommendation`, and
   `pending`. The `actionable` flag separates work the applicant controls from
   work they are blocked on, which drives both sort order and the muted row
