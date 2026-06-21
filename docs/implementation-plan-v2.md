@@ -66,15 +66,15 @@ Pattern copied from `/Users/teial/Projects/internship-tracker`.
 
 ---
 
-## [ ] 2. Application Statuses
+## [x] 2. Application Statuses
 
-### [ ] 2.1 Existing status set
+### [x] 2.1 Existing status set
 
-- [ ] 2.1.1 Keep the existing application statuses. Do not add an `Archived` status.
-- [ ] 2.1.2 Define the done set as `Submitted`, `Awarded`, and `Not Awarded`. These
+- [x] 2.1.1 Keep the existing application statuses. Do not add an `Archived` status.
+- [x] 2.1.2 Define the done set as `Submitted`, `Awarded`, and `Not Awarded`. These
   have no next action and drop out of the action feed, collapsing into a
   "show decided" footer.
-- [ ] 2.1.3 Past due applications stay in their current status and are identified
+- [x] 2.1.3 Past due applications stay in their current status and are identified
   visually through the deadline urgency system.
 
 ---

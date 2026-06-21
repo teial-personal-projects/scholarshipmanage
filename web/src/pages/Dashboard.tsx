@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardReminders from '../components/DashboardReminders';
-import type { UserProfile, ApplicationResponse } from '@scholarshipmanage/shared';
+import { isApplicationDone, type UserProfile, type ApplicationResponse } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 const STATUS_BADGE: Record<string, string> = {
@@ -110,12 +110,12 @@ function Dashboard() {
 
   const inProgressCount = useMemo(() => applications.filter(a => a.status === 'In Progress').length, [applications]);
   const submittedCount = useMemo(() =>
-    applications.filter(a => ['Submitted', 'Awarded', 'Not Awarded'].includes(a.status)).length,
+    applications.filter(a => isApplicationDone(a.status)).length,
     [applications]);
 
   const filteredApplications = useMemo(() => {
     if (activeTab === 'inProgress') return applications.filter(a => a.status === 'In Progress');
-    return applications.filter(a => ['Submitted', 'Awarded', 'Not Awarded'].includes(a.status));
+    return applications.filter(a => isApplicationDone(a.status));
   }, [applications, activeTab]);
 
   const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
