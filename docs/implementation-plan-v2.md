@@ -118,14 +118,14 @@ radar counts all read from one predicate, so it gets pinned down first.
 
 ---
 
-## [ ] 4. Deadline Urgency System
+## [x] 4. Deadline Urgency System
 
 A shared utility drives consistent urgency cues across the feed, the radar,
 the grid, and the Ready to start group.
 
-### [ ] 4.1 Urgency utility
+### [x] 4.1 Urgency utility
 
-- [ ] 4.1.1 Create `web/src/utils/deadline.ts` exporting:
+- [x] 4.1.1 Create `web/src/utils/deadline.ts` exporting:
   - `getDeadlineUrgency(dueDate, status)` returns `'overdue' | 'critical' | 'warning' | 'normal'`
   - `getUrgencyLabel(dueDate, status)` returns `"Overdue"` or `"X days left"` or `null`
 
@@ -138,7 +138,7 @@ the grid, and the Ready to start group.
   | `warning` | eight to fourteen days remaining |
   | `normal` | more than fourteen days remaining |
 
-- [ ] 4.1.2 Items with no due date return `normal` and carry a `"No deadline"` label
+- [x] 4.1.2 Items with no due date return `normal` and carry a `"No deadline"` label
   rather than a day count.
 
 ---

@@ -1,20 +1,6 @@
-// Shared constants and enums
+export const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
-// Placeholder for shared constants
-// These will be implemented as needed throughout the project
-
-// Example constants (to be expanded):
-// export const API_ENDPOINTS = {
-//   USERS: '/api/users',
-//   SCHOLARSHIPS: '/api/scholarships',
-//   APPLICATIONS: '/api/applications',
-// } as const;
-
-// export const APPLICATION_STATUS = {
-//   PLANNING: 'planning',
-//   IN_PROGRESS: 'in_progress',
-//   SUBMITTED: 'submitted',
-//   ACCEPTED: 'accepted',
-//   REJECTED: 'rejected',
-//   WITHDRAWN: 'withdrawn',
-// } as const;
+export const DEADLINE_URGENCY_DAYS = {
+  CRITICAL: 7,
+  WARNING: 14,
+} as const;
