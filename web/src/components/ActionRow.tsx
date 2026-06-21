@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { ApplicationResponse } from '@scholarshipmanage/shared';
 
-import { getDeadlineUrgency, getUrgencyLabel, type DeadlineUrgency } from '../utils/deadline';
+import { getDeadlineBadgeLabel, getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction, type ActionKind } from '../utils/deriveNextAction';
 
 interface ActionRowProps {
@@ -32,6 +32,12 @@ const actionIconStyles: Record<ActionKind, string> = {
   none: 'text-gray-500 bg-gray-100',
 };
 
+function getIconContainerStyle(kind: ActionKind, urgency: DeadlineUrgency): string {
+  if (kind === 'waiting') return actionIconStyles.waiting;
+  if (urgency !== 'normal') return urgencyIconStyles[urgency];
+  return actionIconStyles[kind];
+}
+
 function getActionIcon(kind: ActionKind, urgency: DeadlineUrgency) {
   if (kind === 'waiting') return Hourglass;
   if (kind === 'start') return Play;
@@ -44,7 +50,7 @@ function getActionIcon(kind: ActionKind, urgency: DeadlineUrgency) {
 export default function ActionRow({ application }: ActionRowProps) {
   const navigate = useNavigate();
   const urgency = getDeadlineUrgency(application.dueDate, application.status);
-  const urgencyLabel = getUrgencyLabel(application.dueDate, application.status);
+  const urgencyLabel = getDeadlineBadgeLabel(application.dueDate, application.status);
   const nextAction = deriveNextAction(application);
   const Icon = getActionIcon(nextAction.kind, urgency);
   const isWaiting = nextAction.kind === 'waiting';
@@ -58,9 +64,10 @@ export default function ActionRow({ application }: ActionRowProps) {
       onClick={() => navigate(`/applications/${application.id}`)}
     >
       <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-          isWaiting ? actionIconStyles.waiting : urgencyIconStyles[urgency]
-        }`}
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${getIconContainerStyle(
+          nextAction.kind,
+          urgency,
+        )}`}
         >
           <Icon size={18} aria-hidden />
         </div>

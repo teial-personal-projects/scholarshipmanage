@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/shared';
 
-import { getDeadlineUrgency } from '../utils/deadline';
+import { getDeadlineDaysRemaining, getDeadlineUrgency } from '../utils/deadline';
+import { deriveNextAction } from '../utils/deriveNextAction';
 import ActionRow from './ActionRow';
 
 interface ActionFeedProps {
@@ -13,6 +14,23 @@ interface FeedGroup {
   key: string;
   title: string;
   applications: ApplicationResponse[];
+}
+
+function compareApplications(first: ApplicationResponse, second: ApplicationResponse): number {
+  const firstAction = deriveNextAction(first);
+  const secondAction = deriveNextAction(second);
+
+  if (firstAction.actionable !== secondAction.actionable) {
+    return firstAction.actionable ? -1 : 1;
+  }
+
+  const firstDaysRemaining = getDeadlineDaysRemaining(first.dueDate) ?? Number.POSITIVE_INFINITY;
+  const secondDaysRemaining = getDeadlineDaysRemaining(second.dueDate) ?? Number.POSITIVE_INFINITY;
+  if (firstDaysRemaining !== secondDaysRemaining) {
+    return firstDaysRemaining - secondDaysRemaining;
+  }
+
+  return first.scholarshipName.localeCompare(second.scholarshipName);
 }
 
 function groupApplications(applications: ApplicationResponse[]): FeedGroup[] {
@@ -39,7 +57,12 @@ function groupApplications(applications: ApplicationResponse[]): FeedGroup[] {
     else groups[3].applications.push(application);
   });
 
-  return groups.filter((group) => group.applications.length > 0);
+  return groups
+    .map((group) => ({
+      ...group,
+      applications: [...group.applications].sort(compareApplications),
+    }))
+    .filter((group) => group.applications.length > 0);
 }
 
 export default function ActionFeed({ applications }: ActionFeedProps) {

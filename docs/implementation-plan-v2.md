@@ -221,7 +221,7 @@ The altitude view. Always visible above the feed.
 
 ---
 
-## [ ] 7. Action Feed
+## [x] 7. Action Feed
 
 The default view. The ground view that says what to touch first.
 
@@ -238,25 +238,25 @@ The default view. The ground view that says what to touch first.
   with section headers, hides done items behind a "show decided" footer, and
   renders the empty state when nothing needs action.
 
-### [ ] 7.2 Grouping and sort
+### [x] 7.2 Grouping and sort
 
-- [ ] 7.2.1 Group by deadline tier so the feed lines up visually with the radar:
+- [x] 7.2.1 Group by deadline tier so the feed lines up visually with the radar:
   Overdue, Due this week, Next two weeks, and No deadline set.
-- [ ] 7.2.2 Within a tier, sort actionable items above waiting items, then by due
+- [x] 7.2.2 Within a tier, sort actionable items above waiting items, then by due
   date ascending.
-- [ ] 7.2.3 Items with no due date fall into a "No deadline set" group at the bottom,
+- [x] 7.2.3 Items with no due date fall into a "No deadline set" group at the bottom,
   above the decided footer.
-- [ ] 7.2.4 Done items collapse into a quiet footer such as "3 submitted or decided,
+- [x] 7.2.4 Done items collapse into a quiet footer such as "3 submitted or decided,
   hidden from the feed" with a Show control.
 
-### [ ] 7.3 Row treatments
+### [x] 7.3 Row treatments
 
-- [ ] 7.3.1 Use a colored left border by urgency: red for overdue, orange for due
+- [x] 7.3.1 Use a colored left border by urgency: red for overdue, orange for due
   this week, and neutral or amber for next two weeks.
-- [ ] 7.3.2 Use Lucide icons for row meaning: alert or clock for deadline urgency,
+- [x] 7.3.2 Use Lucide icons for row meaning: alert or clock for deadline urgency,
   hourglass for waiting, and play or flag for start actions. Do not hand-draw
   icons.
-- [ ] 7.3.3 The days badge text should match the row state, for example "3 days
+- [x] 7.3.3 The days badge text should match the row state, for example "3 days
   overdue", "5 days left", "No deadline", or "28 days left".
 
 ---

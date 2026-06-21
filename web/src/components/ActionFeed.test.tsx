@@ -34,21 +34,38 @@ describe('ActionFeed', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 21));
 
-    renderFeed([
-      makeApplication({ id: 1, scholarshipName: 'Late Scholarship', dueDate: '2026-06-20' }),
-      makeApplication({ id: 2, scholarshipName: 'Soon Scholarship', dueDate: '2026-06-24' }),
+    const { container } = renderFeed([
+      makeApplication({ id: 1, scholarshipName: 'Late Scholarship', dueDate: '2026-06-18' }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Waiting Scholarship',
+        dueDate: '2026-06-22',
+        currentAction: 'Waiting for recommendation letter',
+      }),
+      makeApplication({ id: 5, scholarshipName: 'Soon Scholarship', dueDate: '2026-06-24' }),
       makeApplication({ id: 3, scholarshipName: 'Warning Scholarship', dueDate: '2026-07-02' }),
+      makeApplication({ id: 6, scholarshipName: 'No Deadline Scholarship', dueDate: '' }),
       makeApplication({ id: 4, scholarshipName: 'Submitted Scholarship', status: 'Submitted' }),
     ]);
 
     expect(screen.getByRole('heading', { name: 'Overdue' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Due this week' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Next two weeks' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'No deadline set' })).toBeInTheDocument();
     expect(screen.getByText('Late Scholarship')).toBeInTheDocument();
+    expect(screen.getByText('3 days overdue')).toBeInTheDocument();
     expect(screen.getByText('Soon Scholarship')).toBeInTheDocument();
+    expect(screen.getByText('Waiting Scholarship')).toBeInTheDocument();
     expect(screen.getByText('Warning Scholarship')).toBeInTheDocument();
+    expect(screen.getByText('No Deadline Scholarship')).toBeInTheDocument();
+    expect(screen.getByText('No deadline')).toBeInTheDocument();
     expect(screen.queryByText('Submitted Scholarship')).not.toBeInTheDocument();
     expect(screen.getByText(/1 submitted or decided/)).toBeInTheDocument();
+
+    const feedText = container.textContent ?? '';
+    expect(feedText.indexOf('Soon Scholarship')).toBeLessThan(feedText.indexOf('Waiting Scholarship'));
+    expect(feedText.indexOf('No deadline set')).toBeGreaterThan(feedText.indexOf('Next two weeks'));
+    expect(feedText.indexOf('1 submitted or decided')).toBeGreaterThan(feedText.indexOf('No deadline set'));
 
     vi.useRealTimers();
   });
