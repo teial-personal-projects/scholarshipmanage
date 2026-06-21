@@ -225,15 +225,15 @@ The altitude view. Always visible above the feed.
 
 The default view. The ground view that says what to touch first.
 
-### [ ] 7.1 Components
+### [x] 7.1 Components
 
-- [ ] 7.1.1 Create `web/src/components/ActionRow.tsx`.
+- [x] 7.1.1 Create `web/src/components/ActionRow.tsx`.
   Props: `application: ApplicationResponse`. Renders the urgency left border
   and icon, the scholarship name and organization, the next action line from
   `deriveNextAction`, a days remaining badge, and a chevron. Opens the
   combined panel on click. Waiting rows render muted with an hourglass icon.
 
-- [ ] 7.1.2 Create `web/src/components/ActionFeed.tsx`.
+- [x] 7.1.2 Create `web/src/components/ActionFeed.tsx`.
   Props: `applications: ApplicationResponse[]`. Groups rows by deadline tier
   with section headers, hides done items behind a "show decided" footer, and
   renders the empty state when nothing needs action.
