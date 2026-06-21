@@ -32,6 +32,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 type SortDirection = 'asc' | 'desc';
 type SortKey = 'scholarshipName' | 'organization' | 'status' | 'dueDate' | 'awardAmount' | 'currentAction';
+type QuickFilter = 'needsAction' | 'waiting' | 'all';
 
 const GRID_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'scholarshipName', label: 'Scholarship Name' },
@@ -40,6 +41,12 @@ const GRID_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'dueDate', label: 'Due Date' },
   { key: 'awardAmount', label: 'Award Amount' },
   { key: 'currentAction', label: 'Current Action' },
+];
+
+const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
+  { key: 'needsAction', label: 'Needs action' },
+  { key: 'waiting', label: 'Waiting on others' },
+  { key: 'all', label: 'All' },
 ];
 
 const urgencyRowStyles: Record<DeadlineUrgency, string> = {
@@ -110,6 +117,15 @@ function getUrgencyIcon(urgency: DeadlineUrgency) {
   if (urgency === 'overdue') return AlertTriangle;
   if (urgency === 'critical' || urgency === 'warning') return Clock;
   return Flag;
+}
+
+function matchesQuickFilter(application: ApplicationResponse, quickFilter: QuickFilter): boolean {
+  if (quickFilter === 'all') return true;
+  if (isApplicationDone(application.status)) return false;
+
+  const nextAction = deriveNextAction(application);
+  if (quickFilter === 'needsAction') return nextAction.actionable;
+  return nextAction.kind === 'waiting';
 }
 
 function Spinner() {
@@ -183,6 +199,7 @@ function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [radarFilter, setRadarFilter] = useState<DeadlineRadarFilter | null>(null);
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('needsAction');
   const [viewMode, setViewMode] = useState<'feed' | 'grid'>('feed');
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -214,11 +231,21 @@ function Dashboard() {
   const submittedCount = useMemo(() =>
     applications.filter(a => isApplicationDone(a.status)).length,
     [applications]);
+  const quickFilterCounts = useMemo(() => ({
+    needsAction: applications.filter((application) => matchesQuickFilter(application, 'needsAction')).length,
+    waiting: applications.filter((application) => matchesQuickFilter(application, 'waiting')).length,
+    all: applications.length,
+  }), [applications]);
 
   const filteredApplications = useMemo(() => {
-    if (radarFilter) return filterApplicationsByRadar(applications, radarFilter);
-    return applications.filter(a => !isApplicationDone(a.status));
-  }, [applications, radarFilter]);
+    const quickFilteredApplications = applications.filter((application) => (
+      matchesQuickFilter(application, quickFilter)
+    ));
+
+    return radarFilter
+      ? filterApplicationsByRadar(quickFilteredApplications, radarFilter)
+      : quickFilteredApplications;
+  }, [applications, quickFilter, radarFilter]);
 
   const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
   const paginatedApplications = useMemo(() => {
@@ -226,10 +253,14 @@ function Dashboard() {
     return filteredApplications.slice(start, start + itemsPerPage);
   }, [filteredApplications, currentPage]);
 
-  useEffect(() => { setCurrentPage(1); }, [applications.length, radarFilter]);
+  useEffect(() => { setCurrentPage(1); }, [applications.length, quickFilter, radarFilter]);
 
   const handleRadarFilterChange = (filter: DeadlineRadarFilter | null) => {
     setRadarFilter(filter);
+  };
+
+  const handleQuickFilterChange = (filter: QuickFilter) => {
+    setQuickFilter(filter);
   };
 
   const handlePageChange = (page: number) => {
@@ -552,13 +583,41 @@ function Dashboard() {
               </div>
             ) : (
               <>
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {QUICK_FILTERS.map((filter) => {
+                    const isActive = quickFilter === filter.key;
+
+                    return (
+                      <button
+                        key={filter.key}
+                        type="button"
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
+                          isActive
+                            ? 'border-brand-500 bg-brand-50 text-brand-700'
+                            : 'border-gray-300 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700'
+                        }`}
+                        aria-pressed={isActive}
+                        onClick={() => handleQuickFilterChange(filter.key)}
+                      >
+                        {filter.label}
+                        <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${
+                          isActive ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
+                        }`}
+                        >
+                          {quickFilterCounts[filter.key]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {filteredApplications.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-4xl mb-3">📝</div>
                     <p className="text-gray-600 text-sm">
                       {radarFilter
                         ? 'No applications match this radar filter.'
-                        : 'No active applications yet.'}
+                        : `No applications match ${QUICK_FILTERS.find((filter) => filter.key === quickFilter)?.label.toLowerCase()}.`}
                     </p>
                   </div>
                 ) : (

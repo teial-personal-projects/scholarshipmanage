@@ -345,16 +345,16 @@ Secondary toggle for scanning and sorting. Adapted from the existing table.
   urgency icon before the name, and a colored due date cell.
 - [x] 10.1.4 A row click opens the same `ApplicationPanel` used by the feed.
 
-### [ ] 10.2 Filtering
+### [x] 10.2 Filtering
 
-- [ ] 10.2.1 Replace the In Progress and Submitted tab UI with a small set of quick
+- [x] 10.2.1 Replace the In Progress and Submitted tab UI with a small set of quick
   chips above the content: Needs action, Waiting on others, and All. Filtering
   is client side on the already fetched list.
-- [ ] 10.2.2 Needs action maps to non-done applications where
+- [x] 10.2.2 Needs action maps to non-done applications where
   `deriveNextAction(app).actionable` is true.
-- [ ] 10.2.3 Waiting on others maps to non-done applications where
+- [x] 10.2.3 Waiting on others maps to non-done applications where
   `deriveNextAction(app).kind === 'waiting'`.
-- [ ] 10.2.4 All includes every application, including submitted and decided records.
+- [x] 10.2.4 All includes every application, including submitted and decided records.
 
 ### [ ] 10.3 Component
 
