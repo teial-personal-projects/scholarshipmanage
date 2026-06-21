@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X } from 'lucide-react';
+import { ExternalLink, Plus, Trash2, X } from 'lucide-react';
 
 import {
   APPLICATION_STATUSES,
@@ -7,11 +7,13 @@ import {
   essayProgress,
   type ApplicationResponse,
   type Essay,
+  type EssayResponse,
+  type EssayStatus,
   type TApplicationStatus,
   type TTargetType,
 } from '@scholarshipmanage/shared';
 
-import { apiPatch } from '../services/api';
+import { apiDelete, apiGet, apiPatch, apiPost } from '../services/api';
 import { getDeadlineBadgeLabel } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { useToastHelpers } from '../utils/toast';
@@ -45,6 +47,22 @@ interface ApplicationDraft {
   renewableTerms: string;
 }
 
+interface EssayDraft {
+  localId: string;
+  id?: number;
+  theme: string;
+  status: EssayStatus;
+  wordCount: string;
+  essayLink: string;
+  isDeleted: boolean;
+}
+
+const ESSAY_STATUS_OPTIONS: { value: EssayStatus; label: string }[] = [
+  { value: 'not_started', label: 'Not started' },
+  { value: 'in_progress', label: 'In progress' },
+  { value: 'completed', label: 'Completed' },
+];
+
 function toDateInputValue(value: string | null | undefined): string {
   return value ? value.split('T')[0] ?? '' : '';
 }
@@ -68,6 +86,44 @@ function createDraft(application: ApplicationPanelApplication): ApplicationDraft
     requirements: application.requirements ?? '',
     renewable: Boolean(application.renewable),
     renewableTerms: application.renewableTerms ?? '',
+  };
+}
+
+function createEssayDraft(essay: EssayResponse, index: number): EssayDraft {
+  return {
+    localId: `essay-${essay.id}-${index}`,
+    id: essay.id,
+    theme: essay.theme ?? '',
+    status: essay.status ?? 'not_started',
+    wordCount: essay.wordCount?.toString() ?? '',
+    essayLink: essay.essayLink ?? '',
+    isDeleted: false,
+  };
+}
+
+function createFallbackEssayDraft(essay: Pick<Essay, 'status'>, index: number): EssayDraft {
+  return {
+    localId: `fallback-essay-${index}`,
+    theme: '',
+    status: essay.status ?? 'not_started',
+    wordCount: '',
+    essayLink: '',
+    isDeleted: false,
+  };
+}
+
+function createEssayDrafts(application: ApplicationPanelApplication): EssayDraft[] {
+  return (application.essays ?? []).map(createFallbackEssayDraft);
+}
+
+function createBlankEssayDraft(): EssayDraft {
+  return {
+    localId: `new-essay-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    theme: '',
+    status: 'not_started',
+    wordCount: '',
+    essayLink: '',
+    isDeleted: false,
   };
 }
 
@@ -100,30 +156,112 @@ function toPayload(draft: ApplicationDraft) {
   };
 }
 
+function toEssayPayload(draft: EssayDraft) {
+  const wordCount = toOptionalNumber(draft.wordCount);
+
+  return {
+    theme: draft.theme.trim() || undefined,
+    status: draft.status,
+    wordCount: wordCount && wordCount > 0 ? wordCount : undefined,
+    essayLink: draft.essayLink.trim() || undefined,
+  };
+}
+
+function getComparableEssayDrafts(drafts: EssayDraft[]): EssayDraft[] {
+  return drafts.map((draft) => ({
+    ...draft,
+    localId: draft.id ? `essay-${draft.id}` : draft.localId,
+  }));
+}
+
 export default function ApplicationPanel({ application, onClose }: ApplicationPanelProps) {
   const { showSuccess, showError } = useToastHelpers();
   const initialDraft = useMemo(() => createDraft(application), [application]);
+  const initialEssayDrafts = useMemo(() => createEssayDrafts(application), [application]);
   const [draft, setDraft] = useState<ApplicationDraft>(initialDraft);
   const [savedDraft, setSavedDraft] = useState<ApplicationDraft>(initialDraft);
+  const [essayDrafts, setEssayDrafts] = useState<EssayDraft[]>(initialEssayDrafts);
+  const [savedEssayDrafts, setSavedEssayDrafts] = useState<EssayDraft[]>(initialEssayDrafts);
+  const [isLoadingEssays, setIsLoadingEssays] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     setDraft(initialDraft);
     setSavedDraft(initialDraft);
-  }, [initialDraft]);
+    setEssayDrafts(initialEssayDrafts);
+    setSavedEssayDrafts(initialEssayDrafts);
+    setIsLoadingEssays(true);
 
-  const isDirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
-  const nextAction = deriveNextAction({ ...application, status: draft.status, currentAction: draft.currentAction });
+    apiGet<EssayResponse[]>(`/applications/${application.id}/essays`)
+      .then((essays) => {
+        if (!isMounted) return;
+        const nextEssayDrafts = (essays ?? []).map(createEssayDraft);
+        setEssayDrafts(nextEssayDrafts);
+        setSavedEssayDrafts(nextEssayDrafts);
+      })
+      .catch(() => {
+        if (isMounted) setEssayDrafts(initialEssayDrafts);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingEssays(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [application.id, initialDraft, initialEssayDrafts]);
+
+  const visibleEssayDrafts = essayDrafts.filter((essay) => !essay.isDeleted);
+  const applicationIsDirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
+  const essaysAreDirty =
+    JSON.stringify(getComparableEssayDrafts(essayDrafts)) !== JSON.stringify(getComparableEssayDrafts(savedEssayDrafts));
+  const isDirty = applicationIsDirty || essaysAreDirty;
+  const summaryApplication = {
+    ...application,
+    status: draft.status,
+    currentAction: draft.currentAction,
+    essays: visibleEssayDrafts.map((essay) => ({ status: essay.status })),
+  };
+  const nextAction = deriveNextAction(summaryApplication);
   const urgencyLabel = getDeadlineBadgeLabel(draft.dueDate, draft.status) ?? 'No deadline';
-  const { done: essaysDone, total: essaysTotal } = essayProgress(application);
+  const { done: essaysDone, total: essaysTotal } = essayProgress(summaryApplication);
   const essayProgressPercent = essaysTotal === 0 ? 0 : (essaysDone / essaysTotal) * 100;
 
   const updateDraft = <Key extends keyof ApplicationDraft>(key: Key, value: ApplicationDraft[Key]) => {
     setDraft((current) => ({ ...current, [key]: value }));
   };
 
+  const updateEssayDraft = <Key extends keyof EssayDraft>(
+    localId: string,
+    key: Key,
+    value: EssayDraft[Key],
+  ) => {
+    setEssayDrafts((current) => current.map((essay) => (
+      essay.localId === localId ? { ...essay, [key]: value } : essay
+    )));
+  };
+
+  const handleAddEssay = () => {
+    setEssayDrafts((current) => [...current, createBlankEssayDraft()]);
+  };
+
+  const handleDeleteEssay = (localId: string) => {
+    setEssayDrafts((current) => current.flatMap((essay) => {
+      if (essay.localId !== localId) return [essay];
+      return essay.id ? [{ ...essay, isDeleted: true }] : [];
+    }));
+  };
+
   const handleDiscard = () => {
     setDraft(savedDraft);
+    setEssayDrafts(savedEssayDrafts);
+  };
+
+  const handleOpenEssay = (essayLink: string) => {
+    if (!essayLink.trim()) return;
+    window.open(essayLink.trim(), '_blank', 'noopener,noreferrer');
   };
 
   const handleSave = async () => {
@@ -139,8 +277,42 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
 
     try {
       setIsSaving(true);
-      await apiPatch<ApplicationResponse>(`/applications/${application.id}`, toPayload(draft));
+
+      if (applicationIsDirty) {
+        await apiPatch<ApplicationResponse>(`/applications/${application.id}`, toPayload(draft));
+      }
+
+      const savedById = new Map(savedEssayDrafts.filter((essay) => essay.id).map((essay) => [essay.id, essay]));
+      const savedIds = new Set(savedEssayDrafts.map((essay) => essay.id).filter((id): id is number => Boolean(id)));
+
+      await Promise.all(essayDrafts.map(async (essay) => {
+        if (essay.isDeleted) {
+          if (essay.id) await apiDelete(`/essays/${essay.id}`);
+          return;
+        }
+
+        if (!essay.id) {
+          await apiPost<EssayResponse>(`/applications/${application.id}/essays`, toEssayPayload(essay));
+          return;
+        }
+
+        const savedEssay = savedById.get(essay.id);
+        if (JSON.stringify(essay) !== JSON.stringify(savedEssay)) {
+          await apiPatch<EssayResponse>(`/essays/${essay.id}`, toEssayPayload(essay));
+        }
+      }));
+
+      await Promise.all([...savedIds].map(async (essayId) => {
+        if (!essayDrafts.some((essay) => essay.id === essayId)) {
+          await apiDelete(`/essays/${essayId}`);
+        }
+      }));
+
+      const refreshedEssays = await apiGet<EssayResponse[]>(`/applications/${application.id}/essays`);
+      const nextEssayDrafts = (refreshedEssays ?? []).map(createEssayDraft);
       setSavedDraft(draft);
+      setEssayDrafts(nextEssayDrafts);
+      setSavedEssayDrafts(nextEssayDrafts);
       showSuccess('Saved', 'Application updated successfully', 3000);
     } catch (error) {
       showError('Save failed', error instanceof Error ? error.message : 'Failed to save application');
@@ -151,7 +323,7 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/30" role="dialog" aria-modal="true">
-      <div className="w-full max-w-3xl h-full bg-white shadow-xl flex flex-col">
+      <div className="w-full max-w-4xl h-full bg-white shadow-xl flex flex-col">
         <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="text-lg font-bold text-gray-900 truncate">{draft.scholarshipName}</h2>
@@ -277,6 +449,102 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
                 </label>
               )}
             </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="section-heading">Essays</h3>
+                {isLoadingEssays && <p className="text-xs text-gray-500 mt-1">Loading essays...</p>}
+              </div>
+              <button type="button" className="btn-outline text-sm py-1.5 px-3" onClick={handleAddEssay}>
+                <Plus size={15} />
+                Add Essay
+              </button>
+            </div>
+
+            {visibleEssayDrafts.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-300 p-5 text-sm text-gray-500">
+                No essays added yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {visibleEssayDrafts.map((essay, index) => (
+                  <div key={essay.localId} className="rounded-lg border border-gray-200 p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-bold text-gray-900">Essay {index + 1}</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="btn-outline text-xs py-1 px-2"
+                          disabled={!essay.essayLink.trim()}
+                          onClick={() => handleOpenEssay(essay.essayLink)}
+                        >
+                          <ExternalLink size={14} />
+                          Open
+                        </button>
+                        <button
+                          type="button"
+                          className="p-2 rounded-md text-red-600 hover:bg-red-50"
+                          aria-label={`Delete essay ${index + 1}`}
+                          onClick={() => handleDeleteEssay(essay.localId)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <label className="block md:col-span-2">
+                        <span className="field-label">Theme / Prompt</span>
+                        <input
+                          className="field-input"
+                          value={essay.theme}
+                          onChange={(event) => updateEssayDraft(essay.localId, 'theme', event.target.value)}
+                          placeholder="Essay prompt or topic"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="field-label">Status</span>
+                        <select
+                          className="field-select"
+                          value={essay.status}
+                          onChange={(event) => updateEssayDraft(
+                            essay.localId,
+                            'status',
+                            event.target.value as EssayStatus,
+                          )}
+                        >
+                          {ESSAY_STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="field-label">Word Count</span>
+                        <input
+                          type="number"
+                          min={0}
+                          className="field-input"
+                          value={essay.wordCount}
+                          onChange={(event) => updateEssayDraft(essay.localId, 'wordCount', event.target.value)}
+                        />
+                      </label>
+                      <label className="block md:col-span-4">
+                        <span className="field-label">Google Doc Link</span>
+                        <input
+                          type="url"
+                          className="field-input"
+                          value={essay.essayLink}
+                          onChange={(event) => updateEssayDraft(essay.localId, 'essayLink', event.target.value)}
+                          placeholder="https://docs.google.com/document/..."
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 

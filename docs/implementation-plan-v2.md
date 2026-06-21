@@ -286,7 +286,7 @@ Pinned so new opportunities are always visible regardless of deadline.
 
 ---
 
-## [ ] 9. Combined View and Edit Panel
+## [x] 9. Combined View and Edit Panel
 
 One editable surface. Opens from a feed row or a grid row. Retires the separate
 Edit Application page.
@@ -313,18 +313,18 @@ Edit Application page.
   Autosave on blur is optional, but the explicit Save and Discard path is
   required.
 
-### [ ] 9.2 Essays inside the panel
+### [x] 9.2 Essays inside the panel
 
-- [ ] 9.2.1 Render the essay list inside the same panel. Each row is editable: theme,
+- [x] 9.2.1 Render the essay list inside the same panel. Each row is editable: theme,
   a status dropdown bound to `EssayStatus`, word count, and the Google Doc
   link, plus add and delete.
 
-- [ ] 9.2.2 The portal does not store essay body text. The theme is the essay prompt
+- [x] 9.2.2 The portal does not store essay body text. The theme is the essay prompt
   or topic, and the actual writing lives in a linked Google Doc. Each row has
   an open button that opens `googleDocUrl` in a new tab. There is no in app
   essay editor, so the row is purely metadata plus the link out.
 
-- [ ] 9.2.3 The status dropdown is the single write path for essay completion.
+- [x] 9.2.3 The status dropdown is the single write path for essay completion.
   Changing it updates the summary progress bar, the radar counts, and the feed
   action line live.
 
