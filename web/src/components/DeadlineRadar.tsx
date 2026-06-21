@@ -62,7 +62,7 @@ export default function DeadlineRadar({
   const tiles = getRadarTiles(applications);
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="flex flex-wrap gap-2">
       {tiles.map((tile) => {
         const isActive = selectedFilter === tile.filter;
 
@@ -70,14 +70,14 @@ export default function DeadlineRadar({
           <button
             key={tile.filter}
             type="button"
-            className={`rounded-lg border px-3 py-3 text-left transition-colors ring-2 ring-transparent ${tile.tone} ${
+            className={`min-w-28 rounded-lg border px-3 py-1.5 text-left transition-colors ring-2 ring-transparent ${tile.tone} ${
               isActive ? tile.activeTone : 'hover:border-gray-300'
             }`}
             aria-pressed={isActive}
             onClick={() => onFilterChange?.(isActive ? null : tile.filter)}
           >
-            <span className="block text-2xl font-bold leading-none">{tile.count}</span>
-            <span className="block text-xs font-semibold mt-1">{tile.label}</span>
+            <span className="block text-lg font-bold leading-none">{tile.count}</span>
+            <span className="block text-[11px] font-semibold mt-0.5">{tile.label}</span>
           </button>
         );
       })}

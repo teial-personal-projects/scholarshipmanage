@@ -261,27 +261,27 @@ The default view. The ground view that says what to touch first.
 
 ---
 
-## [ ] 8. Ready to Start Group
+## [x] 8. Ready to Start Group
 
 Pinned so new opportunities are always visible regardless of deadline.
 
-### [ ] 8.1 Component and routing
+### [x] 8.1 Component and routing
 
-- [ ] 8.1.1 Create `web/src/components/ReadyToStart.tsx`.
+- [x] 8.1.1 Create `web/src/components/ReadyToStart.tsx`.
   Props: `applications: ApplicationResponse[]`. Always renders when it has
   contents.
 
-- [ ] 8.1.2 Routing rule so nothing double lists. A `Not Started` item with a due
+- [x] 8.1.2 Routing rule so nothing double lists. A `Not Started` item with a due
   date inside the fourteen day window appears in its urgency tier in the feed.
   Every other `Not Started` item lives here.
 
-- [ ] 8.1.3 Sort by soonest deadline, then by most recently added so a freshly
+- [x] 8.1.3 Sort by soonest deadline, then by most recently added so a freshly
   entered scholarship floats to the top.
 
-- [ ] 8.1.4 Show a "New" badge on any item with `createdAt` inside the last seven
+- [x] 8.1.4 Show a "New" badge on any item with `createdAt` inside the last seven
   days.
 
-- [ ] 8.1.5 Include no-deadline items in this group with a `"No deadline"` badge
+- [x] 8.1.5 Include no-deadline items in this group with a `"No deadline"` badge
   after dated items.
 
 ---

@@ -226,19 +226,19 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen pb-8">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-5 space-y-4">
         {/* Welcome Banner */}
-        <div className="page-header flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="page-header flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 md:p-4 mb-0">
           <div className="flex-1">
-            <h1 className="text-xl md:text-2xl font-bold">Welcome back, {firstName}!</h1>
-            <p className="text-white/90 text-sm mt-1">
+            <h1 className="text-lg md:text-xl font-bold leading-tight">Welcome back, {firstName}!</h1>
+            <p className="text-white/90 text-xs md:text-sm mt-0.5">
               {applications.length === 0
                 ? 'Get started by creating your first scholarship application'
                 : `You have ${applications.length} application${applications.length !== 1 ? 's' : ''} · ${inProgressCount} in progress · ${submittedCount} submitted`}
             </p>
           </div>
           <button
-            className="bg-white text-brand-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-gray-50 transition-colors text-sm"
+            className="bg-white text-brand-600 font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-gray-50 transition-colors text-sm"
             onClick={() => navigate('/applications/new')}
           >
             + New Application
@@ -251,13 +251,22 @@ function Dashboard() {
         {/* Applications */}
         <div className="card">
           <div className="card-header">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
-              <h2 className="section-heading">Your Applications</h2>
-              <div className="flex gap-1 border-b border-gray-200 sm:border-b-0">
+            <div className="flex flex-col xl:flex-row xl:items-center gap-3 w-full">
+              <h2 className="section-heading shrink-0">Your Applications</h2>
+              {applications.length > 0 && (
+                <div className="flex-1">
+                  <DeadlineRadar
+                    applications={applications}
+                    selectedFilter={radarFilter}
+                    onFilterChange={handleRadarFilterChange}
+                  />
+                </div>
+              )}
+              <div className="flex gap-1 border-b border-gray-200 sm:border-b-0 shrink-0">
                 {(['inProgress', 'submitted'] as const).map((tab) => (
                   <button
                     key={tab}
-                    className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                    className={`px-3 py-1.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                       !radarFilter && activeTab === tab
                         ? 'border-brand-500 text-brand-700'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -290,14 +299,6 @@ function Dashboard() {
               </div>
             ) : (
               <>
-                <div className="mb-6">
-                  <DeadlineRadar
-                    applications={applications}
-                    selectedFilter={radarFilter}
-                    onFilterChange={handleRadarFilterChange}
-                  />
-                </div>
-
                 {filteredApplications.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="text-4xl mb-3">{activeTab === 'inProgress' ? '📝' : '✅'}</div>

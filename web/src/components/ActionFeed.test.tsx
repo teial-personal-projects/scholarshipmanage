@@ -80,4 +80,36 @@ describe('ActionFeed', () => {
 
     expect(screen.getByText('Waiting for recommendation letter')).toBeInTheDocument();
   });
+
+  it('pins ready-to-start applications and keeps them out of deadline groups', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 21));
+
+    const { container } = renderFeed([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Pinned Scholarship',
+        status: 'Not Started',
+        dueDate: '2026-07-20',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Urgent Start Scholarship',
+        status: 'Not Started',
+        dueDate: '2026-06-28',
+      }),
+    ]);
+
+    expect(screen.getByRole('heading', { name: 'Ready to start' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Due this week' })).toBeInTheDocument();
+    expect(screen.getByText('Pinned Scholarship')).toBeInTheDocument();
+    expect(screen.getByText('Urgent Start Scholarship')).toBeInTheDocument();
+
+    const text = container.textContent ?? '';
+    expect(text.indexOf('Ready to start')).toBeLessThan(text.indexOf('Due this week'));
+    expect(text.indexOf('Pinned Scholarship')).toBeLessThan(text.indexOf('Due this week'));
+    expect(text.indexOf('Urgent Start Scholarship')).toBeGreaterThan(text.indexOf('Due this week'));
+
+    vi.useRealTimers();
+  });
 });

@@ -4,7 +4,9 @@ import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/
 
 import { getDeadlineDaysRemaining, getDeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
+import { isReadyToStartApplication } from '../utils/readyToStart';
 import ActionRow from './ActionRow';
+import ReadyToStart from './ReadyToStart';
 
 interface ActionFeedProps {
   applications: ApplicationResponse[];
@@ -34,7 +36,9 @@ function compareApplications(first: ApplicationResponse, second: ApplicationResp
 }
 
 function groupApplications(applications: ApplicationResponse[]): FeedGroup[] {
-  const activeApplications = applications.filter((application) => !isApplicationDone(application.status));
+  const activeApplications = applications.filter(
+    (application) => !isApplicationDone(application.status) && !isReadyToStartApplication(application),
+  );
 
   const groups: FeedGroup[] = [
     { key: 'overdue', title: 'Overdue', applications: [] },
@@ -68,10 +72,12 @@ function groupApplications(applications: ApplicationResponse[]): FeedGroup[] {
 export default function ActionFeed({ applications }: ActionFeedProps) {
   const [showDecided, setShowDecided] = useState(false);
   const decidedApplications = applications.filter((application) => isApplicationDone(application.status));
+  const readyApplications = applications.filter(isReadyToStartApplication);
   const groups = groupApplications(applications);
   const hasActionableApplications = groups.length > 0;
+  const hasReadyApplications = readyApplications.length > 0;
 
-  if (!hasActionableApplications && decidedApplications.length === 0) {
+  if (!hasActionableApplications && !hasReadyApplications && decidedApplications.length === 0) {
     return (
       <div className="text-center py-12">
         <h3 className="font-semibold text-brand-700 text-lg mb-2">No actions yet</h3>
@@ -82,6 +88,8 @@ export default function ActionFeed({ applications }: ActionFeedProps) {
 
   return (
     <div className="space-y-5">
+      <ReadyToStart applications={applications} />
+
       {hasActionableApplications ? (
         groups.map((group) => (
           <section key={group.key} className="space-y-2">
@@ -94,7 +102,7 @@ export default function ActionFeed({ applications }: ActionFeedProps) {
           </section>
         ))
       ) : (
-        <div className="text-center py-10">
+        !hasReadyApplications && <div className="text-center py-10">
           <h3 className="font-semibold text-brand-700 text-lg mb-2">Nothing needs action</h3>
           <p className="text-gray-600 text-sm">Submitted or decided applications are hidden below.</p>
         </div>
