@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronRight, PlayCircle } from 'lucide-react';
+import { CalendarDays, SquarePen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import type { ApplicationResponse } from '@scholarshipmanage/shared';
@@ -8,6 +8,7 @@ import { isReadyToStartApplication, sortReadyToStartApplications } from '../util
 
 interface ReadyToStartProps {
   applications: ApplicationResponse[];
+  onApplicationOpen?: (application: ApplicationResponse) => void;
 }
 
 const NEW_BADGE_DAYS = 7;
@@ -17,7 +18,7 @@ function isNewApplication(application: ApplicationResponse): boolean {
   return daysSinceCreated !== null && daysSinceCreated >= -NEW_BADGE_DAYS && daysSinceCreated <= 0;
 }
 
-export default function ReadyToStart({ applications }: ReadyToStartProps) {
+export default function ReadyToStart({ applications, onApplicationOpen }: ReadyToStartProps) {
   const navigate = useNavigate();
   const readyApplications = sortReadyToStartApplications(
     applications.filter(isReadyToStartApplication),
@@ -40,14 +41,18 @@ export default function ReadyToStart({ applications }: ReadyToStartProps) {
           <button
             key={application.id}
             type="button"
+            aria-label={`Edit ${application.scholarshipName}`}
             className="w-full rounded-lg border border-blue-100 bg-white px-4 py-3 text-left transition-colors hover:border-blue-300 hover:bg-blue-50"
-            onClick={() => navigate(`/applications/${application.id}`)}
+            onClick={() => {
+              if (onApplicationOpen) {
+                onApplicationOpen(application);
+                return;
+              }
+
+              navigate(`/applications/${application.id}`);
+            }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                <PlayCircle size={18} aria-hidden />
-              </div>
-
               <div className="min-w-0 flex-1">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                   <div className="min-w-0">
@@ -67,7 +72,9 @@ export default function ReadyToStart({ applications }: ReadyToStartProps) {
                 <p className="text-sm text-blue-700 font-medium mt-1">Start application</p>
               </div>
 
-              <ChevronRight size={18} className="text-gray-400 shrink-0" aria-hidden />
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 shrink-0">
+                <SquarePen size={16} aria-hidden />
+              </span>
             </div>
           </button>
         ))}

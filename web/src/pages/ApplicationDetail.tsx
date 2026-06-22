@@ -722,13 +722,6 @@ function ApplicationDetail() {
                     {/* Page actions */}
                     <div className="flex items-center gap-2 sm:justify-end">
                       <button
-                        className="btn-outline inline-flex items-center gap-2"
-                        onClick={() => navigate(`/applications/${id}/edit`)}
-                      >
-                        <Pencil size={16} />
-                        Edit
-                      </button>
-                      <button
                         className="btn-ghost inline-flex items-center gap-2"
                         onClick={() => navigate('/applications')}
                       >

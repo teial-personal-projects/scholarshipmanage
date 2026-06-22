@@ -6,7 +6,6 @@ import { getDeadlineDaysRemaining, getDeadlineUrgency } from '../utils/deadline'
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { isReadyToStartApplication } from '../utils/readyToStart';
 import ActionRow from './ActionRow';
-import ReadyToStart from './ReadyToStart';
 
 interface ActionFeedProps {
   applications: ApplicationResponse[];
@@ -76,12 +75,10 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
   const [showDecided, setShowDecided] = useState(false);
   const [showAllLater, setShowAllLater] = useState(false);
   const decidedApplications = applications.filter((application) => isApplicationDone(application.status));
-  const readyApplications = applications.filter(isReadyToStartApplication);
   const groups = groupApplications(applications);
   const hasActionableApplications = groups.length > 0;
-  const hasReadyApplications = readyApplications.length > 0;
 
-  if (!hasActionableApplications && !hasReadyApplications && decidedApplications.length === 0) {
+  if (applications.length === 0) {
     return (
       <div className="text-center py-12">
         <h3 className="font-semibold text-brand-700 text-lg mb-2">No actions yet</h3>
@@ -92,8 +89,6 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
 
   return (
     <div className="space-y-5">
-      <ReadyToStart applications={applications} />
-
       {hasActionableApplications ? (
         groups.map((group) => {
           const canCollapse = group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT;
@@ -101,27 +96,34 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
             ? group.applications.slice(0, LATER_PREVIEW_LIMIT)
             : group.applications;
           const hiddenApplicationCount = group.applications.length - visibleApplications.length;
+          const showGroupHeading = !(groups.length === 1 && group.key === 'later');
 
           return (
             <section key={group.key} className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide">
-                  {group.title}
-                  {group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT
-                    ? ` (${group.applications.length})`
-                    : ''}
-                </h3>
-                {canCollapse && (
-                  <button
-                    type="button"
-                    className="text-xs font-semibold text-brand-700 hover:text-brand-900"
-                    onClick={() => setShowAllLater((current) => !current)}
-                  >
-                    {showAllLater ? 'Show fewer' : `Show ${hiddenApplicationCount} more`}
-                  </button>
-                )}
-              </div>
-              <div className="space-y-2">
+              {(showGroupHeading || canCollapse) && (
+                <div className="flex items-center justify-between gap-3">
+                  {showGroupHeading ? (
+                    <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide">
+                      {group.title}
+                      {group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT
+                        ? ` (${group.applications.length})`
+                        : ''}
+                    </h3>
+                  ) : (
+                    <span />
+                  )}
+                  {canCollapse && (
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-brand-700 hover:text-brand-900"
+                      onClick={() => setShowAllLater((current) => !current)}
+                    >
+                      {showAllLater ? 'Show fewer' : `Show ${hiddenApplicationCount} more`}
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {visibleApplications.map((application) => (
                   <ActionRow
                     key={application.id}
@@ -134,7 +136,7 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
           );
         })
       ) : (
-        !hasReadyApplications && <div className="text-center py-10">
+        <div className="text-center py-10">
           <h3 className="font-semibold text-brand-700 text-lg mb-2">Nothing needs action</h3>
           <p className="text-gray-600 text-sm">Submitted or decided applications are hidden below.</p>
         </div>
@@ -153,7 +155,7 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
           </button>
 
           {showDecided && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {decidedApplications.map((application) => (
                 <ActionRow
                   key={application.id}

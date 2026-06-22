@@ -31,7 +31,6 @@ function App() {
           <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
           <Route path="/applications/new" element={<ProtectedRoute><ApplicationForm /></ProtectedRoute>} />
           <Route path="/applications/:id" element={<ProtectedRoute><ApplicationDetail /></ProtectedRoute>} />
-          <Route path="/applications/:id/edit" element={<ProtectedRoute><ApplicationForm /></ProtectedRoute>} />
           <Route path="/collaborators" element={<ProtectedRoute><Collaborators /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/resources" element={<ProtectedRoute><ScholarshipResources /></ProtectedRoute>} />

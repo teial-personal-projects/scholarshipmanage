@@ -377,11 +377,11 @@ Secondary toggle for scanning and sorting. Adapted from the existing table.
 
 ---
 
-## [ ] 12. Dashboard Refactor
+## [x] 12. Dashboard Refactor
 
-### [ ] 12.1 New structure
+### [x] 12.1 New structure
 
-- [ ] 12.1.1 Replace the current implementation with:
+- [x] 12.1.1 Replace the current implementation with:
 
   ```text
   Dashboard
@@ -393,21 +393,21 @@ Secondary toggle for scanning and sorting. Adapted from the existing table.
   └── ActionFeed  OR  GridView  (based on toggle)
   ```
 
-### [ ] 12.2 Removals
+### [x] 12.2 Removals
 
-- [ ] 12.2.1 Remove `activeTab` and the tab UI.
-- [ ] 12.2.2 Remove `inProgressCount` and `submittedCount` derived values.
-- [ ] 12.2.3 Remove the inner `AppTable` and `Pagination` (move into `GridView`).
-- [ ] 12.2.4 Remove the separate Edit Application page once `ApplicationPanel` covers
+- [x] 12.2.1 Remove `activeTab` and the tab UI.
+- [x] 12.2.2 Remove `inProgressCount` and `submittedCount` derived values.
+- [x] 12.2.3 Remove the inner `AppTable` and `Pagination` (move into `GridView`).
+- [x] 12.2.4 Remove the separate Edit Application page once `ApplicationPanel` covers
   both views and the essays.
 
-### [ ] 12.3 Additions
+### [x] 12.3 Additions
 
-- [ ] 12.3.1 Add `view` state initialized from `localStorage`, default `"feed"`.
-- [ ] 12.3.2 Add selected radar filter state in `Dashboard.tsx` or a small dashboard
+- [x] 12.3.1 Add `view` state initialized from `localStorage`, default `"feed"`.
+- [x] 12.3.2 Add selected radar filter state in `Dashboard.tsx` or a small dashboard
   hook so `DeadlineRadar` can filter `ActionFeed` without forcing a full route
   change.
-- [ ] 12.3.3 Add selected application state so both `ActionFeed` and `GridView` can
+- [x] 12.3.3 Add selected application state so both `ActionFeed` and `GridView` can
   open the same `ApplicationPanel`.
 
 ---

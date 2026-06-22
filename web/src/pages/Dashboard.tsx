@@ -8,8 +8,9 @@ import ApplicationPanel from '../components/ApplicationPanel';
 import DeadlineRadar from '../components/DeadlineRadar';
 import DashboardReminders from '../components/DashboardReminders';
 import GridView from '../components/GridView';
+import ReadyToStart from '../components/ReadyToStart';
 import ViewToggle from '../components/ViewToggle';
-import { isApplicationDone, type UserProfile, type ApplicationResponse } from '@scholarshipmanage/shared';
+import { type UserProfile, type ApplicationResponse } from '@scholarshipmanage/shared';
 import { getStoredDashboardView, type DashboardView } from '../utils/dashboardView';
 import { filterApplicationsByRadar, type DeadlineRadarFilter } from '../utils/deadlineRadar';
 import { useToastHelpers } from '../utils/toast';
@@ -57,11 +58,6 @@ function Dashboard() {
     fetchData();
   }, [user, showError]);
 
-  const inProgressCount = useMemo(() => applications.filter(a => a.status === 'In Progress').length, [applications]);
-  const submittedCount = useMemo(() =>
-    applications.filter(a => isApplicationDone(a.status)).length,
-    [applications]);
-
   const displayedApplications = useMemo(() => (
     radarFilter ? filterApplicationsByRadar(applications, radarFilter) : applications
   ), [applications, radarFilter]);
@@ -99,7 +95,7 @@ function Dashboard() {
               <p className="text-gray-700 text-xs md:text-sm mt-0.5">
                 {applications.length === 0
                   ? 'Get started by creating your first scholarship application'
-                  : `${applications.length} application${applications.length !== 1 ? 's' : ''} · ${inProgressCount} in progress · ${submittedCount} submitted`}
+                  : `${applications.length} application${applications.length !== 1 ? 's' : ''}`}
               </p>
             </div>
           </div>
@@ -124,6 +120,13 @@ function Dashboard() {
               onFilterChange={handleRadarFilterChange}
             />
           </section>
+        )}
+
+        {applications.length > 0 && (
+          <ReadyToStart
+            applications={displayedApplications}
+            onApplicationOpen={setSelectedApplication}
+          />
         )}
 
         {/* Applications */}
@@ -155,7 +158,10 @@ function Dashboard() {
                 onApplicationOpen={setSelectedApplication}
               />
             ) : (
-              <GridView applications={displayedApplications} />
+              <GridView
+                applications={displayedApplications}
+                onApplicationOpen={setSelectedApplication}
+              />
             )}
           </div>
         </div>

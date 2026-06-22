@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp, Clock, Flag } from 'lucide-react';
+import { ChevronDown, ChevronUp, SquarePen } from 'lucide-react';
 
 import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/shared';
 
 import { getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
-import ApplicationPanel from './ApplicationPanel';
 
 interface GridViewProps {
   applications: ApplicationResponse[];
+  onApplicationOpen: (application: ApplicationResponse) => void;
 }
 
 type SortDirection = 'asc' | 'desc';
@@ -54,13 +54,6 @@ const urgencyDueDateStyles: Record<DeadlineUrgency, string> = {
   normal: 'text-gray-700',
 };
 
-const urgencyIconStyles: Record<DeadlineUrgency, string> = {
-  overdue: 'text-red-600 bg-red-100',
-  critical: 'text-orange-600 bg-orange-100',
-  warning: 'text-amber-600 bg-amber-100',
-  normal: 'text-gray-500 bg-gray-100',
-};
-
 function formatDate(value: string | null | undefined): string {
   return value ? new Date(value).toLocaleDateString() : '-';
 }
@@ -102,12 +95,6 @@ function compareSortValues(first: string | number, second: string | number): num
 
 function sortByCreatedDesc(first: ApplicationResponse, second: ApplicationResponse): number {
   return new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime();
-}
-
-function getUrgencyIcon(urgency: DeadlineUrgency) {
-  if (urgency === 'overdue') return AlertTriangle;
-  if (urgency === 'critical' || urgency === 'warning') return Clock;
-  return Flag;
 }
 
 function matchesQuickFilter(application: ApplicationResponse, quickFilter: QuickFilter): boolean {
@@ -170,12 +157,11 @@ function Pagination({
   );
 }
 
-export default function GridView({ applications }: GridViewProps) {
+export default function GridView({ applications, onApplicationOpen }: GridViewProps) {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('needsAction');
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
 
   const quickFilterCounts = useMemo(() => ({
     needsAction: applications.filter((application) => matchesQuickFilter(application, 'needsAction')).length,
@@ -298,21 +284,15 @@ export default function GridView({ applications }: GridViewProps) {
               <tbody>
                 {pageApplications.map((application) => {
                   const urgency = getDeadlineUrgency(application.dueDate, application.status);
-                  const Icon = getUrgencyIcon(urgency);
 
                   return (
                     <tr
                       key={application.id}
                       className={`border-b border-gray-100 cursor-pointer transition-colors ${urgencyRowStyles[urgency]}`}
-                      onClick={() => setSelectedApplication(application)}
+                      onClick={() => onApplicationOpen(application)}
                     >
                       <td className="table-td font-medium text-brand-700">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${urgencyIconStyles[urgency]}`}>
-                            <Icon size={14} aria-hidden />
-                          </span>
-                          <span className="truncate">{application.scholarshipName}</span>
-                        </div>
+                        <span className="block truncate">{application.scholarshipName}</span>
                       </td>
                       <td className="table-td text-gray-600">{application.organization || '-'}</td>
                       <td className="table-td">
@@ -330,13 +310,14 @@ export default function GridView({ applications }: GridViewProps) {
                       <td className="table-td">
                         <button
                           type="button"
-                          className="text-brand-600 font-semibold text-sm hover:underline"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                          aria-label={`Edit ${application.scholarshipName}`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            setSelectedApplication(application);
+                            onApplicationOpen(application);
                           }}
                         >
-                          Open
+                          <SquarePen size={15} aria-hidden />
                         </button>
                       </td>
                     </tr>
@@ -349,26 +330,20 @@ export default function GridView({ applications }: GridViewProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
             {pageApplications.map((application) => {
               const urgency = getDeadlineUrgency(application.dueDate, application.status);
-              const Icon = getUrgencyIcon(urgency);
 
               return (
                 <button
                   key={application.id}
                   type="button"
                   className={`rounded-lg border border-gray-200 p-4 text-left shadow-sm transition-all ${urgencyRowStyles[urgency]}`}
-                  onClick={() => setSelectedApplication(application)}
+                  onClick={() => onApplicationOpen(application)}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex items-start gap-2">
-                      <span className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${urgencyIconStyles[urgency]}`}>
-                        <Icon size={14} aria-hidden />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-bold text-brand-700 truncate">{application.scholarshipName}</p>
-                        <p className="text-sm text-gray-600 mt-0.5 truncate">
-                          {application.organization || 'No organization set'}
-                        </p>
-                      </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-brand-700 truncate">{application.scholarshipName}</p>
+                      <p className="text-sm text-gray-600 mt-0.5 truncate">
+                        {application.organization || 'No organization set'}
+                      </p>
                     </div>
                     <span className={STATUS_BADGE[application.status] ?? 'badge badge-gray'}>
                       {application.status}
@@ -396,12 +371,6 @@ export default function GridView({ applications }: GridViewProps) {
         </>
       )}
 
-      {selectedApplication && (
-        <ApplicationPanel
-          application={selectedApplication}
-          onClose={() => setSelectedApplication(null)}
-        />
-      )}
     </div>
   );
 }

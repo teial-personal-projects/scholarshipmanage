@@ -81,7 +81,7 @@ describe('ActionFeed', () => {
     expect(screen.getByText('Waiting for recommendation letter')).toBeInTheDocument();
   });
 
-  it('pins ready-to-start applications and keeps them out of deadline groups', () => {
+  it('keeps ready-to-start applications out of deadline groups', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 21));
 
@@ -100,14 +100,12 @@ describe('ActionFeed', () => {
       }),
     ]);
 
-    expect(screen.getByRole('heading', { name: 'Ready to start' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Ready to start' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Due this week' })).toBeInTheDocument();
-    expect(screen.getByText('Pinned Scholarship')).toBeInTheDocument();
+    expect(screen.queryByText('Pinned Scholarship')).not.toBeInTheDocument();
     expect(screen.getByText('Urgent Start Scholarship')).toBeInTheDocument();
 
     const text = container.textContent ?? '';
-    expect(text.indexOf('Ready to start')).toBeLessThan(text.indexOf('Due this week'));
-    expect(text.indexOf('Pinned Scholarship')).toBeLessThan(text.indexOf('Due this week'));
     expect(text.indexOf('Urgent Start Scholarship')).toBeGreaterThan(text.indexOf('Due this week'));
 
     vi.useRealTimers();
@@ -126,7 +124,7 @@ describe('ActionFeed', () => {
       makeApplication({ id: 6, scholarshipName: 'Later Scholarship F', dueDate: '2026-07-25' }),
     ]);
 
-    expect(screen.getByRole('heading', { name: 'Later (6)' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Later (6)' })).not.toBeInTheDocument();
     expect(screen.getByText('Later Scholarship A')).toBeInTheDocument();
     expect(screen.getByText('Later Scholarship D')).toBeInTheDocument();
     expect(screen.queryByText('Later Scholarship E')).not.toBeInTheDocument();

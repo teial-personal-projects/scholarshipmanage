@@ -48,22 +48,22 @@ export const createApplication = async (
   userId: number,
   applicationData: {
     scholarshipName: string;
-    targetType?: string;
-    organization?: string;
-    orgWebsite?: string;
-    platform?: string;
-    applicationLink?: string;
-    theme?: string;
-    minAward?: number;
-    maxAward?: number;
-    requirements?: string;
+    targetType?: string | null;
+    organization?: string | null;
+    orgWebsite?: string | null;
+    platform?: string | null;
+    applicationLink?: string | null;
+    theme?: string | null;
+    minAward?: number | null;
+    maxAward?: number | null;
+    requirements?: string | null;
     renewable?: boolean;
-    renewableTerms?: string;
-    documentInfoLink?: string;
-    currentAction?: string;
+    renewableTerms?: string | null;
+    documentInfoLink?: string | null;
+    currentAction?: string | null;
     status?: string;
-    submissionDate?: string;
-    openDate?: string;
+    submissionDate?: string | null;
+    openDate?: string | null;
     dueDate: string;
   }
 ) => {
@@ -110,22 +110,22 @@ export const updateApplication = async (
   userId: number,
   updates: {
     scholarshipName?: string;
-    targetType?: string;
-    organization?: string;
-    orgWebsite?: string;
-    platform?: string;
-    applicationLink?: string;
-    theme?: string;
-    minAward?: number;
-    maxAward?: number;
-    requirements?: string;
+    targetType?: string | null;
+    organization?: string | null;
+    orgWebsite?: string | null;
+    platform?: string | null;
+    applicationLink?: string | null;
+    theme?: string | null;
+    minAward?: number | null;
+    maxAward?: number | null;
+    requirements?: string | null;
     renewable?: boolean;
-    renewableTerms?: string;
-    documentInfoLink?: string;
-    currentAction?: string;
+    renewableTerms?: string | null;
+    documentInfoLink?: string | null;
+    currentAction?: string | null;
     status?: string;
-    submissionDate?: string;
-    openDate?: string;
+    submissionDate?: string | null;
+    openDate?: string | null;
     dueDate?: string;
   }
 ) => {

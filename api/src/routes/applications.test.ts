@@ -284,6 +284,40 @@ describe('Applications Routes', () => {
       expect(response.body).toHaveProperty('scholarship_name', 'Updated Scholarship');
     });
 
+    it('should allow nullable optional fields when updating application', async () => {
+      await setupAuth();
+      const applicationsService = await import('../services/applications.service.js');
+
+      vi.mocked(applicationsService.getApplicationById).mockResolvedValue(
+        mockApplications.inProgress
+      );
+      vi.mocked(applicationsService.updateApplication).mockResolvedValue({
+        ...mockApplications.inProgress,
+        due_date: '2026-07-15',
+        max_award: null,
+        submission_date: null,
+      });
+
+      const response = await authenticatedRequest(agent, 'valid-token')
+        .patch('/api/applications/1')
+        .send({
+          dueDate: '2026-07-15',
+          maxAward: null,
+          submissionDate: null,
+        });
+
+      expect(response.status).toBe(200);
+      expect(applicationsService.updateApplication).toHaveBeenCalledWith(
+        1,
+        expect.any(Number),
+        expect.objectContaining({
+          dueDate: '2026-07-15',
+          maxAward: null,
+          submissionDate: null,
+        }),
+      );
+    });
+
     it('should return 404 for non-existent application', async () => {
       await setupAuth();
       const applicationsService = await import('../services/applications.service.js');
@@ -341,4 +375,3 @@ describe('Applications Routes', () => {
     });
   });
 });
-
