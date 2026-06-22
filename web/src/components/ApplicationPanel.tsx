@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { ExternalLink, Plus, Trash2, X } from 'lucide-react';
 
 import {
-  APPLICATION_STATUSES,
-  TARGET_TYPES,
   essayProgress,
   type ApplicationResponse,
+  type CollaboratorResponse,
   type Essay,
   type EssayResponse,
   type EssayStatus,
+  type RecommendationResponse,
   type TApplicationStatus,
   type TTargetType,
 } from '@scholarshipmanage/shared';
+
+import { ApplicationFormSections } from './ApplicationFormSections';
+import type { ApplicationFormValues } from './ApplicationFormSections';
 
 import { apiDelete, apiGet, apiPatch, apiPost } from '../services/api';
 import { getDeadlineBadgeLabel } from '../utils/deadline';
@@ -54,6 +57,15 @@ interface EssayDraft {
   status: EssayStatus;
   wordCount: string;
   essayLink: string;
+  isDeleted: boolean;
+}
+
+interface RecommendationDraft {
+  localId: string;
+  id?: number;
+  recommenderId: number | '';
+  status: 'Pending' | 'Submitted';
+  dueDate: string;
   isDeleted: boolean;
 }
 
@@ -127,6 +139,27 @@ function createBlankEssayDraft(): EssayDraft {
   };
 }
 
+function createRecommendationDraft(rec: RecommendationResponse): RecommendationDraft {
+  return {
+    localId: `rec-${rec.id}`,
+    id: rec.id,
+    recommenderId: rec.recommenderId,
+    status: rec.status,
+    dueDate: toDateInputValue(rec.dueDate),
+    isDeleted: false,
+  };
+}
+
+function createBlankRecommendationDraft(): RecommendationDraft {
+  return {
+    localId: `new-rec-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    recommenderId: '',
+    status: 'Pending',
+    dueDate: '',
+    isDeleted: false,
+  };
+}
+
 function toOptionalNumber(value: string): number | null {
   const trimmedValue = value.trim();
   if (!trimmedValue) return null;
@@ -151,7 +184,7 @@ function toPayload(draft: ApplicationDraft) {
     dueDate: draft.dueDate,
     submissionDate: draft.submissionDate || null,
     requirements: draft.requirements.trim() || null,
-    renewable: draft.renewable || null,
+    renewable: draft.renewable,
     renewableTerms: draft.renewable ? draft.renewableTerms.trim() || null : null,
   };
 }
@@ -182,6 +215,9 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
   const [savedDraft, setSavedDraft] = useState<ApplicationDraft>(initialDraft);
   const [essayDrafts, setEssayDrafts] = useState<EssayDraft[]>(initialEssayDrafts);
   const [savedEssayDrafts, setSavedEssayDrafts] = useState<EssayDraft[]>(initialEssayDrafts);
+  const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>([]);
+  const [savedRecommendationDrafts, setSavedRecommendationDrafts] = useState<RecommendationDraft[]>([]);
+  const [collaborators, setCollaborators] = useState<CollaboratorResponse[]>([]);
   const [isLoadingEssays, setIsLoadingEssays] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -192,21 +228,28 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
     setSavedDraft(initialDraft);
     setEssayDrafts(initialEssayDrafts);
     setSavedEssayDrafts(initialEssayDrafts);
+    setRecommendationDrafts([]);
+    setSavedRecommendationDrafts([]);
     setIsLoadingEssays(true);
 
-    apiGet<EssayResponse[]>(`/applications/${application.id}/essays`)
-      .then((essays) => {
-        if (!isMounted) return;
-        const nextEssayDrafts = (essays ?? []).map(createEssayDraft);
-        setEssayDrafts(nextEssayDrafts);
-        setSavedEssayDrafts(nextEssayDrafts);
-      })
-      .catch(() => {
-        if (isMounted) setEssayDrafts(initialEssayDrafts);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingEssays(false);
-      });
+    Promise.all([
+      apiGet<EssayResponse[]>(`/applications/${application.id}/essays`),
+      apiGet<RecommendationResponse[]>(`/applications/${application.id}/recommendations`),
+      apiGet<CollaboratorResponse[]>('/collaborators'),
+    ]).then(([essays, recommendations, collabs]) => {
+      if (!isMounted) return;
+      const nextEssayDrafts = (essays ?? []).map(createEssayDraft);
+      setEssayDrafts(nextEssayDrafts);
+      setSavedEssayDrafts(nextEssayDrafts);
+      const nextRecDrafts = (recommendations ?? []).map(createRecommendationDraft);
+      setRecommendationDrafts(nextRecDrafts);
+      setSavedRecommendationDrafts(nextRecDrafts);
+      setCollaborators(collabs ?? []);
+    }).catch(() => {
+      if (isMounted) setEssayDrafts(initialEssayDrafts);
+    }).finally(() => {
+      if (isMounted) setIsLoadingEssays(false);
+    });
 
     return () => {
       isMounted = false;
@@ -214,10 +257,25 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
   }, [application.id, initialDraft, initialEssayDrafts]);
 
   const visibleEssayDrafts = essayDrafts.filter((essay) => !essay.isDeleted);
+  const visibleRecommendationDrafts = recommendationDrafts.filter((rec) => !rec.isDeleted);
   const applicationIsDirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
   const essaysAreDirty =
     JSON.stringify(getComparableEssayDrafts(essayDrafts)) !== JSON.stringify(getComparableEssayDrafts(savedEssayDrafts));
-  const isDirty = applicationIsDirty || essaysAreDirty;
+  const recommendationsAreDirty = JSON.stringify(recommendationDrafts) !== JSON.stringify(savedRecommendationDrafts);
+  const isDirty = applicationIsDirty || essaysAreDirty || recommendationsAreDirty;
+
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
   const summaryApplication = {
     ...application,
     status: draft.status,
@@ -228,10 +286,6 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
   const urgencyLabel = getDeadlineBadgeLabel(draft.dueDate, draft.status) ?? 'No deadline';
   const { done: essaysDone, total: essaysTotal } = essayProgress(summaryApplication);
   const essayProgressPercent = essaysTotal === 0 ? 0 : (essaysDone / essaysTotal) * 100;
-
-  const updateDraft = <Key extends keyof ApplicationDraft>(key: Key, value: ApplicationDraft[Key]) => {
-    setDraft((current) => ({ ...current, [key]: value }));
-  };
 
   const updateEssayDraft = <Key extends keyof EssayDraft>(
     localId: string,
@@ -257,11 +311,36 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
   const handleDiscard = () => {
     setDraft(savedDraft);
     setEssayDrafts(savedEssayDrafts);
+    setRecommendationDrafts(savedRecommendationDrafts);
+  };
+
+  const handleAddRecommendation = () => {
+    setRecommendationDrafts((prev) => [...prev, createBlankRecommendationDraft()]);
+  };
+
+  const handleDeleteRecommendation = (localId: string) => {
+    setRecommendationDrafts((prev) => prev.flatMap((rec) => {
+      if (rec.localId !== localId) return [rec];
+      return rec.id ? [{ ...rec, isDeleted: true }] : [];
+    }));
+  };
+
+  const updateRecommendationDraft = <K extends keyof RecommendationDraft>(
+    localId: string, key: K, value: RecommendationDraft[K],
+  ) => {
+    setRecommendationDrafts((prev) => prev.map((rec) => (
+      rec.localId === localId ? { ...rec, [key]: value } : rec
+    )));
   };
 
   const handleOpenEssay = (essayLink: string) => {
     if (!essayLink.trim()) return;
     window.open(essayLink.trim(), '_blank', 'noopener,noreferrer');
+  };
+
+  const handleClose = () => {
+    if (isDirty && !window.confirm('Discard unsaved changes?')) return;
+    onClose();
   };
 
   const handleSave = async () => {
@@ -308,11 +387,41 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
         }
       }));
 
-      const refreshedEssays = await apiGet<EssayResponse[]>(`/applications/${application.id}/essays`);
+      await Promise.all(recommendationDrafts.map(async (rec) => {
+        if (rec.isDeleted) {
+          if (rec.id) await apiDelete(`/recommendations/${rec.id}`);
+          return;
+        }
+        if (!rec.recommenderId) return;
+        if (!rec.id) {
+          await apiPost<RecommendationResponse>('/recommendations', {
+            applicationId: application.id,
+            recommenderId: rec.recommenderId,
+            status: rec.status,
+            dueDate: rec.dueDate || undefined,
+          });
+          return;
+        }
+        const savedRec = savedRecommendationDrafts.find((r) => r.id === rec.id);
+        if (JSON.stringify(rec) !== JSON.stringify(savedRec)) {
+          await apiPatch<RecommendationResponse>(`/recommendations/${rec.id}`, {
+            status: rec.status,
+            dueDate: rec.dueDate || null,
+          });
+        }
+      }));
+
+      const [refreshedEssays, refreshedRecs] = await Promise.all([
+        apiGet<EssayResponse[]>(`/applications/${application.id}/essays`),
+        apiGet<RecommendationResponse[]>(`/applications/${application.id}/recommendations`),
+      ]);
       const nextEssayDrafts = (refreshedEssays ?? []).map(createEssayDraft);
+      const nextRecDrafts = (refreshedRecs ?? []).map(createRecommendationDraft);
       setSavedDraft(draft);
       setEssayDrafts(nextEssayDrafts);
       setSavedEssayDrafts(nextEssayDrafts);
+      setRecommendationDrafts(nextRecDrafts);
+      setSavedRecommendationDrafts(nextRecDrafts);
       showSuccess('Saved', 'Application updated successfully', 3000);
     } catch (error) {
       showError('Save failed', error instanceof Error ? error.message : 'Failed to save application');
@@ -324,132 +433,47 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/30" role="dialog" aria-modal="true">
       <div className="w-full max-w-4xl h-full bg-white shadow-xl flex flex-col">
-        <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-4">
+        <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-gray-900 truncate">{draft.scholarshipName}</h2>
-            <p className="text-sm text-gray-600 truncate">{draft.organization || 'No organization set'}</p>
+            <h2 className="text-base font-bold text-gray-900 truncate">{draft.scholarshipName}</h2>
+            <p className="text-xs text-gray-500 truncate">{draft.organization || 'No organization set'}</p>
           </div>
-          <button
-            type="button"
-            className="p-2 rounded-md text-gray-500 hover:bg-gray-100"
-            aria-label="Close panel"
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {isDirty && (
+              <>
+                <span className="hidden sm:inline text-xs font-semibold text-amber-700">Unsaved changes are present.</span>
+                <button type="button" className="btn-outline text-sm py-1.5 px-3" onClick={handleDiscard} disabled={isSaving}>
+                  Discard
+                </button>
+              </>
+            )}
+            <button type="button" className="btn-primary text-sm py-1.5 px-3" onClick={handleSave} disabled={isSaving || !isDirty}>
+              {isSaving ? 'Saving…' : 'Save'}
+            </button>
+            <button type="button" className="p-2 rounded-md text-gray-500 hover:bg-gray-100" aria-label="Close panel" onClick={handleClose}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-          <section className="rounded-lg border border-gray-200 bg-[#F2F4EC] p-4">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-gray-500">Next action</p>
-                <p className="text-base font-bold text-brand-800 mt-1">{nextAction.label || 'No action needed'}</p>
-              </div>
-              <span className="badge badge-gray self-start">{urgencyLabel}</span>
-            </div>
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                <span>Essay progress</span>
-                <span>{essaysDone} / {essaysTotal}</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-gray-200">
-                <div
-                  className="h-2 rounded-full bg-brand-500"
-                  style={{ width: `${essayProgressPercent}%` }}
-                />
-              </div>
-            </div>
-          </section>
+          <div className="flex items-center gap-3 flex-wrap border-b border-gray-100 pb-3">
+            <span className="text-sm font-semibold text-brand-800">{nextAction.label || 'No action needed'}</span>
+            <span className="badge badge-gray">{urgencyLabel}</span>
+            {essaysTotal > 0 && (
+              <span className="flex items-center gap-2 text-xs text-gray-500 ml-auto">
+                Essays <span>{essaysDone} / {essaysTotal}</span>
+                <div className="w-20 h-1.5 rounded-full bg-gray-200">
+                  <div className="h-1.5 rounded-full bg-brand-500" style={{ width: `${essayProgressPercent}%` }} />
+                </div>
+              </span>
+            )}
+          </div>
 
-          <section className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="field-label">Scholarship Name</span>
-                <input className="field-input" value={draft.scholarshipName} onChange={(event) => updateDraft('scholarshipName', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Organization</span>
-                <input className="field-input" value={draft.organization} onChange={(event) => updateDraft('organization', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Status</span>
-                <select className="field-select" value={draft.status} onChange={(event) => updateDraft('status', event.target.value as TApplicationStatus)}>
-                  {APPLICATION_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-                </select>
-              </label>
-              <label className="block">
-                <span className="field-label">Due Date</span>
-                <input type="date" className="field-input" value={draft.dueDate} onChange={(event) => updateDraft('dueDate', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Current Action</span>
-                <input className="field-input" value={draft.currentAction} onChange={(event) => updateDraft('currentAction', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Target Type</span>
-                <select className="field-select" value={draft.targetType} onChange={(event) => updateDraft('targetType', event.target.value as TTargetType | '')}>
-                  <option value="">Select type</option>
-                  {TARGET_TYPES.map((targetType) => <option key={targetType} value={targetType}>{targetType}</option>)}
-                </select>
-              </label>
-              <label className="block">
-                <span className="field-label">Min Award</span>
-                <input type="number" min={0} className="field-input" value={draft.minAward} onChange={(event) => updateDraft('minAward', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Max Award</span>
-                <input type="number" min={0} className="field-input" value={draft.maxAward} onChange={(event) => updateDraft('maxAward', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Open Date</span>
-                <input type="date" className="field-input" value={draft.openDate} onChange={(event) => updateDraft('openDate', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Submission Date</span>
-                <input type="date" className="field-input" value={draft.submissionDate} onChange={(event) => updateDraft('submissionDate', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Platform</span>
-                <input className="field-input" value={draft.platform} onChange={(event) => updateDraft('platform', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Theme/Focus</span>
-                <input className="field-input" value={draft.theme} onChange={(event) => updateDraft('theme', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Organization Website</span>
-                <input type="url" className="field-input" value={draft.orgWebsite} onChange={(event) => updateDraft('orgWebsite', event.target.value)} />
-              </label>
-              <label className="block">
-                <span className="field-label">Application Link</span>
-                <input type="url" className="field-input" value={draft.applicationLink} onChange={(event) => updateDraft('applicationLink', event.target.value)} />
-              </label>
-            </div>
-
-            <label className="block">
-              <span className="field-label">Requirements</span>
-              <textarea className="field-textarea" value={draft.requirements} onChange={(event) => updateDraft('requirements', event.target.value)} rows={3} />
-            </label>
-
-            <div className="rounded-lg border border-gray-200 p-4 space-y-3">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 accent-brand-500"
-                  checked={draft.renewable}
-                  onChange={(event) => updateDraft('renewable', event.target.checked)}
-                />
-                <span className="text-sm font-semibold text-gray-800">Renewable Scholarship</span>
-              </label>
-              {draft.renewable && (
-                <label className="block">
-                  <span className="field-label">Renewal Terms</span>
-                  <input className="field-input" value={draft.renewableTerms} onChange={(event) => updateDraft('renewableTerms', event.target.value)} />
-                </label>
-              )}
-            </div>
-          </section>
+          <ApplicationFormSections
+            values={draft as ApplicationFormValues}
+            onChange={(updates) => setDraft((prev) => ({ ...prev, ...updates }))}
+          />
 
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-3">
@@ -546,21 +570,110 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
               </div>
             )}
           </section>
-        </div>
 
-        {isDirty && (
-          <div className="sticky bottom-0 border-t border-amber-200 bg-amber-50 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm font-semibold text-amber-800">Unsaved changes are present.</p>
-            <div className="flex gap-2">
-              <button type="button" className="btn-outline" onClick={handleDiscard} disabled={isSaving}>
-                Discard
-              </button>
-              <button type="button" className="btn-primary" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save'}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="section-heading">Recommendations</h3>
+              <button
+                type="button"
+                className="btn-outline text-sm py-1.5 px-3 inline-flex items-center gap-1.5"
+                onClick={handleAddRecommendation}
+                disabled={collaborators.length === 0}
+              >
+                <Plus size={15} />
+                Add Recommender
               </button>
             </div>
-          </div>
-        )}
+
+            {collaborators.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-300 p-5 text-sm text-gray-500">
+                No collaborators added yet. Add a collaborator first, then assign them as a recommender.
+              </div>
+            ) : visibleRecommendationDrafts.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-300 p-5 text-sm text-gray-500">
+                No recommenders added yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {visibleRecommendationDrafts.map((rec, index) => {
+                  const takenIds = new Set(
+                    visibleRecommendationDrafts
+                      .filter((r) => r.localId !== rec.localId && r.recommenderId !== '')
+                      .map((r) => r.recommenderId),
+                  );
+                  const availableCollaborators = collaborators.filter((c) => !takenIds.has(c.id));
+                  const assignedCollaborator = collaborators.find((c) => c.id === rec.recommenderId);
+                  const recommenderInputId = `${rec.localId}-recommender`;
+                  const statusInputId = `${rec.localId}-status`;
+                  const dueDateInputId = `${rec.localId}-due-date`;
+
+                  return (
+                    <div key={rec.localId} className="rounded-lg border border-gray-200 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-gray-900">Recommender {index + 1}</p>
+                        <button
+                          type="button"
+                          className="p-2 rounded-md text-red-600 hover:bg-red-50"
+                          aria-label={`Delete recommender ${index + 1}`}
+                          onClick={() => handleDeleteRecommendation(rec.localId)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label htmlFor={rec.id ? undefined : recommenderInputId} className="field-label">Recommender</label>
+                          {rec.id ? (
+                            <p className="text-sm text-gray-800 py-1.5">
+                              {assignedCollaborator
+                                ? `${assignedCollaborator.firstName} ${assignedCollaborator.lastName}`
+                                : `Collaborator #${rec.recommenderId}`}
+                            </p>
+                          ) : (
+                            <select
+                              id={recommenderInputId}
+                              className="field-select"
+                              value={rec.recommenderId}
+                              onChange={(e) => updateRecommendationDraft(rec.localId, 'recommenderId', Number(e.target.value) || '')}
+                            >
+                              <option value="">Select recommender…</option>
+                              {availableCollaborators.map((c) => (
+                                <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                        <div>
+                          <label htmlFor={statusInputId} className="field-label">Status</label>
+                          <select
+                            id={statusInputId}
+                            className="field-select"
+                            value={rec.status}
+                            onChange={(e) => updateRecommendationDraft(rec.localId, 'status', e.target.value as 'Pending' | 'Submitted')}
+                          >
+                            <option value="Pending">Pending</option>
+                            <option value="Submitted">Submitted</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label htmlFor={dueDateInputId} className="field-label">Due Date</label>
+                          <input
+                            id={dueDateInputId}
+                            type="date"
+                            className="field-input"
+                            value={rec.dueDate}
+                            onChange={(e) => updateRecommendationDraft(rec.localId, 'dueDate', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+
       </div>
     </div>
   );

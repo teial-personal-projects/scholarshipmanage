@@ -4,12 +4,12 @@ import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/
 
 import { getDeadlineDaysRemaining, getDeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
-import { isReadyToStartApplication } from '../utils/readyToStart';
 import ActionRow from './ActionRow';
 
 interface ActionFeedProps {
   applications: ApplicationResponse[];
   onApplicationOpen?: (application: ApplicationResponse) => void;
+  onDelete?: (id: number) => Promise<void>;
 }
 
 interface FeedGroup {
@@ -39,7 +39,7 @@ function compareApplications(first: ApplicationResponse, second: ApplicationResp
 
 function groupApplications(applications: ApplicationResponse[]): FeedGroup[] {
   const activeApplications = applications.filter(
-    (application) => !isApplicationDone(application.status) && !isReadyToStartApplication(application),
+    (application) => !isApplicationDone(application.status),
   );
 
   const groups: FeedGroup[] = [
@@ -71,9 +71,17 @@ function groupApplications(applications: ApplicationResponse[]): FeedGroup[] {
     .filter((group) => group.applications.length > 0);
 }
 
-export default function ActionFeed({ applications, onApplicationOpen }: ActionFeedProps) {
+export default function ActionFeed({ applications, onApplicationOpen, onDelete }: ActionFeedProps) {
   const [showDecided, setShowDecided] = useState(false);
   const [showAllLater, setShowAllLater] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (key: string) =>
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
   const decidedApplications = applications.filter((application) => isApplicationDone(application.status));
   const groups = groupApplications(applications);
   const hasActionableApplications = groups.length > 0;
@@ -91,8 +99,9 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
     <div className="space-y-5">
       {hasActionableApplications ? (
         groups.map((group) => {
-          const canCollapse = group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT;
-          const visibleApplications = canCollapse && !showAllLater
+          const isCollapsed = collapsedGroups.has(group.key);
+          const canShowMore = group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT;
+          const visibleApplications = canShowMore && !showAllLater
             ? group.applications.slice(0, LATER_PREVIEW_LIMIT)
             : group.applications;
           const hiddenApplicationCount = group.applications.length - visibleApplications.length;
@@ -100,19 +109,26 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
 
           return (
             <section key={group.key} className="space-y-2">
-              {(showGroupHeading || canCollapse) && (
+              {(showGroupHeading || canShowMore) && (
                 <div className="flex items-center justify-between gap-3">
                   {showGroupHeading ? (
-                    <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide">
-                      {group.title}
-                      {group.key === 'later' && group.applications.length > LATER_PREVIEW_LIMIT
-                        ? ` (${group.applications.length})`
-                        : ''}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wide">{group.title}</h3>
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs font-bold uppercase text-gray-500 tracking-wide hover:text-gray-700"
+                        aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${group.title}`}
+                        aria-expanded={!isCollapsed}
+                        onClick={() => toggleGroup(group.key)}
+                      >
+                        {isCollapsed ? '▶' : '▼'}
+                        {`(${group.applications.length})`}
+                      </button>
+                    </div>
                   ) : (
                     <span />
                   )}
-                  {canCollapse && (
+                  {canShowMore && !isCollapsed && (
                     <button
                       type="button"
                       className="text-xs font-semibold text-brand-700 hover:text-brand-900"
@@ -123,15 +139,18 @@ export default function ActionFeed({ applications, onApplicationOpen }: ActionFe
                   )}
                 </div>
               )}
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {visibleApplications.map((application) => (
-                  <ActionRow
-                    key={application.id}
-                    application={application}
-                    onOpen={onApplicationOpen}
-                  />
-                ))}
-              </div>
+              {!isCollapsed && (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {visibleApplications.map((application) => (
+                    <ActionRow
+                      key={application.id}
+                      application={application}
+                      onOpen={onApplicationOpen}
+                      onDelete={onDelete}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           );
         })

@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Applications from './pages/Applications';
 import ApplicationDetail from './pages/ApplicationDetail';
 import ApplicationForm from './components/ApplicationForm';
 import Collaborators from './pages/Collaborators';
@@ -28,7 +27,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/invite/:token" element={<CollaboratorInvite />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
+          <Route path="/applications" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
           <Route path="/applications/new" element={<ProtectedRoute><ApplicationForm /></ProtectedRoute>} />
           <Route path="/applications/:id" element={<ProtectedRoute><ApplicationDetail /></ProtectedRoute>} />
           <Route path="/collaborators" element={<ProtectedRoute><Collaborators /></ProtectedRoute>} />

@@ -6,7 +6,12 @@ import ApplicationPanel from './ApplicationPanel';
 
 import { apiDelete, apiGet, apiPatch, apiPost } from '../services/api';
 
-import type { ApplicationResponse, EssayResponse } from '@scholarshipmanage/shared';
+import type {
+  ApplicationResponse,
+  CollaboratorResponse,
+  EssayResponse,
+  RecommendationResponse,
+} from '@scholarshipmanage/shared';
 
 vi.mock('../services/api', () => ({
   apiDelete: vi.fn(),
@@ -43,6 +48,18 @@ const essays: EssayResponse[] = [
   },
 ];
 
+const recommendations: RecommendationResponse[] = [];
+const collaborators: CollaboratorResponse[] = [];
+const collaborator: CollaboratorResponse = {
+  id: 7,
+  userId: 1,
+  firstName: 'Ada',
+  lastName: 'Lovelace',
+  emailAddress: 'ada@example.com',
+  createdAt: '2026-06-01T00:00:00Z',
+  updatedAt: '2026-06-01T00:00:00Z',
+};
+
 const application: ApplicationResponse & { essays: EssayResponse[] } = {
   id: 1,
   userId: 1,
@@ -62,7 +79,12 @@ const application: ApplicationResponse & { essays: EssayResponse[] } = {
 describe('ApplicationPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(apiGet).mockResolvedValue(essays);
+    vi.mocked(apiGet).mockImplementation(async (endpoint) => {
+      if (endpoint === '/applications/1/essays') return essays;
+      if (endpoint === '/applications/1/recommendations') return recommendations;
+      if (endpoint === '/collaborators') return collaborators;
+      throw new Error(`Unexpected API call: ${endpoint}`);
+    });
     vi.mocked(apiDelete).mockResolvedValue({});
     vi.mocked(apiPatch).mockResolvedValue(application);
     vi.mocked(apiPost).mockResolvedValue(essays[0]);
@@ -113,6 +135,22 @@ describe('ApplicationPanel', () => {
     expect(screen.queryByText('Unsaved changes are present.')).not.toBeInTheDocument();
   });
 
+  it('confirms before closing with unsaved changes', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal('confirm', confirm);
+
+    render(<ApplicationPanel application={application} onClose={onClose} />);
+
+    await user.clear(screen.getByLabelText('Organization'));
+    await user.type(screen.getByLabelText('Organization'), 'Updated University');
+    await user.click(screen.getByRole('button', { name: 'Close panel' }));
+
+    expect(confirm).toHaveBeenCalledWith('Discard unsaved changes?');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('updates essay completion live from the status dropdown', async () => {
     const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
@@ -142,10 +180,22 @@ describe('ApplicationPanel', () => {
 
   it('creates and deletes essay metadata through the essays API', async () => {
     const user = userEvent.setup();
-    vi.mocked(apiGet).mockResolvedValueOnce(essays).mockResolvedValueOnce([
-      ...essays,
-      { ...essays[0], id: 12, theme: 'New essay prompt', status: 'not_started' },
-    ]);
+    let essayFetchCount = 0;
+    vi.mocked(apiGet).mockImplementation(async (endpoint) => {
+      if (endpoint === '/applications/1/essays') {
+        essayFetchCount += 1;
+        if (essayFetchCount >= 2) {
+          return [
+            ...essays,
+            { ...essays[0], id: 12, theme: 'New essay prompt', status: 'not_started' },
+          ];
+        }
+        return essays;
+      }
+      if (endpoint === '/applications/1/recommendations') return recommendations;
+      if (endpoint === '/collaborators') return collaborators;
+      throw new Error(`Unexpected API call: ${endpoint}`);
+    });
 
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
@@ -170,5 +220,34 @@ describe('ApplicationPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith('/essays/10'));
+  });
+
+  it('persists clearing an existing recommendation due date', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiGet).mockImplementation(async (endpoint) => {
+      if (endpoint === '/applications/1/essays') return essays;
+      if (endpoint === '/applications/1/recommendations') {
+        return [{
+          id: 20,
+          applicationId: 1,
+          recommenderId: collaborator.id,
+          status: 'Pending',
+          dueDate: '2026-06-25',
+          createdAt: '2026-06-01T00:00:00Z',
+        }];
+      }
+      if (endpoint === '/collaborators') return [collaborator];
+      throw new Error(`Unexpected API call: ${endpoint}`);
+    });
+
+    render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+
+    await user.clear(await screen.findByDisplayValue('2026-06-25'));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(apiPatch).toHaveBeenCalledWith('/recommendations/20', {
+      status: 'Pending',
+      dueDate: null,
+    }));
   });
 });

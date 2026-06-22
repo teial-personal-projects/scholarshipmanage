@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, LayoutDashboard, LibraryBig, UserRound, UsersRound, type LucideIcon } from 'lucide-react';
+import { DollarSign, LayoutDashboard, LibraryBig, UserRound, UsersRound, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastHelpers } from '../utils/toast';
 
@@ -60,7 +60,7 @@ export function Navigation() {
   return (
     <>
       <nav className="sticky top-0 z-50 px-4 py-3">
-        <div className="max-w-full mx-auto bg-brand-500 rounded-lg px-4 md:px-5 py-2.5 flex items-center justify-between shadow-md">
+        <div className="max-w-full mx-auto rounded-lg px-4 md:px-5 py-2.5 flex items-center justify-between shadow-md" style={{ backgroundColor: '#496B1E' }}>
           {/* Left: Logo and Mobile Menu Button */}
           <div className="flex items-center gap-3">
             <button
@@ -71,7 +71,9 @@ export function Navigation() {
               <span className="text-xl">☰</span>
             </button>
             <Link to="/dashboard" className="no-underline flex items-center gap-2 hover:opacity-90 transition-opacity">
-              <GraduationCap size={18} className="text-white shrink-0" />
+              <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center shrink-0">
+                <DollarSign size={18} className="text-green-800" strokeWidth={2.5} />
+              </div>
               <span className="text-white font-bold text-sm md:text-base">Scholarship Manage</span>
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/20 text-white/80">
                 v{import.meta.env.VITE_APP_VERSION}
@@ -128,7 +130,7 @@ export function Navigation() {
             className="fixed inset-0 bg-black/50 z-40"
             onClick={() => setIsDrawerOpen(false)}
           />
-          <div className="fixed top-0 left-0 h-full w-64 bg-brand-500 z-50 shadow-xl">
+          <div className="fixed top-0 left-0 h-full w-64 z-50 shadow-xl" style={{ backgroundColor: '#496B1E' }}>
             <div className="flex items-center justify-between px-4 py-4 border-b border-white/20">
               <span className="text-white font-bold text-lg">Menu</span>
               <button

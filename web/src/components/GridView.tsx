@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, SquarePen } from 'lucide-react';
+import { ChevronDown, ChevronUp, SquarePen, Trash2 } from 'lucide-react';
 
 import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/shared';
 
@@ -9,11 +9,12 @@ import { deriveNextAction } from '../utils/deriveNextAction';
 interface GridViewProps {
   applications: ApplicationResponse[];
   onApplicationOpen: (application: ApplicationResponse) => void;
+  onDelete?: (id: number) => Promise<void>;
 }
 
 type SortDirection = 'asc' | 'desc';
 type SortKey = 'scholarshipName' | 'organization' | 'status' | 'dueDate' | 'awardAmount' | 'currentAction';
-type QuickFilter = 'needsAction' | 'waiting' | 'all';
+type QuickFilter = 'needsAction' | 'waiting' | 'notStarted' | 'all';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -37,6 +38,7 @@ const GRID_COLUMNS: { key: SortKey; label: string }[] = [
 const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
   { key: 'needsAction', label: 'Needs action' },
   { key: 'waiting', label: 'Waiting on others' },
+  { key: 'notStarted', label: 'Not Started' },
   { key: 'all', label: 'All' },
 ];
 
@@ -99,7 +101,9 @@ function sortByCreatedDesc(first: ApplicationResponse, second: ApplicationRespon
 
 function matchesQuickFilter(application: ApplicationResponse, quickFilter: QuickFilter): boolean {
   if (quickFilter === 'all') return true;
+  if (quickFilter === 'notStarted') return application.status === 'Not Started';
   if (isApplicationDone(application.status)) return false;
+  if (quickFilter === 'needsAction' && application.status === 'Not Started') return false;
 
   const nextAction = deriveNextAction(application);
   if (quickFilter === 'needsAction') return nextAction.actionable;
@@ -157,15 +161,28 @@ function Pagination({
   );
 }
 
-export default function GridView({ applications, onApplicationOpen }: GridViewProps) {
+export default function GridView({ applications, onApplicationOpen, onDelete }: GridViewProps) {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('needsAction');
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    if (!onDelete) return;
+    setDeletingId(id);
+    try {
+      await onDelete(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const quickFilterCounts = useMemo(() => ({
     needsAction: applications.filter((application) => matchesQuickFilter(application, 'needsAction')).length,
     waiting: applications.filter((application) => matchesQuickFilter(application, 'waiting')).length,
+    notStarted: applications.filter((application) => matchesQuickFilter(application, 'notStarted')).length,
     all: applications.length,
   }), [applications]);
 
@@ -220,11 +237,13 @@ export default function GridView({ applications, onApplicationOpen }: GridViewPr
       <div className="flex flex-wrap items-center gap-2">
         {QUICK_FILTERS.map((filter) => {
           const isActive = quickFilter === filter.key;
+          const count = quickFilterCounts[filter.key];
 
           return (
             <button
               key={filter.key}
               type="button"
+              aria-label={`${filter.label} (${count})`}
               className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
                 isActive
                   ? 'border-brand-500 bg-brand-50 text-brand-700'
@@ -238,7 +257,7 @@ export default function GridView({ applications, onApplicationOpen }: GridViewPr
                 isActive ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
               }`}
               >
-                {quickFilterCounts[filter.key]}
+                {count}
               </span>
             </button>
           );
@@ -308,17 +327,30 @@ export default function GridView({ applications, onApplicationOpen }: GridViewPr
                         <span className="line-clamp-2">{getCurrentAction(application)}</span>
                       </td>
                       <td className="table-td">
-                        <button
-                          type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
-                          aria-label={`Edit ${application.scholarshipName}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onApplicationOpen(application);
-                          }}
-                        >
-                          <SquarePen size={15} aria-hidden />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                            aria-label={`Edit ${application.scholarshipName}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onApplicationOpen(application);
+                            }}
+                          >
+                            <SquarePen size={15} aria-hidden />
+                          </button>
+                          {onDelete && (
+                            <button
+                              type="button"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
+                              aria-label={`Delete ${application.scholarshipName}`}
+                              disabled={deletingId === application.id}
+                              onClick={(event) => handleDelete(event, application.id)}
+                            >
+                              <Trash2 size={15} aria-hidden />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -332,35 +364,50 @@ export default function GridView({ applications, onApplicationOpen }: GridViewPr
               const urgency = getDeadlineUrgency(application.dueDate, application.status);
 
               return (
-                <button
+                <div
                   key={application.id}
-                  type="button"
-                  className={`rounded-lg border border-gray-200 p-4 text-left shadow-sm transition-all ${urgencyRowStyles[urgency]}`}
-                  onClick={() => onApplicationOpen(application)}
+                  className={`relative rounded-lg border border-gray-200 shadow-sm transition-all ${urgencyRowStyles[urgency]}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-bold text-brand-700 truncate">{application.scholarshipName}</p>
-                      <p className="text-sm text-gray-600 mt-0.5 truncate">
-                        {application.organization || 'No organization set'}
-                      </p>
+                  <button
+                    type="button"
+                    className="w-full p-4 text-left"
+                    onClick={() => onApplicationOpen(application)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-bold text-brand-700 truncate">{application.scholarshipName}</p>
+                        <p className="text-sm text-gray-600 mt-0.5 truncate">
+                          {application.organization || 'No organization set'}
+                        </p>
+                      </div>
+                      <span className={STATUS_BADGE[application.status] ?? 'badge badge-gray'}>
+                        {application.status}
+                      </span>
                     </div>
-                    <span className={STATUS_BADGE[application.status] ?? 'badge badge-gray'}>
-                      {application.status}
-                    </span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-gray-700">
-                    <div>
-                      <span className="block text-xs font-semibold uppercase text-gray-500">Due date</span>
-                      <span className={urgencyDueDateStyles[urgency]}>{formatDate(application.dueDate)}</span>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-gray-700">
+                      <div>
+                        <span className="block text-xs font-semibold uppercase text-gray-500">Due date</span>
+                        <span className={urgencyDueDateStyles[urgency]}>{formatDate(application.dueDate)}</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold uppercase text-gray-500">Award</span>
+                        <span>{formatAwardAmount(application)}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="block text-xs font-semibold uppercase text-gray-500">Award</span>
-                      <span>{formatAwardAmount(application)}</span>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm text-gray-700">{getCurrentAction(application)}</p>
-                </button>
+                    <p className="mt-3 text-sm text-gray-700">{getCurrentAction(application)}</p>
+                  </button>
+                  {onDelete && (
+                    <button
+                      type="button"
+                      aria-label={`Delete ${application.scholarshipName}`}
+                      className="absolute top-3 right-3 text-red-300 hover:text-red-600 transition-colors disabled:opacity-40"
+                      disabled={deletingId === application.id}
+                      onClick={(e) => handleDelete(e, application.id)}
+                    >
+                      <Trash2 size={15} aria-hidden />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>

@@ -81,7 +81,7 @@ describe('ActionFeed', () => {
     expect(screen.getByText('Waiting for recommendation letter')).toBeInTheDocument();
   });
 
-  it('keeps ready-to-start applications out of deadline groups', () => {
+  it('includes ready-to-start applications in deadline groups when no separate section is rendered', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 21));
 
@@ -102,11 +102,13 @@ describe('ActionFeed', () => {
 
     expect(screen.queryByRole('heading', { name: 'Ready to start' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Due this week' })).toBeInTheDocument();
-    expect(screen.queryByText('Pinned Scholarship')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Later' })).toBeInTheDocument();
+    expect(screen.getByText('Pinned Scholarship')).toBeInTheDocument();
     expect(screen.getByText('Urgent Start Scholarship')).toBeInTheDocument();
 
     const text = container.textContent ?? '';
     expect(text.indexOf('Urgent Start Scholarship')).toBeGreaterThan(text.indexOf('Due this week'));
+    expect(text.indexOf('Pinned Scholarship')).toBeGreaterThan(text.indexOf('Later'));
 
     vi.useRealTimers();
   });

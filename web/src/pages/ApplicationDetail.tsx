@@ -466,7 +466,7 @@ function ApplicationDetail() {
         <div className="card">
           <div className="card-body">
             <p className="text-red-500">{error || 'Application not found'}</p>
-            <button className="btn-outline mt-4" onClick={() => navigate('/applications')}>
+            <button className="btn-outline mt-4" onClick={() => navigate('/dashboard')}>
               Back to Applications
             </button>
           </div>
@@ -723,7 +723,7 @@ function ApplicationDetail() {
                     <div className="flex items-center gap-2 sm:justify-end">
                       <button
                         className="btn-ghost inline-flex items-center gap-2"
-                        onClick={() => navigate('/applications')}
+                        onClick={() => navigate('/dashboard')}
                       >
                         ← Back
                       </button>
