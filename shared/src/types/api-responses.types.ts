@@ -11,6 +11,8 @@ import type {
   ActionOwner,
   CollaborationActionType
 } from './collaborator.types.js';
+import type { Essay } from './essay.types.js';
+import type { Recommendation } from './recommendation.types.js';
 
 /**
  * User Profile (from GET /api/users/me)
@@ -73,6 +75,8 @@ export interface ApplicationResponse {
   dueDate: string;
   createdAt: string;
   updatedAt: string;
+  essays?: readonly Pick<Essay, 'status'>[] | null;
+  recommendations?: readonly Pick<Recommendation, 'status'>[] | null;
 }
 
 /**

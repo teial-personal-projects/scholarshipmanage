@@ -42,6 +42,7 @@ vi.mock('@scholarshipmanage/shared', async () => {
   emailSchema: z.string().email(),
   urlSchema: z.string().url(),
   htmlNoteSchema: z.string().max(5000).optional(),
+  DONE_APPLICATION_STATUSES: ['Submitted', 'Awarded', 'Not Awarded'],
   };
 });
 

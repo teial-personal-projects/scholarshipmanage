@@ -8,6 +8,15 @@ export type TTargetType = typeof TARGET_TYPES[number];
 export type TRecommendationStatus = typeof RECOMMENDATION_STATUSES[number];
 export type TSubmissionMethod = typeof SUBMISSION_METHODS[number];
 
+export const DONE_APPLICATION_STATUSES = ['Submitted', 'Awarded', 'Not Awarded'] as const;
+export type DoneApplicationStatus = typeof DONE_APPLICATION_STATUSES[number];
+
+export const isApplicationDone = (
+  status: TApplicationStatus,
+): status is DoneApplicationStatus => (
+  DONE_APPLICATION_STATUSES as readonly TApplicationStatus[]
+).includes(status);
+
 // Education Level options and type
 export const educationLevelsOptions = [
   'High School',

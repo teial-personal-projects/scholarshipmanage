@@ -1,8 +1,10 @@
+import { DONE_APPLICATION_STATUSES, sanitizePhoneNumber, type DashboardReminders } from '@scholarshipmanage/shared';
+
 import { supabase } from '../config/supabase.js';
 import { getUserProfileById } from '../utils/supabase.js';
-import type { DashboardReminders } from '@scholarshipmanage/shared';
-import { sanitizePhoneNumber } from '@scholarshipmanage/shared';
 import { AppError } from '../middleware/error-handler.js';
+
+const doneApplicationStatusFilter = `(${DONE_APPLICATION_STATUSES.map((status) => JSON.stringify(status)).join(',')})`;
 
 /**
  * Get user profile by user ID
@@ -99,9 +101,7 @@ export const getUserReminders = async (userId: number): Promise<DashboardReminde
     .eq('user_id', userId)
     .gte('due_date', now.toISOString().split('T')[0])
     .lte('due_date', sevenDaysFromNow.toISOString().split('T')[0])
-    .neq('status', 'Submitted')
-    .neq('status', 'Awarded')
-    .neq('status', 'Not Awarded')
+    .not('status', 'in', doneApplicationStatusFilter)
     .order('due_date', { ascending: true });
 
   if (dueSoonError) throw dueSoonError;
@@ -112,9 +112,7 @@ export const getUserReminders = async (userId: number): Promise<DashboardReminde
     .select('*')
     .eq('user_id', userId)
     .lt('due_date', now.toISOString().split('T')[0])
-    .neq('status', 'Submitted')
-    .neq('status', 'Awarded')
-    .neq('status', 'Not Awarded')
+    .not('status', 'in', doneApplicationStatusFilter)
     .order('due_date', { ascending: true });
 
   if (overdueError) throw overdueError;

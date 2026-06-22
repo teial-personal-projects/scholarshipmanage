@@ -142,10 +142,10 @@
     @apply border-b border-gray-100 hover:bg-[#F2F4EC] cursor-pointer transition-colors;
   }
   .nav-link {
-    @apply px-4 py-2 rounded-md text-white font-medium transition-all hover:bg-white/20;
+    @apply relative inline-flex items-center gap-1.5 px-0 py-2 text-white font-semibold text-sm transition-colors hover:text-yellow-200;
   }
   .nav-link-active {
-    @apply bg-white/30 border-b-2 border-white font-bold;
+    @apply text-yellow-300 after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-yellow-300;
   }
   .section-heading {
     @apply text-sm font-semibold text-brand-700 uppercase tracking-wide;

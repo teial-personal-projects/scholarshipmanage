@@ -3,6 +3,8 @@
  * Handles automated reminder emails for applications and collaborations
  */
 
+import { DONE_APPLICATION_STATUSES } from '@scholarshipmanage/shared';
+
 import { supabase } from '../config/supabase.js';
 import * as emailService from './email.service.js';
 
@@ -36,6 +38,8 @@ const REMINDER_CONFIG: Record<'application' | 'collaboration', ReminderConfig> =
     overdueIntervals: [1, 3], // Remind 1 and 3 day(s) after overdue
   },
 };
+
+const doneApplicationStatusFilter = `(${DONE_APPLICATION_STATUSES.map((status) => JSON.stringify(status)).join(',')})`;
 
 /**
  * Calculate if a reminder should be sent based on due date and last reminder
@@ -117,7 +121,7 @@ async function processApplicationReminders(): Promise<number> {
       )
       .gte('due_date', overdueDate.toISOString().split('T')[0])
       .lte('due_date', futureDate.toISOString().split('T')[0])
-      .not('status', 'in', '("Submitted","Awarded","Not Awarded")');
+      .not('status', 'in', doneApplicationStatusFilter);
 
     if (error) {
       console.error('[reminders.service] Error querying applications:', error);

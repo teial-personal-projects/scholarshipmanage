@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Pencil, Trash2, History } from 'lucide-react';
+import { SquarePen, Trash2 } from 'lucide-react';
 import { apiGet, apiDelete } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { ApplicationResponse } from '@scholarshipmanage/shared';
@@ -234,9 +234,7 @@ function Applications() {
                           <td className="table-td text-gray-700">{app.dueDate ? new Date(app.dueDate).toLocaleDateString() : '-'}</td>
                           <td className="table-td">
                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                              <button className="btn-ghost p-1.5 text-blue-600 hover:bg-blue-50" aria-label="View" onClick={() => navigate(`/applications/${app.id}`)}><Eye size={15} /></button>
-                              <button className="btn-ghost p-1.5 text-gray-600 hover:bg-gray-50" aria-label="Edit" onClick={() => navigate(`/applications/${app.id}/edit`)}><Pencil size={15} /></button>
-                              <button className="btn-ghost p-1.5 text-purple-600 hover:bg-purple-50" aria-label="History" onClick={() => navigate(`/applications/${app.id}`)}><History size={15} /></button>
+                              <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors" aria-label="Edit" onClick={() => navigate(`/applications/${app.id}`)}><SquarePen size={15} /></button>
                               <button className="btn-ghost p-1.5 text-red-600 hover:bg-red-50" aria-label="Delete" onClick={() => handleDeleteClick(app.id)}><Trash2 size={15} /></button>
                             </div>
                           </td>
@@ -261,9 +259,7 @@ function Applications() {
                         <span className="font-semibold">Due:</span> {app.dueDate ? new Date(app.dueDate).toLocaleDateString() : '-'}
                       </p>
                       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                        <button className="btn-outline p-1.5" aria-label="View" onClick={() => navigate(`/applications/${app.id}`)}><Eye size={15} /></button>
-                        <button className="btn-outline p-1.5" aria-label="Edit" onClick={() => navigate(`/applications/${app.id}/edit`)}><Pencil size={15} /></button>
-                        <button className="btn-outline p-1.5" aria-label="History" onClick={() => navigate(`/applications/${app.id}`)}><History size={15} /></button>
+                        <button className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors" aria-label="Edit" onClick={() => navigate(`/applications/${app.id}`)}><SquarePen size={15} /></button>
                         <button className="btn-danger p-1.5" aria-label="Delete" onClick={() => handleDeleteClick(app.id)}><Trash2 size={15} /></button>
                       </div>
                     </div>

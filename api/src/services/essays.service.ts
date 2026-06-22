@@ -5,6 +5,7 @@
 
 import { supabase } from '../config/supabase.js';
 import { AppError } from '../middleware/error-handler.js';
+import type { EssayStatus } from '@scholarshipmanage/shared';
 import {
   DB_ERROR_CODES,
   isDbErrorCode,
@@ -71,7 +72,7 @@ export const createEssay = async (applicationId: number, userId: number, essayDa
   units?: string;
   essayLink?: string;
   wordCount?: number;
-  status?: string;
+  status?: EssayStatus;
 }) => {
   // First verify the application belongs to the user
   const { data: application, error: appError } = await supabase
@@ -115,7 +116,7 @@ export const updateEssay = async (essayId: number, userId: number, essayData: {
   units?: string;
   essayLink?: string;
   wordCount?: number;
-  status?: string;
+  status?: EssayStatus;
 }) => {
   // First verify the essay belongs to the user's application
   await getEssayById(essayId, userId);

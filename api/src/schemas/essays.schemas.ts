@@ -7,6 +7,7 @@ import { urlSchema } from '@scholarshipmanage/shared';
 
 // Units schema
 const unitsSchema = z.enum(['words', 'characters']).optional();
+const essayStatusSchema = z.enum(['not_started', 'in_progress', 'completed']).optional();
 
 /**
  * Input Schema: Create Essay
@@ -17,6 +18,7 @@ export const createEssayInputSchema = z.object({
   units: unitsSchema,
   essayLink: urlSchema.optional(),
   wordCount: z.number().int().positive().optional(),
+  status: essayStatusSchema,
 }).strict();
 
 /**
@@ -28,6 +30,7 @@ export const updateEssayInputSchema = z.object({
   units: unitsSchema,
   essayLink: urlSchema.optional(),
   wordCount: z.number().int().positive().optional(),
+  status: essayStatusSchema,
 }).strict();
 
 /**
@@ -35,4 +38,3 @@ export const updateEssayInputSchema = z.object({
  */
 export type CreateEssayInput = z.infer<typeof createEssayInputSchema>;
 export type UpdateEssayInput = z.infer<typeof updateEssayInputSchema>;
-
