@@ -33,7 +33,6 @@
     "declarationMap": true,
     "sourceMap": true,
 
-    "baseUrl": ".",
     "paths": {
       "@scholarshipmanage/shared": ["../shared/src"],
       "@scholarshipmanage/shared/*": ["../shared/src/*"]
