@@ -5,6 +5,7 @@ This guide explains how to configure email sending for Scholarshipmanage using R
 ## Overview
 
 Scholarshipmanage uses [Resend](https://resend.com/) to send transactional emails for:
+
 - Collaboration invitations to recommenders and essay reviewers
 - Application deadline reminders
 - Recommendation deadline notifications
@@ -17,7 +18,7 @@ Scholarshipmanage uses [Resend](https://resend.com/) to send transactional email
 
 ## Step 1: Create Resend Account
 
-1. Go to https://resend.com/
+1. Go to <https://resend.com/>
 2. Sign up for a free account
 3. Note your API key from the dashboard
 
@@ -39,6 +40,7 @@ Resend will provide you with DNS records to add. Go to your **Cloudflare Dashboa
 3. Add the following records (exact values will be provided by Resend): (If you select "Login into Cloudflare" and authorize Resend to access your account, it'll auto populate those records)
 
 #### SPF Record (TXT)
+
 ```
 Type: TXT
 Name: @ (or your domain root)
@@ -47,6 +49,7 @@ TTL: Auto
 ```
 
 #### DKIM Record (CNAME)
+
 ```
 Type: CNAME
 Name: resend._domainkey
@@ -55,6 +58,7 @@ TTL: Auto
 ```
 
 #### Return-Path (CNAME)
+
 ```
 Type: CNAME
 Name: em
@@ -110,22 +114,27 @@ APP_URL=https://yourscholarships.com
 ### Recommended Options
 
 1. **No-Reply Address** (Recommended)
+
    ```
    RESEND_FROM_EMAIL=noreply@yourscholarships.com
    RESEND_FROM_NAME=Scholarshipmanage
    ```
+
    - Best for transactional emails
    - Users won't try to reply
 
 2. **Support Address**
+
    ```
    RESEND_FROM_EMAIL=support@yourscholarships.com
    RESEND_FROM_NAME=Scholarshipmanage
    ```
+
    - Allows users to reply
    - Requires email forwarding setup (see below)
 
 3. **Custom Name**
+
    ```
    RESEND_FROM_EMAIL=hello@yourscholarships.com
    RESEND_FROM_NAME=Your Scholarship Platform
@@ -159,6 +168,7 @@ curl -X POST http://localhost:3001/api/test-email \
 ### Expected Response
 
 Success:
+
 ```json
 {
   "success": true,
@@ -168,6 +178,7 @@ Success:
 ```
 
 Error:
+
 ```json
 {
   "error": "Email Error",
@@ -178,14 +189,17 @@ Error:
 ### Common Test Email Errors
 
 #### "Domain not verified"
+
 - **Cause:** DNS records not configured or verified
 - **Solution:** Complete Step 2 above, wait for verification
 
 #### "API key invalid"
+
 - **Cause:** Wrong API key or not set
 - **Solution:** Check `RESEND_API_KEY` in environment variables
 
 #### "From email not allowed"
+
 - **Cause:** Using unverified domain in `RESEND_FROM_EMAIL`
 - **Solution:** Use `yourverifieddomain.com` or `onboarding@resend.dev` (dev only)
 
@@ -198,9 +212,11 @@ Webhooks allow you to track email delivery status.
 1. Navigate to **Webhooks**
 2. Click **Add Endpoint**
 3. Enter your webhook URL:
+
    ```
    https://yourscholarships.com/api/webhooks/resend
    ```
+
 4. Select events to track:
    - ✓ email.sent
    - ✓ email.delivered
@@ -208,6 +224,7 @@ Webhooks allow you to track email delivery status.
    - ✓ email.complained
 5. Copy the webhook secret
 6. Add to environment variables:
+
    ```
    RESEND_WEBHOOK_SECRET=whsec_abc123...
    ```
@@ -215,6 +232,7 @@ Webhooks allow you to track email delivery status.
 ### Webhook Implementation
 
 The webhook handler is already implemented in:
+
 - [api/src/routes/webhooks.routes.ts](../api/src/routes/webhooks.routes.ts)
 - [api/src/controllers/webhooks.controller.ts](../api/src/controllers/webhooks.controller.ts)
 - [api/src/services/webhooks.service.ts](../api/src/services/webhooks.service.ts)
@@ -247,6 +265,7 @@ The application includes pre-built templates for:
 Email templates are in [api/src/services/email.service.ts](../api/src/services/email.service.ts).
 
 To customize:
+
 1. Locate the template function (e.g., `generateCollaborationInviteEmail`)
 2. Modify the HTML/text content
 3. Test changes using the test endpoint
@@ -257,12 +276,15 @@ To customize:
 ### Email Deliverability
 
 1. **Use a Professional From Name**
+
    ```
    RESEND_FROM_NAME=Scholarshipmanage
    ```
+
    Not: `RESEND_FROM_NAME=John's App`
 
 2. **Use No-Reply for Transactional Emails**
+
    ```
    RESEND_FROM_EMAIL=noreply@yourscholarships.com
    ```
@@ -294,10 +316,12 @@ To customize:
 ### Rate Limiting
 
 Resend free tier limits:
+
 - **3,000 emails/month**
 - **100 emails/day** (soft limit)
 
 For higher volumes, upgrade to Pro:
+
 - **50,000 emails/month** - $20/month
 - **100,000 emails/month** - $40/month
 
@@ -306,6 +330,7 @@ For higher volumes, upgrade to Pro:
 ### Emails Not Sending
 
 1. **Check Logs**
+
    ```bash
    # In development
    npm run dev --workspace=@scholarshipmanage/api
@@ -314,6 +339,7 @@ For higher volumes, upgrade to Pro:
    ```
 
 2. **Verify Configuration**
+
    ```bash
    # Test environment variables are loaded
    node -e "console.log(process.env.RESEND_API_KEY)"
@@ -341,6 +367,7 @@ For higher volumes, upgrade to Pro:
 ### Domain Verification Failing
 
 1. **Check DNS Propagation**
+
    ```bash
    # Check if DNS records are visible
    dig TXT yourscholarships.com
@@ -370,4 +397,4 @@ If you encounter issues:
 1. Check Resend Logs in dashboard
 2. Review application logs for errors
 3. Test with `onboarding@resend.dev` (development only)
-4. Contact Resend support at support@resend.com
+4. Contact Resend support at <support@resend.com>

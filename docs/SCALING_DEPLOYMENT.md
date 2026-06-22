@@ -41,6 +41,7 @@ python finder_main.py --mode scheduled >> logs/finder_$(date +\%Y\%m\%d).log 2>&
 ```
 
 Add to crontab:
+
 ```bash
 crontab -e
 
@@ -190,17 +191,20 @@ export function scheduleScholarshipFinder() {
 ### Theoretical Scaling (if it were to be used)
 
 **Start Small** (Months 1-3):
+
 - Run every 6 hours
 - Process 2-3 categories
 - ~$15/month total cost
 
 **Scale Up** (Months 4-6):
+
 - Move to cloud VPS if needed ($10/month)
 - Add more categories
 - Run more frequently
 - ~$30/month total cost
 
 **Production** (Months 7+):
+
 - Consider managed services if volume increases
 - Add monitoring (free tier options available)
 - Optimize based on actual usage
@@ -212,6 +216,7 @@ export function scheduleScholarshipFinder() {
 ⚠️ **Not Currently in Use** - No monitoring or maintenance is needed as the scholarship finder is not running.
 
 ### Metrics to Track (if it were to be used)
+
 - Number of scholarships scraped per run
 - Number of duplicates detected
 - Errors encountered
@@ -219,12 +224,14 @@ export function scheduleScholarshipFinder() {
 - Database growth rate
 
 ### Alerts (if it were to be used)
+
 - Scraper failed to run
 - High error rate (>10%)
 - No new scholarships found (potential issue)
 - Database connection failures
 
 ### Maintenance Tasks (if it were to be used)
+
 - Review and update scraper selectors (websites change)
 - Add new sources
 - Clean up old raw results (retention policy)

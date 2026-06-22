@@ -6,6 +6,8 @@
  * timezones. These helpers treat date-only strings as local calendar dates.
  */
 
+import { MILLISECONDS_PER_DAY } from '@scholarshipmanage/shared';
+
 export function toDateOnlyString(dateString: string | null | undefined): string | null {
   if (!dateString) return null;
   return dateString.split('T')[0] || null;
@@ -59,7 +61,7 @@ export function formatRelativeTimestamp(
   const diffMs = now.getTime() - updatedDate.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+  const diffDays = Math.floor(diffMs / MILLISECONDS_PER_DAY);
 
   if (diffMins < 1) return 'Just now';
   if (diffMins < 60) return `${diffMins}m ago`;
@@ -72,4 +74,3 @@ export function formatRelativeTimestamp(
     year: updatedDate.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
   });
 }
-

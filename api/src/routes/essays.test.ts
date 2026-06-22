@@ -43,6 +43,7 @@ vi.mock('@scholarshipmanage/shared', async () => {
   emailSchema: z.string().email(),
   urlSchema: z.string().url(),
   htmlNoteSchema: z.string().max(5000).optional(),
+  DONE_APPLICATION_STATUSES: ['Submitted', 'Awarded', 'Not Awarded'],
   };
 });
 
@@ -155,12 +156,14 @@ describe('Essays Routes', () => {
       const newEssay = {
         theme: 'Write about your goals',
         wordCount: 500,
+        status: 'completed',
       };
 
       const createdEssay = {
         ...mockEssays.personalStatement,
         theme: 'Write about your goals',
         word_count: 500,
+        status: 'completed',
         id: 10,
         application_id: 1,
         user_id: 1,
@@ -177,6 +180,7 @@ describe('Essays Routes', () => {
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
+      expect(essaysService.createEssay).toHaveBeenCalledWith(1, mockUsers.student1.id, newEssay);
     });
 
     it('should return 400 for invalid input', async () => {
@@ -252,6 +256,7 @@ describe('Essays Routes', () => {
       const updatedEssay = {
         ...mockEssays.personalStatement,
         theme: 'Updated Essay Theme',
+        status: 'completed',
       };
 
       vi.mocked(essaysService.getEssayById).mockResolvedValue(mockEssays.personalStatement);
@@ -261,9 +266,14 @@ describe('Essays Routes', () => {
         .patch('/api/essays/1')
         .send({
           theme: 'Updated Essay Theme',
+          status: 'completed',
         });
 
       expect(response.status).toBe(200);
+      expect(essaysService.updateEssay).toHaveBeenCalledWith(1, mockUsers.student1.id, {
+        theme: 'Updated Essay Theme',
+        status: 'completed',
+      });
     });
 
     it('should return 404 for non-existent essay', async () => {
@@ -321,4 +331,3 @@ describe('Essays Routes', () => {
     });
   });
 });
-

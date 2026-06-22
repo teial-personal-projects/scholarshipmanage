@@ -23,16 +23,17 @@ describe('applications.service', () => {
       const { getUserApplications } = await import('./applications.service.js');
 
       const mockApps = [mockApplications.inProgress, mockApplications.submitted];
-
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: mockApps,
-              error: null,
-            }),
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({
+            data: mockApps,
+            error: null,
           }),
         }),
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: mockSelect,
       });
 
       vi.mocked(supabase.from).mockImplementation(mockFrom as any);
@@ -41,6 +42,7 @@ describe('applications.service', () => {
 
       expect(result).toEqual(mockApps);
       expect(mockFrom).toHaveBeenCalledWith('applications');
+      expect(mockSelect).toHaveBeenCalledWith('*, essays(status), recommendations(status)');
     });
   });
 
