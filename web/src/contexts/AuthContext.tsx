@@ -52,21 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    // First create the auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (authError) {
-      throw authError;
-    }
-
-    if (!authData.user) {
-      throw new Error('Failed to create user');
-    }
-
-    // Then create the user profile via API
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
@@ -74,14 +59,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       body: JSON.stringify({
         email,
+        password,
         firstName,
         lastName,
-        authUserId: authData.user.id,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create user profile');
+      const errorBody = await response.json().catch(() => null);
+      const message = typeof errorBody?.message === 'string'
+        ? errorBody.message
+        : 'Failed to create account';
+      throw new Error(message);
     }
   };
 

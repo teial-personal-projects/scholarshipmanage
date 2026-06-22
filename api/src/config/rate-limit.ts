@@ -107,6 +107,13 @@ const skipInTest: Options['skip'] = () => {
 };
 
 /**
+ * Skip registration rate limiting while developing locally.
+ */
+const skipRegistrationInLocalDevelopment: Options['skip'] = () => {
+  return ['local', 'development', 'test'].includes(config.nodeEnv);
+};
+
+/**
  * Base rate limiter configuration
  */
 const baseConfig: Partial<Options> = {
@@ -142,6 +149,7 @@ export const authRateLimiters = {
     windowMs: RateLimitWindows.ONE_HOUR,
     max: RequestLimits.AUTH_REGISTER,
     message: RateLimitMessages.auth,
+    skip: skipRegistrationInLocalDevelopment,
   }),
 
   /**
