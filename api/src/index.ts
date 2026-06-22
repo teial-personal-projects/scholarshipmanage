@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { config } from './config/index.js';
+import { corsOptions } from './config/cors.js';
 import { errorHandler } from './middleware/error-handler.js';
 import apiRoutes from './routes/index.js';
 import { securityHeadersConfig, additionalSecurityHeaders } from './config/security-headers.js';
@@ -22,7 +23,7 @@ app.use((_req, res, next) => {
 });
 
 // CORS middleware
-app.use(cors());
+app.use(cors(corsOptions));
 
 // Request logging
 app.use(morgan('dev'));

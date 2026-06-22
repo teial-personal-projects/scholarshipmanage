@@ -235,7 +235,6 @@ The API uses bearer tokens in explicit `Authorization` headers rather than cooki
 
 - The backend uses the Supabase service role key, so service code must carefully scope data access.
 - Rate limiting uses the default in-memory store, suitable for local and single-instance deployments but not distributed production scaling.
-- CORS currently uses default Express CORS middleware and should be restricted before production.
 - Email verification enforcement is not yet applied as a backend access gate.
 - The frontend is an SPA and requires JavaScript.
 - Session persistence uses `sessionStorage`, which improves token exposure posture but requires re-login across browser sessions and can be less convenient across tabs.
@@ -269,7 +268,7 @@ The API uses bearer tokens in explicit `Authorization` headers rather than cooki
 | Reminder emails and cron route | Planned for v3 |
 | Resend webhooks | Implemented |
 | Rate limiting | Implemented, with local registration bypass |
-| CORS production hardening | Pending |
+| CORS origin allow-list | Implemented |
 | Distributed rate-limit store | Pending |
 | Email verification gate | Pending |
 

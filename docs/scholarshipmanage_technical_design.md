@@ -440,7 +440,13 @@ Helmet and custom headers are configured through:
 - `api/src/config/security-headers.ts`
 - `api/src/index.ts`
 
-CORS currently uses default `cors()` middleware and should be restricted for production deployments.
+CORS is configured through `api/src/config/cors.ts` and applied by `api/src/index.ts`.
+The default local and development allow-list accepts:
+
+- `https://dev.scholarshipmanage.pages.dev`
+- `http://localhost:5173`
+
+Deployments can override the allow-list with `CORS_ALLOWED_ORIGINS`, using a comma-separated list of origins.
 
 ## 9. Environment Configuration
 
@@ -461,6 +467,7 @@ Common backend values:
 NODE_ENV=local
 PORT=3001
 APP_URL=http://localhost:5173
+CORS_ALLOWED_ORIGINS=https://dev.scholarshipmanage.pages.dev,http://localhost:5173
 RESEND_API_KEY=
 RESEND_WEBHOOK_SECRET=
 RESEND_FROM_EMAIL=
@@ -566,7 +573,7 @@ Production deployment must verify:
 - `NODE_ENV=production`.
 - Service role key is backend-only.
 - Frontend uses only the Supabase anon key.
-- CORS is restricted to the deployed frontend origin.
+- `CORS_ALLOWED_ORIGINS` is restricted to deployed frontend origins.
 - Rate limits use an external store if the API runs more than one instance.
 - Health checks target `/health`.
 - Resend webhook secret is configured.
@@ -574,7 +581,6 @@ Production deployment must verify:
 
 ## 13. Known Technical Debt
 
-- Restrict production CORS instead of default `cors()`.
 - Move rate limiting to Redis or another shared store for multi-instance deployments.
 - Add explicit backend email-verification enforcement if required by product policy.
 - Split `AuthContext` exports if React Fast Refresh warnings need to be eliminated.
