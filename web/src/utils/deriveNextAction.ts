@@ -3,6 +3,7 @@ import {
   isApplicationDone,
   type ApplicationResponse,
   type Essay,
+  type Recommendation,
 } from '@scholarshipmanage/shared';
 
 export type ActionKind = 'essays' | 'submit' | 'start' | 'waiting' | 'none';
@@ -15,9 +16,16 @@ export interface NextAction {
 
 type ApplicationWithEssays = ApplicationResponse & {
   essays?: readonly Pick<Essay, 'status'>[] | null;
+  recommendations?: readonly Pick<Recommendation, 'status'>[] | null;
 };
 
 const WAITING_KEYWORDS = ['waiting', 'recommendation', 'pending'];
+
+function getPendingRecommendationCount(app: ApplicationWithEssays): number {
+  return (app.recommendations ?? [])
+    .filter((recommendation) => recommendation.status !== 'Submitted')
+    .length;
+}
 
 export function looksLikeWaiting(text: string | null | undefined): text is string {
   if (!text) return false;
@@ -29,6 +37,15 @@ export function looksLikeWaiting(text: string | null | undefined): text is strin
 export function deriveNextAction(app: ApplicationWithEssays): NextAction {
   if (isApplicationDone(app.status)) {
     return { label: '', kind: 'none', actionable: false };
+  }
+
+  const pendingRecommendations = getPendingRecommendationCount(app);
+  if (pendingRecommendations > 0) {
+    return {
+      label: pendingRecommendations === 1 ? 'Waiting for recommendation' : `Waiting for ${pendingRecommendations} recommendations`,
+      kind: 'waiting',
+      actionable: false,
+    };
   }
 
   const { done, total } = essayProgress(app);

@@ -81,6 +81,26 @@ describe('ActionFeed', () => {
     expect(screen.getByText('Waiting for recommendation letter')).toBeInTheDocument();
   });
 
+  it('shows pending essay and recommendation counts on cards', () => {
+    renderFeed([
+      makeApplication({
+        id: 1,
+        essays: [
+          { status: 'completed' },
+          { status: 'in_progress' },
+          { status: 'not_started' },
+        ],
+        recommendations: [
+          { status: 'Pending' },
+          { status: 'Submitted' },
+        ],
+      }),
+    ]);
+
+    expect(screen.getByText('Essays 2 left')).toBeInTheDocument();
+    expect(screen.getByText('Recs 1 pending')).toBeInTheDocument();
+  });
+
   it('includes ready-to-start applications in deadline groups when no separate section is rendered', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 21));
@@ -109,6 +129,33 @@ describe('ActionFeed', () => {
     const text = container.textContent ?? '';
     expect(text.indexOf('Urgent Start Scholarship')).toBeGreaterThan(text.indexOf('Due this week'));
     expect(text.indexOf('Pinned Scholarship')).toBeGreaterThan(text.indexOf('Later'));
+
+    vi.useRealTimers();
+  });
+
+  it('uses deadline border colors before the not-started border for urgent not-started applications', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 21));
+
+    const { container } = renderFeed([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Next Two Weeks Scholarship',
+        status: 'Not Started',
+        dueDate: '2026-06-29',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Later Not Started Scholarship',
+        status: 'Not Started',
+        dueDate: '2026-07-20',
+      }),
+    ]);
+
+    expect(screen.getByText('Next Two Weeks Scholarship')).toBeInTheDocument();
+    expect(screen.getByText('Later Not Started Scholarship')).toBeInTheDocument();
+    expect(container.querySelectorAll('.border-l-yellow-400')).toHaveLength(1);
+    expect(container.querySelectorAll('.border-l-blue-500')).toHaveLength(1);
 
     vi.useRealTimers();
   });

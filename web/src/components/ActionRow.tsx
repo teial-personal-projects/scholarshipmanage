@@ -7,6 +7,7 @@ import type { ApplicationResponse } from '@scholarshipmanage/shared';
 import { getDeadlineBadgeLabel, getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { parseDateOnlyToLocalDate } from '../utils/date';
 import { deriveNextAction } from '../utils/deriveNextAction';
+import { getPendingWorkChips } from '../utils/pendingWork';
 
 interface ActionRowProps {
   application: ApplicationResponse;
@@ -16,10 +17,17 @@ interface ActionRowProps {
 
 const urgencyStyles: Record<DeadlineUrgency, string> = {
   overdue: 'border-l-red-500',
-  critical: 'border-l-orange-500',
-  warning: 'border-l-amber-400',
+  critical: 'border-l-orange-600',
+  warning: 'border-l-yellow-400',
   normal: 'border-l-gray-200',
 };
+
+function getDeadlineBorderStyle(application: ApplicationResponse): string {
+  const urgency = getDeadlineUrgency(application.dueDate, application.status);
+  if (urgency !== 'normal') return urgencyStyles[urgency];
+  if (application.status === 'Not Started') return 'border-l-blue-500';
+  return urgencyStyles.normal;
+}
 
 function formatDueDate(dueDate: string | null | undefined): string | null {
   if (!dueDate) return null;
@@ -31,11 +39,12 @@ function formatDueDate(dueDate: string | null | undefined): string | null {
 export default function ActionRow({ application, onOpen, onDelete }: ActionRowProps) {
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const urgency = getDeadlineUrgency(application.dueDate, application.status);
+  const deadlineBorderStyle = getDeadlineBorderStyle(application);
   const urgencyLabel = getDeadlineBadgeLabel(application.dueDate, application.status);
   const dateLabel = formatDueDate(application.dueDate);
   const nextAction = deriveNextAction(application);
   const isWaiting = nextAction.kind === 'waiting';
+  const pendingWorkChips = getPendingWorkChips(application);
 
   const handleOpen = () => {
     if (onOpen) { onOpen(application); return; }
@@ -54,7 +63,7 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
   };
 
   return (
-    <div className={`relative h-full min-h-32 w-full border border-gray-200 border-l-4 rounded-lg bg-white shadow-sm ${urgencyStyles[urgency]} ${isWaiting ? 'opacity-75' : ''}`}>
+    <div className={`relative h-full min-h-32 w-full border border-gray-200 border-l-4 rounded-lg bg-white shadow-sm ${deadlineBorderStyle} ${isWaiting ? 'opacity-75' : ''}`}>
       {/* Full-card click overlay */}
       <button
         type="button"
@@ -85,6 +94,11 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
           )}
           <div className="flex items-center gap-2 flex-wrap">
             {urgencyLabel && <span className="badge badge-gray">{urgencyLabel}</span>}
+            {pendingWorkChips.map((chip) => (
+              <span key={chip.key} className="badge bg-amber-50 text-amber-800 border border-amber-200">
+                {chip.label}
+              </span>
+            ))}
             {dateLabel && <span className="text-xs text-gray-500">{dateLabel}</span>}
           </div>
         </div>

@@ -30,6 +30,28 @@ function renderGrid(applications: ApplicationResponse[]) {
 }
 
 describe('GridView', () => {
+  it('defaults to all applications when no applications need action', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Future Scholarship',
+        status: 'Not Started',
+        dueDate: '2026-07-20',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Submitted Scholarship',
+        status: 'Submitted',
+        dueDate: '2026-07-20',
+      }),
+    ]);
+
+    expect(screen.getByRole('button', { name: 'Needs action (0)' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'All (2)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
+  });
+
   it('filters not-started applications with the same count as the radar', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 21));
@@ -58,5 +80,52 @@ describe('GridView', () => {
     expect(screen.queryByText('Active Scholarship')).not.toBeInTheDocument();
 
     vi.useRealTimers();
+  });
+
+  it('shows pending essay and recommendation counts in application rows', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Pending Work Scholarship',
+        status: 'In Progress',
+        essays: [
+          { status: 'completed' },
+          { status: 'not_started' },
+        ],
+        recommendations: [
+          { status: 'Pending' },
+        ],
+      }),
+    ]);
+
+    expect(screen.getAllByText('Essays 1 left').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Recs 1 pending').length).toBeGreaterThan(0);
+  });
+
+  it('includes pending recommendations in waiting on others', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Recommendation Scholarship',
+        status: 'In Progress',
+        essays: [{ status: 'completed' }],
+        recommendations: [{ status: 'Pending' }],
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Action Scholarship',
+        status: 'In Progress',
+        dueDate: '2026-07-21',
+      }),
+    ]);
+
+    expect(screen.getByRole('button', { name: 'Waiting on others (1)' })).toBeInTheDocument();
+    expect(screen.queryByText('Recommendation Scholarship')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Waiting on others (1)' }));
+
+    expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Waiting for recommendation').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Action Scholarship')).not.toBeInTheDocument();
   });
 });

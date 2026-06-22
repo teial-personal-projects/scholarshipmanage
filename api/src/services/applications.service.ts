@@ -11,7 +11,7 @@ import {
 export const getUserApplications = async (userId: number) => {
   const { data, error } = await supabase
     .from('applications')
-    .select('*')
+    .select('*, essays(status), recommendations(status)')
     .eq('user_id', userId)
     .order('due_date', { ascending: true });
 

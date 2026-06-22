@@ -121,7 +121,8 @@ describe('ApplicationPanel', () => {
 
   it('saves changed application fields through the applications API', async () => {
     const user = userEvent.setup();
-    render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+    const onSaveSuccess = vi.fn();
+    render(<ApplicationPanel application={application} onClose={vi.fn()} onSaveSuccess={onSaveSuccess} />);
 
     await user.clear(screen.getByLabelText('Current Action'));
     await user.type(screen.getByLabelText('Current Action'), 'Submit application');
@@ -132,6 +133,7 @@ describe('ApplicationPanel', () => {
       scholarshipName: 'Merit Scholarship',
       dueDate: '2026-06-30',
     })));
+    expect(onSaveSuccess).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('Unsaved changes are present.')).not.toBeInTheDocument();
   });
 

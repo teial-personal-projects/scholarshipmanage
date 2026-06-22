@@ -28,6 +28,7 @@ type ApplicationPanelApplication = ApplicationResponse & {
 interface ApplicationPanelProps {
   application: ApplicationPanelApplication;
   onClose: () => void;
+  onSaveSuccess?: () => void;
 }
 
 interface ApplicationDraft {
@@ -207,7 +208,7 @@ function getComparableEssayDrafts(drafts: EssayDraft[]): EssayDraft[] {
   }));
 }
 
-export default function ApplicationPanel({ application, onClose }: ApplicationPanelProps) {
+export default function ApplicationPanel({ application, onClose, onSaveSuccess }: ApplicationPanelProps) {
   const { showSuccess, showError } = useToastHelpers();
   const initialDraft = useMemo(() => createDraft(application), [application]);
   const initialEssayDrafts = useMemo(() => createEssayDrafts(application), [application]);
@@ -354,6 +355,8 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
       return;
     }
 
+    let shouldResetSaving = true;
+
     try {
       setIsSaving(true);
 
@@ -423,10 +426,13 @@ export default function ApplicationPanel({ application, onClose }: ApplicationPa
       setRecommendationDrafts(nextRecDrafts);
       setSavedRecommendationDrafts(nextRecDrafts);
       showSuccess('Saved', 'Application updated successfully', 3000);
+      shouldResetSaving = false;
+      setIsSaving(false);
+      onSaveSuccess?.();
     } catch (error) {
       showError('Save failed', error instanceof Error ? error.message : 'Failed to save application');
     } finally {
-      setIsSaving(false);
+      if (shouldResetSaving) setIsSaving(false);
     }
   };
 

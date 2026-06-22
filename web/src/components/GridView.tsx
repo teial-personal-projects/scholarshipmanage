@@ -5,6 +5,7 @@ import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/
 
 import { getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
+import { getPendingWorkChips } from '../utils/pendingWork';
 
 interface GridViewProps {
   applications: ApplicationResponse[];
@@ -110,6 +111,10 @@ function matchesQuickFilter(application: ApplicationResponse, quickFilter: Quick
   return nextAction.kind === 'waiting';
 }
 
+function getDefaultQuickFilter(applications: ApplicationResponse[]): QuickFilter {
+  return applications.some((application) => matchesQuickFilter(application, 'needsAction')) ? 'needsAction' : 'all';
+}
+
 function Pagination({
   currentPage,
   totalPages,
@@ -162,7 +167,8 @@ function Pagination({
 }
 
 export default function GridView({ applications, onApplicationOpen, onDelete }: GridViewProps) {
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('needsAction');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>(() => getDefaultQuickFilter(applications));
+  const [userSelectedQuickFilter, setUserSelectedQuickFilter] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -185,6 +191,11 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
     notStarted: applications.filter((application) => matchesQuickFilter(application, 'notStarted')).length,
     all: applications.length,
   }), [applications]);
+
+  useEffect(() => {
+    if (userSelectedQuickFilter || quickFilter !== 'needsAction' || quickFilterCounts.needsAction > 0) return;
+    setQuickFilter('all');
+  }, [quickFilter, quickFilterCounts.needsAction, userSelectedQuickFilter]);
 
   const filteredApplications = useMemo(() => (
     applications.filter((application) => matchesQuickFilter(application, quickFilter))
@@ -250,7 +261,10 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                   : 'border-gray-300 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700'
               }`}
               aria-pressed={isActive}
-              onClick={() => setQuickFilter(filter.key)}
+              onClick={() => {
+                setUserSelectedQuickFilter(true);
+                setQuickFilter(filter.key);
+              }}
             >
               {filter.label}
               <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${
@@ -303,6 +317,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
               <tbody>
                 {pageApplications.map((application) => {
                   const urgency = getDeadlineUrgency(application.dueDate, application.status);
+                  const pendingWorkChips = getPendingWorkChips(application);
 
                   return (
                     <tr
@@ -325,6 +340,15 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       <td className="table-td text-gray-700">{formatAwardAmount(application)}</td>
                       <td className="table-td text-gray-700 max-w-xs">
                         <span className="line-clamp-2">{getCurrentAction(application)}</span>
+                        {pendingWorkChips.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {pendingWorkChips.map((chip) => (
+                              <span key={chip.key} className="badge bg-amber-50 text-amber-800 border border-amber-200">
+                                {chip.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td className="table-td">
                         <div className="flex items-center gap-2">
@@ -362,6 +386,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
             {pageApplications.map((application) => {
               const urgency = getDeadlineUrgency(application.dueDate, application.status);
+              const pendingWorkChips = getPendingWorkChips(application);
 
               return (
                 <div
@@ -395,6 +420,15 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       </div>
                     </div>
                     <p className="mt-3 text-sm text-gray-700">{getCurrentAction(application)}</p>
+                    {pendingWorkChips.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {pendingWorkChips.map((chip) => (
+                          <span key={chip.key} className="badge bg-amber-50 text-amber-800 border border-amber-200">
+                            {chip.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </button>
                   {onDelete && (
                     <button

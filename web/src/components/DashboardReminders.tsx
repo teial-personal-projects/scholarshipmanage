@@ -51,8 +51,7 @@ function DashboardReminders({ onDelete }: DashboardRemindersProps) {
 
   const getUrgencyBadge = (days: number) => {
     if (days < 0) return 'badge badge-red';
-    if (days <= 3) return 'badge badge-orange';
-    if (days <= 7) return 'badge badge-blue';
+    if (days <= 7) return 'badge badge-orange';
     return 'badge badge-gray';
   };
 
@@ -157,15 +156,15 @@ function DashboardReminders({ onDelete }: DashboardRemindersProps) {
         )}
 
         {reminders.applications.dueSoon.length > 0 && (
-          <div className="card border border-blue-200 flex flex-col">
+          <div className="card border border-orange-200 flex flex-col">
             <button type="button" className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 shrink-0" onClick={() => setShowDueSoonApps(!showDueSoonApps)}>
-              <h3 className="font-semibold text-sm text-blue-600">Applications Due Soon ({reminders.applications.dueSoon.length})</h3>
+              <h3 className="font-semibold text-sm text-orange-700">Applications Due Soon ({reminders.applications.dueSoon.length})</h3>
               <span className="text-gray-400 text-xs">{showDueSoonApps ? '▼' : '▶'}</span>
             </button>
             {showDueSoonApps && (
               <div className="px-4 pb-4 space-y-3 overflow-y-auto max-h-72">
                 {reminders.applications.dueSoon.map((app) => (
-                  <AppCard key={app.id} app={app} colorClass="bg-blue-50" borderClass="border-blue-200" />
+                  <AppCard key={app.id} app={app} colorClass="bg-orange-50" borderClass="border-orange-200" />
                 ))}
               </div>
             )}

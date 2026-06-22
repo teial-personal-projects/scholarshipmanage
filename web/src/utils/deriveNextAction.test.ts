@@ -80,6 +80,41 @@ describe('deriveNextAction', () => {
     });
   });
 
+  it('returns waiting when recommendations are pending', () => {
+    expect(
+      deriveNextAction({
+        ...baseApplication,
+        currentAction: null,
+        essays: [{ status: 'completed' }],
+        recommendations: [
+          { status: 'Pending' },
+          { status: 'Submitted' },
+        ],
+      }),
+    ).toEqual({
+      label: 'Waiting for recommendation',
+      kind: 'waiting',
+      actionable: false,
+    });
+  });
+
+  it('returns waiting for pending recommendations before essay work', () => {
+    expect(
+      deriveNextAction({
+        ...baseApplication,
+        essays: [{ status: 'in_progress' }],
+        recommendations: [
+          { status: 'Pending' },
+          { status: 'Pending' },
+        ],
+      }),
+    ).toEqual({
+      label: 'Waiting for 2 recommendations',
+      kind: 'waiting',
+      actionable: false,
+    });
+  });
+
   it('returns start for unstarted applications with no remaining essay work', () => {
     expect(
       deriveNextAction({

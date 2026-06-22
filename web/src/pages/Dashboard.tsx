@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { apiGet, apiDelete } from '../services/api';
@@ -37,26 +37,31 @@ function Dashboard() {
   const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
   const [showYourApplications, setShowYourApplications] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      if (!user) { setLoading(false); return; }
-      try {
-        setLoading(true);
-        setError(null);
-        const profileData = await apiGet<UserProfile>('/users/me');
-        setProfile(profileData);
-        const applicationsData = await apiGet<ApplicationResponse[]>('/applications');
-        setApplications(applicationsData || []);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Failed to load dashboard data';
-        setError(msg);
-        showError('Error', msg);
-      } finally {
-        setLoading(false);
-      }
+  const fetchData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
     }
-    fetchData();
-  }, [user, showError]);
+
+    try {
+      setLoading(true);
+      setError(null);
+      const profileData = await apiGet<UserProfile>('/users/me');
+      setProfile(profileData);
+      const applicationsData = await apiGet<ApplicationResponse[]>('/applications');
+      setApplications(applicationsData || []);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(msg);
+      showError('Error', msg);
+    } finally {
+      setLoading(false);
+    }
+  }, [showError, user]);
+
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   const displayedApplications = useMemo(() => (
     radarFilter ? filterApplicationsByRadar(applications, radarFilter) : applications
@@ -70,6 +75,11 @@ function Dashboard() {
     if (!confirm('Delete this application and all its essays?')) return;
     await apiDelete(`/applications/${id}`);
     setApplications((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const handleApplicationSaveSuccess = () => {
+    setSelectedApplication(null);
+    void fetchData();
   };
 
   if (authLoading || loading) return (
@@ -180,6 +190,7 @@ function Dashboard() {
         <ApplicationPanel
           application={selectedApplication}
           onClose={() => setSelectedApplication(null)}
+          onSaveSuccess={handleApplicationSaveSuccess}
         />
       )}
     </div>
