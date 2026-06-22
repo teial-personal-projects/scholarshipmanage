@@ -2,6 +2,9 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../config/supabase';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
+const REGISTER_ENDPOINT = '/auth/register';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -52,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch(`${API_BASE_URL}${REGISTER_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
