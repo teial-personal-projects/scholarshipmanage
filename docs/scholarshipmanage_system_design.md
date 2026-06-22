@@ -234,7 +234,7 @@ The API uses bearer tokens in explicit `Authorization` headers rather than cooki
 ## 9. Current Constraints
 
 - The backend uses the Supabase service role key, so service code must carefully scope data access.
-- Rate limiting uses the default in-memory store, suitable for local and single-instance deployments but not distributed production scaling.
+- Rate limiting uses an in-memory store for local development and can use Redis for deployed multi-instance environments.
 - Email verification enforcement is not yet applied as a backend access gate.
 - The frontend is an SPA and requires JavaScript.
 - Session persistence uses `sessionStorage`, which improves token exposure posture but requires re-login across browser sessions and can be less convenient across tabs.
@@ -247,7 +247,7 @@ The API uses bearer tokens in explicit `Authorization` headers rather than cooki
 | REST API | Simple routing, testing, and debugging | Less flexible than GraphQL for arbitrary client queries |
 | Supabase managed platform | Auth, database, and operational simplicity | Vendor dependency and service-role key discipline |
 | NPM workspaces | Simple shared code and atomic changes | Less build orchestration than Nx or Turborepo |
-| In-memory rate limits | Easy local and single-instance setup | Needs Redis or another store for multi-instance production |
+| Environment-aware rate-limit store | No Redis required locally; shared Redis counters available in deployed environments | Production deployments must provision and configure Redis |
 | Session storage | Reduces long-lived browser token exposure | Less persistent login experience |
 
 ## 11. Implementation Status
@@ -269,7 +269,7 @@ The API uses bearer tokens in explicit `Authorization` headers rather than cooki
 | Resend webhooks | Implemented |
 | Rate limiting | Implemented, with local registration bypass |
 | CORS origin allow-list | Implemented |
-| Distributed rate-limit store | Pending |
+| Distributed rate-limit store | Implemented with Redis when configured |
 | Email verification gate | Pending |
 
 ## 12. Related Documents

@@ -396,6 +396,7 @@ Backend:
 ### 8.2 Rate Limits
 
 Configured in `api/src/config/rate-limit.ts`.
+Redis is used whenever `REDIS_URL` or `REDIS_PRIVATE_URL` is set, except in test. Local development can omit Redis and use the default in-memory store. A deployed environment without Redis fails startup unless `ALLOW_IN_MEMORY_RATE_LIMIT=true` is explicitly set for an intentional single-instance deployment.
 
 | Limiter | Current value |
 | --- | --- |
@@ -468,6 +469,8 @@ NODE_ENV=local
 PORT=3001
 APP_URL=http://localhost:5173
 CORS_ALLOWED_ORIGINS=https://dev.scholarshipmanage.pages.dev,http://localhost:5173
+REDIS_URL=
+ALLOW_IN_MEMORY_RATE_LIMIT=false
 RESEND_API_KEY=
 RESEND_WEBHOOK_SECRET=
 RESEND_FROM_EMAIL=
@@ -574,14 +577,13 @@ Production deployment must verify:
 - Service role key is backend-only.
 - Frontend uses only the Supabase anon key.
 - `CORS_ALLOWED_ORIGINS` is restricted to deployed frontend origins.
-- Rate limits use an external store if the API runs more than one instance.
+- `REDIS_URL` or `REDIS_PRIVATE_URL` is configured for Redis-backed rate limits. This can be used with Railway `dev` while keeping `NODE_ENV=development`. `ALLOW_IN_MEMORY_RATE_LIMIT=true` is only acceptable for an intentional single-instance deployment.
 - Health checks target `/health`.
 - Resend webhook secret is configured.
 - Reminder email delivery and any cron caller contract are planned for v3.
 
 ## 13. Known Technical Debt
 
-- Move rate limiting to Redis or another shared store for multi-instance deployments.
 - Add explicit backend email-verification enforcement if required by product policy.
 - Split `AuthContext` exports if React Fast Refresh warnings need to be eliminated.
 - Address frontend lint issues in test utilities and broader helper code.

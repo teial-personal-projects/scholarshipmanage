@@ -1,15 +1,14 @@
 import rateLimit, { type Options, ipKeyGenerator } from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
 import { config } from './index.js';
+import { isRedisConfigured, sendRedisCommand } from './redis.js';
 
 /**
  * Rate Limiting Configuration
  *
  * Protects API endpoints from abuse and brute-force attacks.
- * Uses in-memory store by default (suitable for single-server deployments).
- *
- * For multi-server deployments, consider using Redis store:
- * - npm install rate-limit-redis
- * - Configure RedisStore as the store option
+ * Uses the in-memory store locally and in tests. In deployed environments,
+ * setting REDIS_URL or REDIS_PRIVATE_URL enables a shared Redis store.
  *
  * Best Practices Implemented:
  * - Different limits for different endpoint types
@@ -113,15 +112,54 @@ const skipRegistrationInLocalDevelopment: Options['skip'] = () => {
   return ['local', 'development', 'test'].includes(config.nodeEnv);
 };
 
-/**
- * Base rate limiter configuration
- */
-const baseConfig: Partial<Options> = {
+const isLocalRateLimitEnvironment = (): boolean => {
+  return ['local', 'development', 'test'].includes(config.nodeEnv);
+};
+
+const allowInMemoryRateLimit = (): boolean => {
+  return process.env.ALLOW_IN_MEMORY_RATE_LIMIT === 'true';
+};
+
+const shouldUseRedisRateLimitStore = (): boolean => {
+  return config.nodeEnv !== 'test' && isRedisConfigured();
+};
+
+export const rateLimitStoreName = shouldUseRedisRateLimitStore() ? 'redis' : 'memory';
+
+if (
+  rateLimitStoreName === 'memory' &&
+  !isLocalRateLimitEnvironment() &&
+  !allowInMemoryRateLimit()
+) {
+  throw new Error(
+    'Redis is required for rate limiting in deployed environments. ' +
+      'Set REDIS_URL or REDIS_PRIVATE_URL, or set ALLOW_IN_MEMORY_RATE_LIMIT=true only for a single-instance deployment.'
+  );
+}
+
+if (config.nodeEnv !== 'test') {
+  const mode = rateLimitStoreName === 'redis' ? 'Redis shared store' : 'in-memory store';
+  console.info(`[rate-limit] Using ${mode}`);
+}
+
+const createRateLimitStore = (): Options['store'] | undefined => {
+  if (rateLimitStoreName !== 'redis') {
+    return undefined;
+  }
+
+  return new RedisStore({
+    sendCommand: sendRedisCommand,
+    prefix: 'scholarshipmanage:rate-limit:',
+  });
+};
+
+const createBaseConfig = (): Partial<Options> => ({
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   handler: standardHandler,
   skip: skipInTest,
-};
+  store: createRateLimitStore(),
+});
 
 /**
  * Authentication Rate Limiters
@@ -133,7 +171,7 @@ export const authRateLimiters = {
    * 5 requests per 15 minutes
    */
   login: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.FIFTEEN_MINUTES,
     max: RequestLimits.AUTH_LOGIN,
     message: RateLimitMessages.auth,
@@ -145,7 +183,7 @@ export const authRateLimiters = {
    * 3 requests per hour
    */
   register: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.ONE_HOUR,
     max: RequestLimits.AUTH_REGISTER,
     message: RateLimitMessages.auth,
@@ -157,7 +195,7 @@ export const authRateLimiters = {
    * 3 requests per hour
    */
   passwordReset: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.ONE_HOUR,
     max: RequestLimits.AUTH_PASSWORD_RESET,
     message: RateLimitMessages.auth,
@@ -168,7 +206,7 @@ export const authRateLimiters = {
    * 5 requests per hour
    */
   emailVerify: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.ONE_HOUR,
     max: RequestLimits.AUTH_EMAIL_VERIFY,
     message: RateLimitMessages.auth,
@@ -185,7 +223,7 @@ export const writeRateLimiters = {
    * 30 requests per 15 minutes
    */
   createUpdate: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.FIFTEEN_MINUTES,
     max: RequestLimits.WRITE_OPERATIONS,
     message: RateLimitMessages.write,
@@ -196,7 +234,7 @@ export const writeRateLimiters = {
    * 10 requests per 15 minutes
    */
   delete: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.FIFTEEN_MINUTES,
     max: RequestLimits.DELETE_OPERATIONS,
     message: RateLimitMessages.write,
@@ -213,7 +251,7 @@ export const readRateLimiters = {
    * 100 requests per 15 minutes
    */
   read: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.FIFTEEN_MINUTES,
     max: RequestLimits.READ_OPERATIONS,
     message: RateLimitMessages.read,
@@ -224,7 +262,7 @@ export const readRateLimiters = {
    * 50 requests per 15 minutes
    */
   list: rateLimit({
-    ...baseConfig,
+    ...createBaseConfig(),
     windowMs: RateLimitWindows.FIFTEEN_MINUTES,
     max: RequestLimits.LIST_OPERATIONS,
     message: RateLimitMessages.read,
@@ -237,7 +275,7 @@ export const readRateLimiters = {
  * 150 requests per 15 minutes
  */
 export const generalApiLimiter = rateLimit({
-  ...baseConfig,
+  ...createBaseConfig(),
   windowMs: RateLimitWindows.FIFTEEN_MINUTES,
   max: RequestLimits.GENERAL_API,
   message: RateLimitMessages.general,
@@ -249,7 +287,7 @@ export const generalApiLimiter = rateLimit({
  * 60 requests per 15 minutes
  */
 export const publicEndpointLimiter = rateLimit({
-  ...baseConfig,
+  ...createBaseConfig(),
   windowMs: RateLimitWindows.FIFTEEN_MINUTES,
   max: RequestLimits.PUBLIC_ENDPOINTS,
   message: RateLimitMessages.general,
@@ -261,7 +299,7 @@ export const publicEndpointLimiter = rateLimit({
  * 100 requests per 15 minutes
  */
 export const webhookLimiter = rateLimit({
-  ...baseConfig,
+  ...createBaseConfig(),
   windowMs: RateLimitWindows.FIFTEEN_MINUTES,
   max: 100,
   message: 'Webhook rate limit exceeded',
@@ -284,7 +322,7 @@ export const webhookLimiter = rateLimit({
  * Only use in development/test environments
  */
 export const bypassLimiter = rateLimit({
-  ...baseConfig,
+  ...createBaseConfig(),
   windowMs: RateLimitWindows.ONE_MINUTE,
   max: 10000, // Effectively unlimited
   skip: () => true, // Always skip
