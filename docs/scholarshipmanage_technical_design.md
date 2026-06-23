@@ -173,7 +173,7 @@ Primary page and feature components include:
 - `Dashboard`, `DeadlineRadar`, `GridView`, `ActionFeed`, `DashboardReminders`, `DashboardCollaborations`, and `DashboardPendingResponses`.
 - `ApplicationForm`, `ApplicationFormSections`, `ApplicationDetail`, and `ApplicationPanel`.
 - `EssayForm`.
-- `Collaborators`, `CollaboratorForm`, `AddCollaborationModal`, `EditCollaborationModal`, `AssignCollaboratorModal`, `SendInviteDialog`, and `CollaborationHistory`.
+- `Collaborators`, `CollaboratorForm`, `AddCollaborationModal`, `EditCollaborationModal`, `AssignCollaboratorModal`, and `SendInviteDialog`.
 - `ScholarshipResources`.
 - `Profile`.
 
@@ -312,8 +312,6 @@ The collaborator route module supports authenticated collaborator management for
 | GET | `/api/collaborations/:id` | Get collaboration |
 | PATCH | `/api/collaborations/:id` | Update collaboration |
 | DELETE | `/api/collaborations/:id` | Delete collaboration |
-| POST | `/api/collaborations/:id/history` | Add history entry |
-| GET | `/api/collaborations/:id/history` | Get history |
 | POST | `/api/collaborations/:id/invite` | Send invitation now |
 | POST | `/api/collaborations/:id/invite/schedule` | Schedule invitation |
 | POST | `/api/collaborations/:id/invite/resend` | Resend invitation |
@@ -348,11 +346,10 @@ Core areas include:
 - `applications`.
 - `essays`.
 - `collaborators`.
-- `collaborations` and collaboration-specific detail/history tables.
+- `collaborations` and collaboration-specific detail tables. The legacy `collaboration_history` table remains in the schema but is not part of the active product surface.
 - `recommendations`.
 - Reminder tracking tables.
 - Scholarship resource and category tables.
-- Invitation and email tracking data.
 
 ### 7.2 Migration Set
 
@@ -363,7 +360,6 @@ Implemented migration areas include:
 - Essays.
 - Collaborators.
 - Recommendations.
-- Collaboration invitation fields.
 - Reminder tracking.
 - Scholarship resource/category tables.
 - Cleanup and schema simplification migrations.

@@ -21,7 +21,7 @@ This document focuses on architectural decisions. Implementation details are cov
 - Deadline radar, reminders, pending response indicators, and action feed views.
 - Essay records associated with applications.
 - Collaborator records for recommenders, essay reviewers, and guidance collaborators.
-- Collaboration assignments, history entries, invitation sending, invitation scheduling, and invitation acceptance.
+- Collaboration assignments
 - Recommendation records attached to applications and collaborations.
 - Scholarship resource listing.
 - Resend webhook handling for email delivery events.
@@ -32,8 +32,7 @@ This document focuses on architectural decisions. Implementation details are cov
 - Native mobile applications.
 - Offline mode.
 - Real-time collaborative editing.
-- Payment processing.
-- Institution-level multi-tenancy.
+- Invitation sending, invitation scheduling, and invitation acceptance.
 - Public SEO-oriented marketing pages.
 - Direct document storage beyond links, notes, and structured metadata.
 - Automated reminder delivery through cron jobs or cron endpoints. Reminder scheduling and delivery are planned for v3.
@@ -41,7 +40,7 @@ This document focuses on architectural decisions. Implementation details are cov
 ## 3. Actors
 
 - Student: Primary authenticated user who owns applications, essays, collaborators, and collaboration workflows.
-- Collaborator: External or invited participant who may support recommendations, essay review, or guidance workflows.
+- Collaborator: External participant who may support recommendations, essay review, or guidance workflows.
 - Recommender: Collaborator acting in a recommendation-specific workflow.
 - Email provider: Resend, used for outbound email and delivery webhooks.
 
@@ -141,7 +140,7 @@ Current primary route areas:
 - Authentication: login, registration, forgot password, reset password.
 - Dashboard: deadline radar, grid view, reminders, collaborations, pending responses, and action feed.
 - Applications: create application, application detail panel, essays, collaborations, recommendations.
-- Collaborators: collaborator management and invitation acceptance.
+- Collaborators: collaborator management.
 - Resources: scholarship resources.
 - Profile: current user profile settings.
 
@@ -186,6 +185,9 @@ Authentication is based on Supabase Auth JWTs.
 - API requests send `Authorization: Bearer <token>`.
 - The backend verifies tokens with Supabase before protected route access.
 - Browser cookies are not used for API authentication.
+- The frontend allows Supabase to refresh access tokens while the underlying
+  Supabase Auth session remains valid. Required re-authentication should be
+  enforced through Supabase Auth session controls, such as time-boxed sessions or inactivity timeout settings, rather than by treating access-token expiration as the full login lifetime.
 
 ### 7.2 Authorization
 
@@ -260,8 +262,7 @@ The API uses bearer tokens in explicit `Authorization` headers rather than cooki
 | Application tracking | Implemented |
 | Dashboard and deadline radar | Implemented |
 | Essays | Implemented |
-| Collaborators and invitations | Implemented |
-| Collaboration history | Implemented |
+| Collaborators | Implemented |
 | Recommendations | Implemented |
 | Scholarship resources | Implemented |
 | Reminder data and dashboard views | Implemented |
