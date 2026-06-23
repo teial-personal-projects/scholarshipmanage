@@ -9,6 +9,15 @@ import {
 } from '../schemas/auth.schemas.js';
 import { httpResponse } from '../utils/http-response.js';
 
+function isDuplicateEmailAuthError(message: string): boolean {
+  const normalizedMessage = message.toLowerCase();
+
+  return (
+    normalizedMessage.includes('already registered') ||
+    normalizedMessage.includes('already been registered')
+  );
+}
+
 /**
  * POST /api/auth/register
  * Register a new user
@@ -65,10 +74,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
       typeof error.message === 'string'
     ) {
       // Check for duplicate email
-      if (
-        error.message.includes('already registered') ||
-        error.message.includes('User already registered')
-      ) {
+      if (isDuplicateEmailAuthError(error.message)) {
         throw new AppError('Email is already registered', 409);
       }
 
@@ -216,4 +222,3 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     throw error;
   }
 });
-

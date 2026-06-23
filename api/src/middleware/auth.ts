@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase.js';
-import { getUserProfileByAuthId } from '../utils/supabase.js';
+import {
+  createUserProfileForAuthUser,
+  getUserProfileByAuthId,
+} from '../utils/supabase.js';
 
 // Extend Express Request to include user
 declare global {
@@ -52,8 +55,10 @@ export const auth = async (
       return;
     }
 
-    // Get user profile from database
-    const userProfile = await getUserProfileByAuthId(user.id);
+    // Get or create user profile from database. The JWT has already been
+    // verified by Supabase; never trust request body data for this bootstrap.
+    const userProfile = await getUserProfileByAuthId(user.id) ??
+      (user.email ? await createUserProfileForAuthUser(user.id, user.email) : null);
 
     if (!userProfile) {
       res.status(404).json({

@@ -29,6 +29,7 @@ vi.mock('../config/supabase.js', () => ({
 // Mock utils
 vi.mock('../utils/supabase.js', () => ({
   getUserProfileByAuthId: vi.fn(),
+  createUserProfileForAuthUser: vi.fn(),
   getUserProfileById: vi.fn(),
 }));
 

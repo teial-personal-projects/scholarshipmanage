@@ -28,6 +28,7 @@ vi.mock('../config/supabase.js', () => ({
 // Mock utils
 vi.mock('../utils/supabase.js', () => ({
   getUserProfileByAuthId: vi.fn(),
+  createUserProfileForAuthUser: vi.fn(),
   getUserProfileById: vi.fn(),
 }));
 
@@ -42,6 +43,7 @@ vi.mock('@scholarshipmanage/shared', async () => {
   urlSchema: z.string().url(),
   htmlNoteSchema: z.string().max(5000).optional(),
   DONE_APPLICATION_STATUSES: ['Submitted', 'Awarded', 'Not Awarded'],
+  COLLABORATOR_RELATIONSHIPS: ['Teacher', 'Professor', 'Counselor'],
   };
 });
 
@@ -339,4 +341,3 @@ describe('Recommendations Routes', () => {
     });
   });
 });
-

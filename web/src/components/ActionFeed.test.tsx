@@ -186,4 +186,24 @@ describe('ActionFeed', () => {
 
     vi.useRealTimers();
   });
+
+  it('shows only a start action for deadlines more than 100 days away', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 21));
+
+    renderFeed([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Far Future Scholarship',
+        status: 'Not Started',
+        dueDate: '2026-10-01',
+      }),
+    ]);
+
+    expect(screen.getByText('Start Application')).toBeInTheDocument();
+    expect(screen.queryByText('102 days left')).not.toBeInTheDocument();
+    expect(screen.queryByText('Oct 1, 2026')).not.toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
 });

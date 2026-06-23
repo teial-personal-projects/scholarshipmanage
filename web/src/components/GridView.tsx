@@ -62,11 +62,8 @@ function formatDate(value: string | null | undefined): string {
 }
 
 function formatAwardAmount(application: ApplicationResponse): string {
-  if (application.minAward && application.maxAward) {
-    return `$${application.minAward.toLocaleString()} - $${application.maxAward.toLocaleString()}`;
-  }
-  if (application.maxAward) return `Up to $${application.maxAward.toLocaleString()}`;
-  if (application.minAward) return `$${application.minAward.toLocaleString()}+`;
+  if (application.minAward) return `$${application.minAward.toLocaleString()}`;
+  if (application.maxAward) return `$${application.maxAward.toLocaleString()}`;
   return '-';
 }
 
@@ -325,23 +322,23 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       className={`border-b border-gray-100 cursor-pointer transition-colors ${urgencyRowStyles[urgency]}`}
                       onClick={() => onApplicationOpen(application)}
                     >
-                      <td className="table-td font-medium text-brand-700">
+                      <td className="px-4 py-2 font-medium text-brand-700">
                         <span className="block truncate">{application.scholarshipName}</span>
                       </td>
-                      <td className="table-td text-gray-600">{application.organization || '-'}</td>
-                      <td className="table-td">
+                      <td className="px-4 py-2 text-gray-600">{application.organization || '-'}</td>
+                      <td className="px-4 py-2">
                         <span className={STATUS_BADGE[application.status] ?? 'badge badge-gray'}>
                           {application.status}
                         </span>
                       </td>
-                      <td className={`table-td ${urgencyDueDateStyles[urgency]}`}>
+                      <td className={`px-4 py-2 ${urgencyDueDateStyles[urgency]}`}>
                         {formatDate(application.dueDate)}
                       </td>
-                      <td className="table-td text-gray-700">{formatAwardAmount(application)}</td>
-                      <td className="table-td text-gray-700 max-w-xs">
-                        <span className="line-clamp-2">{getCurrentAction(application)}</span>
+                      <td className="px-4 py-2 text-gray-700">{formatAwardAmount(application)}</td>
+                      <td className="px-4 py-2 text-gray-700 max-w-xs">
+                        <span className="line-clamp-1">{getCurrentAction(application)}</span>
                         {pendingWorkChips.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {pendingWorkChips.map((chip) => (
                               <span key={chip.key} className="badge bg-amber-50 text-amber-800 border border-amber-200">
                                 {chip.label}
@@ -350,28 +347,28 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                           </div>
                         )}
                       </td>
-                      <td className="table-td">
+                      <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
                             aria-label={`Edit ${application.scholarshipName}`}
                             onClick={(event) => {
                               event.stopPropagation();
                               onApplicationOpen(application);
                             }}
                           >
-                            <SquarePen size={15} aria-hidden />
+                            <SquarePen size={14} aria-hidden />
                           </button>
                           {onDelete && (
                             <button
                               type="button"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
                               aria-label={`Delete ${application.scholarshipName}`}
                               disabled={deletingId === application.id}
                               onClick={(event) => handleDelete(event, application.id)}
                             >
-                              <Trash2 size={15} aria-hidden />
+                              <Trash2 size={14} aria-hidden />
                             </button>
                           )}
                         </div>
@@ -395,13 +392,13 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                 >
                   <button
                     type="button"
-                    className="w-full p-4 text-left"
+                    className="w-full p-3 text-left"
                     onClick={() => onApplicationOpen(application)}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-bold text-brand-700 truncate">{application.scholarshipName}</p>
-                        <p className="text-sm text-gray-600 mt-0.5 truncate">
+                        <p className="text-xs text-gray-600 mt-0.5 truncate">
                           {application.organization || 'No organization set'}
                         </p>
                       </div>
@@ -409,7 +406,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                         {application.status}
                       </span>
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-gray-700">
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-gray-700">
                       <div>
                         <span className="block text-xs font-semibold uppercase text-gray-500">Due date</span>
                         <span className={urgencyDueDateStyles[urgency]}>{formatDate(application.dueDate)}</span>
@@ -419,9 +416,9 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                         <span>{formatAwardAmount(application)}</span>
                       </div>
                     </div>
-                    <p className="mt-3 text-sm text-gray-700">{getCurrentAction(application)}</p>
+                    <p className="mt-2 line-clamp-1 text-sm text-gray-700">{getCurrentAction(application)}</p>
                     {pendingWorkChips.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {pendingWorkChips.map((chip) => (
                           <span key={chip.key} className="badge bg-amber-50 text-amber-800 border border-amber-200">
                             {chip.label}

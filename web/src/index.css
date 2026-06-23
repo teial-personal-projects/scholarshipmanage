@@ -153,4 +153,46 @@
   .spinner {
     @apply animate-spin rounded-full border-2 border-gray-200 border-t-brand-500;
   }
+  .dashboard-progress {
+    @apply block h-1.5 w-full overflow-hidden rounded-full bg-gray-100;
+  }
+  .dashboard-progress::-webkit-progress-bar {
+    @apply rounded-full bg-gray-100;
+  }
+  .dashboard-progress::-webkit-progress-value {
+    @apply rounded-full;
+  }
+  .dashboard-progress::-moz-progress-bar {
+    @apply rounded-full;
+  }
+  .dashboard-progress-gray::-webkit-progress-value {
+    @apply bg-gray-300;
+  }
+  .dashboard-progress-gray::-moz-progress-bar {
+    @apply bg-gray-300;
+  }
+  .dashboard-progress-accent::-webkit-progress-value {
+    @apply bg-accent-500;
+  }
+  .dashboard-progress-accent::-moz-progress-bar {
+    @apply bg-accent-500;
+  }
+  .dashboard-progress-brand::-webkit-progress-value {
+    @apply bg-brand-500;
+  }
+  .dashboard-progress-brand::-moz-progress-bar {
+    @apply bg-brand-500;
+  }
+  .dashboard-progress-emerald::-webkit-progress-value {
+    @apply bg-emerald-500;
+  }
+  .dashboard-progress-emerald::-moz-progress-bar {
+    @apply bg-emerald-500;
+  }
+  .dashboard-progress-dark::-webkit-progress-value {
+    @apply bg-gray-700;
+  }
+  .dashboard-progress-dark::-moz-progress-bar {
+    @apply bg-gray-700;
+  }
 }
