@@ -9,6 +9,22 @@ export type CollaborationStatus =
 
 export type ActionOwner = 'student' | 'collaborator' | null;
 
+export const COLLABORATOR_RELATIONSHIPS = [
+  'Teacher',
+  'Professor',
+  'Counselor',
+  'Academic Advisor',
+  'Research Advisor',
+  'Coach',
+  'Employer',
+  'Mentor',
+  'Tutor',
+  'Parent/Guardian',
+  'Other',
+] as const;
+
+export type CollaboratorRelationship = typeof COLLABORATOR_RELATIONSHIPS[number];
+
 // Type-specific action types
 export type EssayActionType =
   | 'acceptance'
@@ -43,7 +59,7 @@ export interface Collaborator {
   firstName: string;
   lastName: string;
   emailAddress: string;
-  relationship?: string;
+  relationship?: CollaboratorRelationship | string;
   phoneNumber?: string;
   createdAt?: Date;
   updatedAt?: Date;

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { apiPost, apiPatch } from '../services/api';
-import type { CollaboratorResponse } from '@scholarshipmanage/shared';
+import {
+  COLLABORATOR_RELATIONSHIPS,
+  type CollaboratorResponse,
+} from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 interface CollaboratorFormProps {
@@ -114,7 +117,16 @@ const CollaboratorForm: React.FC<CollaboratorFormProps> = ({
             </div>
             <div>
               <label className="field-label">Relationship</label>
-              <input className="field-input" value={relationship} onChange={(e) => setRelationship(e.target.value)} placeholder="e.g., Teacher, Professor, Counselor, Mentor" />
+              <select
+                className="field-select"
+                value={relationship}
+                onChange={(e) => setRelationship(e.target.value)}
+              >
+                <option value="">Select relationship</option>
+                {COLLABORATOR_RELATIONSHIPS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="field-label">Phone Number</label>
