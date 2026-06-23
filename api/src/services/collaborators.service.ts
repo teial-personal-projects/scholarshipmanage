@@ -56,7 +56,7 @@ export const createCollaborator = async (
     firstName: string;
     lastName: string;
     emailAddress: string;
-    relationship?: string;
+    relationship?: string | null;
     phoneNumber?: string | null;
   }
 ) => {
@@ -93,7 +93,9 @@ export const createCollaborator = async (
   };
 
   if (collaboratorData.relationship !== undefined) {
-    dbData.relationship = collaboratorData.relationship.trim();
+    dbData.relationship = collaboratorData.relationship
+      ? collaboratorData.relationship.trim()
+      : null;
   }
   if (phoneToStore !== undefined) {
     dbData.phone_number = phoneToStore;
@@ -120,7 +122,7 @@ export const updateCollaborator = async (
     firstName?: string;
     lastName?: string;
     emailAddress?: string;
-    relationship?: string;
+    relationship?: string | null;
     phoneNumber?: string | null;
   }
 ) => {
@@ -145,7 +147,7 @@ export const updateCollaborator = async (
   }
   
   if (updates.relationship !== undefined) {
-    dbUpdates.relationship = updates.relationship.trim();
+    dbUpdates.relationship = updates.relationship ? updates.relationship.trim() : null;
   }
   
   if (updates.phoneNumber !== undefined) {
@@ -199,4 +201,3 @@ export const deleteCollaborator = async (collaboratorId: number, userId: number)
 
   if (error) throw error;
 };
-

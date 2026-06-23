@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToastHelpers } from '../utils/toast';
@@ -6,12 +7,14 @@ import { useToastHelpers } from '../utils/toast';
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const { showSuccess, showError } = useToastHelpers();
+  const passwordToggleLabel = isPasswordVisible ? 'Hide password' : 'Show password';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,14 +80,26 @@ function Register() {
 
               <div>
                 <label className="field-label">Password</label>
-                <input
-                  type="password"
-                  className="field-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a strong password"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={isPasswordVisible ? 'text' : 'password'}
+                    className="field-input pr-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create a strong password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-gray-500 transition-colors hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+                    onClick={() => setIsPasswordVisible((current) => !current)}
+                    aria-label={passwordToggleLabel}
+                    aria-pressed={isPasswordVisible}
+                    title={passwordToggleLabel}
+                  >
+                    {isPasswordVisible ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                  </button>
+                </div>
                 <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
               </div>
 

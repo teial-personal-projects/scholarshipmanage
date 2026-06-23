@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Pencil, Trash2, ExternalLink, History, Mail, Check } from 'lucide-react';
+import { Pencil, Trash2, ExternalLink, Mail, Check } from 'lucide-react';
 import { apiGet, apiDelete, apiPatch } from '../services/api';
 import {
   essayProgress,
@@ -11,7 +11,6 @@ import {
 } from '@scholarshipmanage/shared';
 import EssayForm from '../components/EssayForm';
 import SendInviteDialog from '../components/SendInviteDialog';
-import CollaborationHistory from '../components/CollaborationHistory';
 import AddCollaborationModal from '../components/AddCollaborationModal';
 import EditCollaborationModal from '../components/EditCollaborationModal';
 import { formatDateNoTimezone, formatRelativeTimestamp } from '../utils/date';
@@ -46,9 +45,6 @@ function ApplicationDetail() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [selectedCollaboration, setSelectedCollaboration] = useState<CollaborationResponse | null>(null);
 
-  // Collaboration history
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [historyCollaborationId, setHistoryCollaborationId] = useState<number | null>(null);
 
   // Add collaboration modal
   const [isAddCollabOpen, setIsAddCollabOpen] = useState(false);
@@ -255,12 +251,6 @@ function ApplicationDetail() {
     }
 
     return false;
-  };
-
-  // Handle viewing collaboration history
-  const handleViewHistory = (collaborationId: number) => {
-    setHistoryCollaborationId(collaborationId);
-    setIsHistoryOpen(true);
   };
 
   // Handle editing collaboration
@@ -508,14 +498,7 @@ function ApplicationDetail() {
 
   // Helper to render collaboration action buttons (shared across tabs)
   const renderCollabActions = (collab: CollaborationResponse) => (
-    <div className="flex items-center gap-1">
-      <button
-        className="p-1.5 rounded hover:bg-purple-50 text-purple-600"
-        aria-label="View History"
-        onClick={() => handleViewHistory(collab.id)}
-      >
-        <History size={16} />
-      </button>
+    <div className="flex flex-wrap items-center gap-1">
       <button
         className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
         aria-label="Edit"
@@ -1298,32 +1281,6 @@ function ApplicationDetail() {
           applicationName={application?.scholarshipName}
           onSuccess={handleInviteSuccess}
         />
-
-        {/* Collaboration History Modal */}
-        {isHistoryOpen && (
-          <div className="modal-backdrop" onClick={() => setIsHistoryOpen(false)}>
-            <div className="modal-content max-w-lg" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="text-lg font-semibold">Collaboration History</h2>
-                <button
-                  className="p-1 rounded hover:bg-gray-100 text-gray-500"
-                  onClick={() => setIsHistoryOpen(false)}
-                  aria-label="Close"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="modal-body pb-6">
-                {historyCollaborationId && (
-                  <CollaborationHistory
-                    collaborationId={historyCollaborationId}
-                    isOpen={isHistoryOpen}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Add Collaboration Modal */}
         <AddCollaborationModal

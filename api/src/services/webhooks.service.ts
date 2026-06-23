@@ -148,26 +148,5 @@ export const processResendWebhook = async (
     throw new AppError('Failed to update invite record', 500);
   }
 
-  // Optionally log webhook event in collaboration_history
-  try {
-    const { error: historyError } = await supabase
-      .from('collaboration_history')
-      .insert({
-        collaboration_id: invite.collaboration_id,
-        user_id: invite.user_id,
-        action: 'webhook_event',
-        details: `Webhook event: ${type} for email ${emailId}`,
-      });
-
-    if (historyError) {
-      // Don't fail the webhook if history logging fails
-      console.warn('[webhooks.service] Failed to log webhook event in history:', historyError);
-    }
-  } catch (err) {
-    // Ignore history logging errors
-    console.warn('[webhooks.service] Error logging webhook event:', err);
-  }
-
   console.log(`[webhooks.service] Processed webhook event: ${type} for email ${emailId}`);
 };
-

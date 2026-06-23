@@ -202,9 +202,9 @@ export const createCollaboration = async (
     applicationId: number;
     collaborationType: 'recommendation' | 'essayReview' | 'guidance';
     status?: string;
-    awaitingActionFrom?: string;
+    awaitingActionFrom?: string | null;
     awaitingActionType?: string;
-    nextActionDescription?: string;
+    nextActionDescription?: string | null;
     nextActionDueDate?: string;
     notes?: string;
     // Type-specific fields
@@ -391,23 +391,6 @@ export const createCollaboration = async (
     throw typeError;
   }
 
-  // Log creation in history for complete tracking
-  const { error: historyError } = await supabase.from('collaboration_history').insert({
-    collaboration_id: collaboration.id,
-    action: 'created',
-    details: `Collaboration created for ${collaborationData.collaborationType}`,
-  });
-
-  if (historyError) {
-    // Log error but don't fail the collaboration creation
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ Failed to create history entry:', {
-        error: historyError.message,
-        collaborationId: collaboration.id,
-      });
-    }
-  }
-
   // Fetch full collaboration with type-specific data
   return getCollaborationById(collaboration.id, userId);
 };
@@ -420,9 +403,9 @@ export const updateCollaboration = async (
   userId: number,
   updates: {
     status?: string;
-    awaitingActionFrom?: string;
+    awaitingActionFrom?: string | null;
     awaitingActionType?: string;
-    nextActionDescription?: string;
+    nextActionDescription?: string | null;
     nextActionDueDate?: string;
     notes?: string;
     // Type-specific fields
@@ -543,130 +526,7 @@ export const updateCollaboration = async (
     }
   }
 
-  // Re-fetch after updates so we only log when the DB actually changed.
-  const updated = await getCollaborationById(collaborationId, userId);
-
-  // Track ALL changes (base + type-specific) in a single array
-  const allChanges: string[] = [];
-
-  // Base fields (only if included in request)
-  if (updates.status !== undefined && updated.status !== existing.status) {
-    allChanges.push(`status: ${existing.status} → ${updated.status}`);
-  }
-  if (
-    updates.awaitingActionFrom !== undefined &&
-    updated.awaiting_action_from !== existing.awaiting_action_from
-  ) {
-    allChanges.push(
-      `awaiting action from: ${existing.awaiting_action_from || 'none'} → ${updated.awaiting_action_from || 'none'}`
-    );
-  }
-  if (
-    updates.awaitingActionType !== undefined &&
-    updated.awaiting_action_type !== existing.awaiting_action_type
-  ) {
-    allChanges.push(
-      `awaiting action type: ${existing.awaiting_action_type || 'none'} → ${updated.awaiting_action_type || 'none'}`
-    );
-  }
-  if (
-    updates.nextActionDescription !== undefined &&
-    updated.next_action_description !== existing.next_action_description
-  ) {
-    allChanges.push(
-      `next action: ${existing.next_action_description || 'none'} → ${updated.next_action_description || 'none'}`
-    );
-  }
-  if (updates.nextActionDueDate !== undefined) {
-    const oldDate = existing.next_action_due_date ? String(existing.next_action_due_date).split('T')[0] : null;
-    const newDate = updated.next_action_due_date ? String(updated.next_action_due_date).split('T')[0] : null;
-    if (oldDate !== newDate) {
-      allChanges.push(`due date: ${oldDate || 'none'} → ${newDate || 'none'}`);
-    }
-  }
-  if (updates.notes !== undefined) {
-    const oldNotes = existing.notes ?? null;
-    const newNotes = updated.notes ?? null;
-    if (oldNotes !== newNotes) allChanges.push('notes updated');
-  }
-
-  // Type-specific (only if included in request)
-  if (existing.collaboration_type === 'essayReview') {
-    if (updates.currentDraftVersion !== undefined && updated.currentDraftVersion !== existing.currentDraftVersion) {
-      allChanges.push(`draft version updated to ${updated.currentDraftVersion ?? 'none'}`);
-    }
-    if (updates.feedbackRounds !== undefined && updated.feedbackRounds !== existing.feedbackRounds) {
-      allChanges.push(`feedback rounds updated to ${updated.feedbackRounds ?? 'none'}`);
-    }
-    if (updates.lastFeedbackAt !== undefined && updated.lastFeedbackAt !== existing.lastFeedbackAt) {
-      const dateOnly = String(updated.lastFeedbackAt).split('T')[0];
-      allChanges.push(`feedback received on ${dateOnly}`);
-    }
-  } else if (existing.collaboration_type === 'recommendation') {
-    if (updates.portalUrl !== undefined && (updated as any).portal_url !== (existing as any).portal_url) {
-      allChanges.push(`portal URL ${(updated as any).portal_url ? 'updated' : 'removed'}`);
-    }
-    if (
-      updates.questionnaireCompleted !== undefined &&
-      (updated as any).questionnaire_completed !== (existing as any).questionnaire_completed
-    ) {
-      allChanges.push(
-        `questionnaire ${(updated as any).questionnaire_completed ? 'completed' : 'marked incomplete'}`
-      );
-    }
-  } else if (existing.collaboration_type === 'guidance') {
-    if (updates.sessionType !== undefined && (updated as any).session_type !== (existing as any).session_type) {
-      allChanges.push(`session type updated to ${(updated as any).session_type ?? 'none'}`);
-    }
-    if (updates.meetingUrl !== undefined && (updated as any).meeting_url !== (existing as any).meeting_url) {
-      allChanges.push(`meeting URL ${(updated as any).meeting_url ? 'updated' : 'removed'}`);
-    }
-    if (updates.scheduledFor !== undefined && (updated as any).scheduled_for !== (existing as any).scheduled_for) {
-      const dateOnly = String((updated as any).scheduled_for).split('T')[0];
-      allChanges.push(`scheduled for ${dateOnly}`);
-    }
-  }
-
-  // Create a single history record with ALL changes from this save operation
-  if (allChanges.length > 0) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📝 Creating update history:', {
-        collaborationId,
-        changes: allChanges,
-      });
-    }
-
-    const action = updates.status !== undefined && updates.status !== existing.status
-      ? updates.status
-      : 'updated';
-
-    const details = allChanges.join(', ');
-
-    const { error: historyError } = await supabase.from('collaboration_history').insert({
-      collaboration_id: collaborationId,
-      action,
-      details,
-    });
-
-    if (historyError) {
-      console.error('❌ Failed to create history entry:', {
-        error: historyError.message,
-        code: historyError.code,
-        collaborationId,
-        changes: allChanges,
-      });
-      throw historyError;
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Update history created successfully');
-    }
-  } else if (process.env.NODE_ENV === 'development') {
-    console.log('⏭️  No substantive changes detected, skipping history');
-  }
-
-  // Return updated collaboration
-  return updated;
+  return getCollaborationById(collaborationId, userId);
 };
 
 /**
@@ -708,53 +568,6 @@ export const deleteCollaboration = async (collaborationId: number, userId: numbe
   if (process.env.NODE_ENV === 'development' && data) {
     console.log('✅ Collaboration deleted:', { collaborationId, deletedRows: data.length });
   }
-};
-
-/**
- * Add history entry to a collaboration
- */
-export const addCollaborationHistory = async (
-  collaborationId: number,
-  userId: number,
-  historyData: {
-    action: string;
-    details?: string;
-  }
-) => {
-  // Verify ownership
-  await getCollaborationById(collaborationId, userId);
-
-  const { data, error } = await supabase
-    .from('collaboration_history')
-    .insert({
-      collaboration_id: collaborationId,
-      action: historyData.action,
-      details: historyData.details,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  return data;
-};
-
-/**
- * Get collaboration history
- */
-export const getCollaborationHistory = async (collaborationId: number, userId: number) => {
-  // Verify ownership
-  await getCollaborationById(collaborationId, userId);
-
-  const { data, error } = await supabase
-    .from('collaboration_history')
-    .select('*')
-    .eq('collaboration_id', collaborationId)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-
-  return data || [];
 };
 
 /**
@@ -882,12 +695,6 @@ export const sendCollaborationInvitation = async (
     throw new AppError(`Failed to update collaboration status: ${updateError.message}`, 500);
   }
 
-  // Log action in history
-  await addCollaborationHistory(collaborationId, userId, {
-    action: 'invited',
-    details: `Invitation sent to ${collaboration.collaborators.email_address}`,
-  });
-
   return invite;
 };
 
@@ -924,12 +731,6 @@ export const scheduleCollaborationInvitation = async (
   if (inviteError) {
     throw new AppError(`Failed to create invite record: ${inviteError.message}`, 500);
   }
-
-  // Log action in history
-  await addCollaborationHistory(collaborationId, userId, {
-    action: 'invite_scheduled',
-    details: `Invitation scheduled for ${new Date(scheduledFor).toLocaleString()}`,
-  });
 
   return invite;
 };
@@ -1016,12 +817,5 @@ export const resendCollaborationInvitation = async (
     throw new AppError(`Failed to update invite record: ${updateError.message}`, 500);
   }
 
-  // Log resend action in history
-  await addCollaborationHistory(collaborationId, userId, {
-    action: 'resend',
-    details: `Invitation resent to ${collaboration.collaborators.email_address}`,
-  });
-
   return updatedInvite;
 };
-

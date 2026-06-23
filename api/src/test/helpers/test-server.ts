@@ -10,6 +10,7 @@ import morgan from 'morgan';
 import request from 'supertest';
 import { vi } from 'vitest';
 import apiRoutes from '../../routes/index.js';
+import { corsOptions } from '../../config/cors.js';
 import { errorHandler } from '../../middleware/error-handler.js';
 
 /**
@@ -20,7 +21,7 @@ export const createTestApp = (): Express => {
 
   // Middleware (matching production setup)
   app.use(helmet());
-  app.use(cors());
+  app.use(cors(corsOptions));
   app.use(morgan('dev'));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

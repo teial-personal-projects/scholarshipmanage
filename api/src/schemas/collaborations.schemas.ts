@@ -76,9 +76,9 @@ export const createCollaborationInputSchema = z.object({
  */
 export const updateCollaborationInputSchema = z.object({
   status: collaborationStatusSchema,
-  awaitingActionFrom: actionOwnerSchema,
+  awaitingActionFrom: actionOwnerSchema.nullable(),
   awaitingActionType: z.string().max(255).trim().optional(),
-  nextActionDescription: z.string().max(1000).trim().optional(),
+  nextActionDescription: z.string().max(1000).trim().nullable().optional(),
   nextActionDueDate: dateSchema,
   notes: htmlNoteSchema,
   // Essay review specific fields
@@ -106,4 +106,3 @@ export const collaborationIdParamSchema = z.object({
  */
 export type CreateCollaborationInput = z.infer<typeof createCollaborationInputSchema>;
 export type UpdateCollaborationInput = z.infer<typeof updateCollaborationInputSchema>;
-

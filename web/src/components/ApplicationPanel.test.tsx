@@ -8,9 +8,9 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../services/api';
 
 import type {
   ApplicationResponse,
+  CollaborationResponse,
   CollaboratorResponse,
   EssayResponse,
-  RecommendationResponse,
 } from '@scholarshipmanage/shared';
 
 vi.mock('../services/api', () => ({
@@ -48,7 +48,7 @@ const essays: EssayResponse[] = [
   },
 ];
 
-const recommendations: RecommendationResponse[] = [];
+const collaborations: CollaborationResponse[] = [];
 const collaborators: CollaboratorResponse[] = [];
 const collaborator: CollaboratorResponse = {
   id: 7,
@@ -81,7 +81,7 @@ describe('ApplicationPanel', () => {
     vi.clearAllMocks();
     vi.mocked(apiGet).mockImplementation(async (endpoint) => {
       if (endpoint === '/applications/1/essays') return essays;
-      if (endpoint === '/applications/1/recommendations') return recommendations;
+      if (endpoint === '/applications/1/collaborations') return collaborations;
       if (endpoint === '/collaborators') return collaborators;
       throw new Error(`Unexpected API call: ${endpoint}`);
     });
@@ -194,7 +194,7 @@ describe('ApplicationPanel', () => {
         }
         return essays;
       }
-      if (endpoint === '/applications/1/recommendations') return recommendations;
+      if (endpoint === '/applications/1/collaborations') return collaborations;
       if (endpoint === '/collaborators') return collaborators;
       throw new Error(`Unexpected API call: ${endpoint}`);
     });
@@ -224,18 +224,22 @@ describe('ApplicationPanel', () => {
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith('/essays/10'));
   });
 
-  it('persists clearing an existing recommendation due date', async () => {
+  it('persists updating an existing recommendation collaboration status', async () => {
     const user = userEvent.setup();
     vi.mocked(apiGet).mockImplementation(async (endpoint) => {
       if (endpoint === '/applications/1/essays') return essays;
-      if (endpoint === '/applications/1/recommendations') {
+      if (endpoint === '/applications/1/collaborations') {
         return [{
           id: 20,
+          userId: 1,
           applicationId: 1,
-          recommenderId: collaborator.id,
-          status: 'Pending',
-          dueDate: '2026-06-25',
+          collaboratorId: collaborator.id,
+          collaborationType: 'recommendation',
+          status: 'pending',
+          awaitingActionFrom: 'student',
+          nextActionDueDate: '2026-06-25',
           createdAt: '2026-06-01T00:00:00Z',
+          updatedAt: '2026-06-01T00:00:00Z',
         }];
       }
       if (endpoint === '/collaborators') return [collaborator];
@@ -244,12 +248,15 @@ describe('ApplicationPanel', () => {
 
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
-    await user.clear(await screen.findByDisplayValue('2026-06-25'));
+    await screen.findByDisplayValue('2026-06-25');
+    await user.selectOptions(screen.getAllByLabelText('Status')[3], 'submitted');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    await waitFor(() => expect(apiPatch).toHaveBeenCalledWith('/recommendations/20', {
-      status: 'Pending',
-      dueDate: null,
+    await waitFor(() => expect(apiPatch).toHaveBeenCalledWith('/collaborations/20', {
+      status: 'submitted',
+      nextActionDueDate: '2026-06-25',
+      awaitingActionFrom: 'student',
+      nextActionDescription: 'Review submitted recommendation',
     }));
   });
 });

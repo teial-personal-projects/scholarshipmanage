@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useCollaboratorCollaborations } from '../hooks/useCollaborations';
 import type { CollaborationResponse } from '@scholarshipmanage/shared';
-import CollaborationHistory from '../components/CollaborationHistory';
 import { apiPatch } from '../services/api';
 import { formatDateNoTimezone, formatRelativeTimestamp } from '../utils/date';
 import { useToastHelpers } from '../utils/toast';
@@ -27,8 +26,6 @@ function getStatusLabel(status: string) {
 function CollaboratorDashboard() {
   const { data: collaborations = [], isLoading: loading, refetch } = useCollaboratorCollaborations();
   const { showSuccess, showError } = useToastHelpers();
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [historyCollaborationId, setHistoryCollaborationId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'recommendations' | 'essayReviews' | 'guidance'>('all');
 
@@ -52,8 +49,6 @@ function CollaboratorDashboard() {
   const recommendations = collaborations.filter(c => c.collaborationType === 'recommendation');
   const essayReviews = collaborations.filter(c => c.collaborationType === 'essayReview');
   const guidance = collaborations.filter(c => c.collaborationType === 'guidance');
-
-  const handleViewHistory = (id: number) => { setHistoryCollaborationId(id); setIsHistoryOpen(true); };
 
   const renderTable = (list: CollaborationResponse[]) => {
     if (list.length === 0) return <p className="text-gray-500 text-sm">No collaborations in this category</p>;
@@ -81,7 +76,6 @@ function CollaboratorDashboard() {
                   <td className="table-td text-gray-600 text-sm">{formatRelativeTimestamp(c.updatedAt, '-')}</td>
                   <td className="table-td">
                     <div className="flex gap-2">
-                      <button className="btn-outline text-xs px-2 py-1" onClick={() => handleViewHistory(c.id)}>View History</button>
                       {c.status === 'in_progress' && (
                         <button className="btn-primary text-xs px-2 py-1 bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsSubmitted(c.id)} disabled={submitting === c.id}>
                           {submitting === c.id ? 'Marking...' : 'Mark as Submitted'}
@@ -107,7 +101,6 @@ function CollaboratorDashboard() {
               {c.nextActionDueDate && <p className="text-sm text-gray-600">Due: {formatDateNoTimezone(c.nextActionDueDate)}</p>}
               <p className="text-xs text-gray-500">Updated: {formatRelativeTimestamp(c.updatedAt, '-')}</p>
               <div className="flex flex-col gap-2">
-                <button className="btn-outline text-xs py-1" onClick={() => handleViewHistory(c.id)}>View History</button>
                 {c.status === 'in_progress' && (
                   <button className="btn-primary text-xs py-1 bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsSubmitted(c.id)} disabled={submitting === c.id}>
                     {submitting === c.id ? 'Marking...' : 'Mark as Submitted'}
@@ -165,22 +158,6 @@ function CollaboratorDashboard() {
       </div>
 
       <div>{renderTable(tabData[activeTab])}</div>
-
-      {isHistoryOpen && (
-        <div className="modal-backdrop" onClick={() => setIsHistoryOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="font-semibold text-gray-900">Collaboration History</h3>
-              <button className="text-gray-400 hover:text-gray-600" onClick={() => setIsHistoryOpen(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              {historyCollaborationId && (
-                <CollaborationHistory collaborationId={historyCollaborationId} isOpen={isHistoryOpen} />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

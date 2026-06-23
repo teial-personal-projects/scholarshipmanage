@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { emailSchema, nameSchema } from '@scholarshipmanage/shared';
+import {
+  COLLABORATOR_RELATIONSHIPS,
+  emailSchema,
+  nameSchema,
+} from '@scholarshipmanage/shared';
 
 /**
  * Collaborator Validation Schemas
@@ -16,6 +20,11 @@ const collaboratorPhoneSchema = z
   .union([z.string().trim().max(50), z.null()])
   .optional();
 
+const collaboratorRelationshipSchema = z
+  .enum(COLLABORATOR_RELATIONSHIPS)
+  .nullable()
+  .optional();
+
 /**
  * Input Schema: Create Collaborator
  * Used for POST /api/collaborators
@@ -24,7 +33,7 @@ export const createCollaboratorInputSchema = z.object({
   firstName: nameSchema,
   lastName: nameSchema,
   emailAddress: emailSchema,
-  relationship: z.string().max(100).trim().optional(),
+  relationship: collaboratorRelationshipSchema,
   phoneNumber: collaboratorPhoneSchema,
 }).strict();
 
@@ -38,7 +47,7 @@ export const updateCollaboratorInputSchema = z.object({
   firstName: nameSchema.optional(),
   lastName: nameSchema.optional(),
   emailAddress: emailSchema.optional(),
-  relationship: z.string().max(100).trim().optional(),
+  relationship: collaboratorRelationshipSchema,
   phoneNumber: collaboratorPhoneSchema,
 }).strict();
 
@@ -66,4 +75,3 @@ export const collaboratorResponseSchema = z.object({
 export type CreateCollaboratorInput = z.infer<typeof createCollaboratorInputSchema>;
 export type UpdateCollaboratorInput = z.infer<typeof updateCollaboratorInputSchema>;
 export type CollaboratorResponse = z.infer<typeof collaboratorResponseSchema>;
-
