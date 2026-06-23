@@ -4,11 +4,12 @@ import { ExternalLink, Plus, Trash2, X } from 'lucide-react';
 import {
   essayProgress,
   type ApplicationResponse,
+  type CollaborationResponse,
+  type CollaborationStatus,
   type CollaboratorResponse,
   type Essay,
   type EssayResponse,
   type EssayStatus,
-  type RecommendationResponse,
   type TApplicationStatus,
   type TTargetType,
 } from '@scholarshipmanage/shared';
@@ -65,7 +66,7 @@ interface RecommendationDraft {
   localId: string;
   id?: number;
   recommenderId: number | '';
-  status: 'Pending' | 'Submitted';
+  status: CollaborationStatus;
   dueDate: string;
   isDeleted: boolean;
 }
@@ -140,13 +141,13 @@ function createBlankEssayDraft(): EssayDraft {
   };
 }
 
-function createRecommendationDraft(rec: RecommendationResponse): RecommendationDraft {
+function createRecommendationDraft(rec: CollaborationResponse): RecommendationDraft {
   return {
     localId: `rec-${rec.id}`,
     id: rec.id,
-    recommenderId: rec.recommenderId,
+    recommenderId: rec.collaboratorId,
     status: rec.status,
-    dueDate: toDateInputValue(rec.dueDate),
+    dueDate: toDateInputValue(rec.nextActionDueDate),
     isDeleted: false,
   };
 }
@@ -155,7 +156,7 @@ function createBlankRecommendationDraft(): RecommendationDraft {
   return {
     localId: `new-rec-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     recommenderId: '',
-    status: 'Pending',
+    status: 'pending',
     dueDate: '',
     isDeleted: false,
   };
@@ -235,14 +236,16 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
 
     Promise.all([
       apiGet<EssayResponse[]>(`/applications/${application.id}/essays`),
-      apiGet<RecommendationResponse[]>(`/applications/${application.id}/recommendations`),
+      apiGet<CollaborationResponse[]>(`/applications/${application.id}/collaborations`),
       apiGet<CollaboratorResponse[]>('/collaborators'),
-    ]).then(([essays, recommendations, collabs]) => {
+    ]).then(([essays, collaborations, collabs]) => {
       if (!isMounted) return;
       const nextEssayDrafts = (essays ?? []).map(createEssayDraft);
       setEssayDrafts(nextEssayDrafts);
       setSavedEssayDrafts(nextEssayDrafts);
-      const nextRecDrafts = (recommendations ?? []).map(createRecommendationDraft);
+      const nextRecDrafts = (collaborations ?? [])
+        .filter((collaboration) => collaboration.collaborationType === 'recommendation')
+        .map(createRecommendationDraft);
       setRecommendationDrafts(nextRecDrafts);
       setSavedRecommendationDrafts(nextRecDrafts);
       setCollaborators(collabs ?? []);
@@ -355,6 +358,15 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
       return;
     }
 
+    const recommendationWithoutDueDate = recommendationDrafts.some((rec) =>
+      !rec.isDeleted && rec.recommenderId && !rec.dueDate
+    );
+
+    if (recommendationWithoutDueDate) {
+      showError('Validation Error', 'Due date is required for recommendation collaborations', 3000);
+      return;
+    }
+
     let shouldResetSaving = true;
 
     try {
@@ -392,34 +404,50 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
 
       await Promise.all(recommendationDrafts.map(async (rec) => {
         if (rec.isDeleted) {
-          if (rec.id) await apiDelete(`/recommendations/${rec.id}`);
+          if (rec.id) await apiDelete(`/collaborations/${rec.id}`);
           return;
         }
         if (!rec.recommenderId) return;
         if (!rec.id) {
-          await apiPost<RecommendationResponse>('/recommendations', {
+          await apiPost<CollaborationResponse>('/collaborations', {
             applicationId: application.id,
-            recommenderId: rec.recommenderId,
+            collaboratorId: rec.recommenderId,
+            collaborationType: 'recommendation',
             status: rec.status,
-            dueDate: rec.dueDate || undefined,
+            awaitingActionFrom: 'student',
+            awaitingActionType: rec.status === 'pending' ? 'send_invite' : undefined,
+            nextActionDescription: rec.status === 'pending'
+              ? 'Send invitation to collaborator'
+              : undefined,
+            nextActionDueDate: rec.dueDate,
           });
           return;
         }
         const savedRec = savedRecommendationDrafts.find((r) => r.id === rec.id);
         if (JSON.stringify(rec) !== JSON.stringify(savedRec)) {
-          await apiPatch<RecommendationResponse>(`/recommendations/${rec.id}`, {
+          await apiPatch<CollaborationResponse>(`/collaborations/${rec.id}`, {
             status: rec.status,
-            dueDate: rec.dueDate || null,
+            nextActionDueDate: rec.dueDate,
+            ...(rec.status === 'submitted' && {
+              awaitingActionFrom: 'student',
+              nextActionDescription: 'Review submitted recommendation',
+            }),
+            ...(rec.status === 'completed' && {
+              awaitingActionFrom: null,
+              nextActionDescription: null,
+            }),
           });
         }
       }));
 
       const [refreshedEssays, refreshedRecs] = await Promise.all([
         apiGet<EssayResponse[]>(`/applications/${application.id}/essays`),
-        apiGet<RecommendationResponse[]>(`/applications/${application.id}/recommendations`),
+        apiGet<CollaborationResponse[]>(`/applications/${application.id}/collaborations`),
       ]);
       const nextEssayDrafts = (refreshedEssays ?? []).map(createEssayDraft);
-      const nextRecDrafts = (refreshedRecs ?? []).map(createRecommendationDraft);
+      const nextRecDrafts = (refreshedRecs ?? [])
+        .filter((collaboration) => collaboration.collaborationType === 'recommendation')
+        .map(createRecommendationDraft);
       setSavedDraft(draft);
       setEssayDrafts(nextEssayDrafts);
       setSavedEssayDrafts(nextEssayDrafts);
@@ -655,10 +683,14 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
                             id={statusInputId}
                             className="field-select"
                             value={rec.status}
-                            onChange={(e) => updateRecommendationDraft(rec.localId, 'status', e.target.value as 'Pending' | 'Submitted')}
+                            onChange={(e) => updateRecommendationDraft(rec.localId, 'status', e.target.value as CollaborationStatus)}
                           >
-                            <option value="Pending">Pending</option>
-                            <option value="Submitted">Submitted</option>
+                            <option value="pending">Pending</option>
+                            <option value="invited">Invited</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="submitted">Submitted</option>
+                            <option value="completed">Completed</option>
+                            <option value="declined">Declined</option>
                           </select>
                         </div>
                         <div>

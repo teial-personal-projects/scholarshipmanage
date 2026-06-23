@@ -347,27 +347,6 @@ async function processCollaborationReminders(): Promise<number> {
               // Don't fail the reminder process if updating timestamp fails
             }
 
-            // Log reminder in collaboration_history table
-            try {
-              const isOverdue = daysDiff < 0;
-              const details = isOverdue
-                ? `Overdue reminder sent (${Math.abs(daysDiff)} days overdue). Email ID: ${emailSent}`
-                : `Due soon reminder sent (${daysDiff} days remaining). Email ID: ${emailSent}`;
-
-              await supabase
-                .from('collaboration_history')
-                .insert({
-                  collaboration_id: collab.id,
-                  action: 'reminder_sent',
-                  details,
-                });
-
-              console.log(`[reminders.service] Logged reminder to collaboration_history for collaboration ${collab.id}`);
-            } catch (historyError) {
-              console.error(`[reminders.service] Failed to log reminder to collaboration_history:`, historyError);
-              // Don't fail the reminder process if logging fails
-            }
-
             count++;
           } else {
             console.warn(

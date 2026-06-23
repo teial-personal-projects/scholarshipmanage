@@ -53,7 +53,6 @@ vi.mock('../services/collaborations.service.js', () => ({
   createCollaboration: vi.fn(),
   updateCollaboration: vi.fn(),
   deleteCollaboration: vi.fn(),
-  getCollaborationHistory: vi.fn(),
 }));
 
 describe('Collaborations Routes', () => {
@@ -313,48 +312,6 @@ describe('Collaborations Routes', () => {
     });
   });
 
-  describe('GET /api/collaborations/:id/history', () => {
-    it('should return collaboration history when authenticated and owner', async () => {
-      await setupAuth();
-      const collaborationsService = await import('../services/collaborations.service.js');
-
-      const mockHistory = [
-        {
-          id: 1,
-          collaboration_id: 1,
-          status: 'pending',
-          notes: 'Created',
-          created_at: '2024-01-10T00:00:00Z',
-        },
-        {
-          id: 2,
-          collaboration_id: 1,
-          status: 'invited',
-          notes: 'Invitation sent',
-          created_at: '2024-01-12T00:00:00Z',
-        },
-      ];
-
-      vi.mocked(collaborationsService.getCollaborationById).mockResolvedValue(
-        mockCollaborations.recommendationPending
-      );
-      vi.mocked(collaborationsService.getCollaborationHistory).mockResolvedValue(mockHistory);
-
-      const response = await authenticatedRequest(agent, 'valid-token').get(
-        '/api/collaborations/1/history'
-      );
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-    });
-
-    it('should return 401 when not authenticated', async () => {
-      const response = await agent.get('/api/collaborations/1/history');
-
-      expect(response.status).toBe(401);
-    });
-  });
-
   describe('DELETE /api/collaborations/:id', () => {
     it('should delete collaboration when authenticated and owner', async () => {
       await setupAuth();
@@ -390,4 +347,3 @@ describe('Collaborations Routes', () => {
     });
   });
 });
-

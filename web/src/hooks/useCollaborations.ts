@@ -9,7 +9,6 @@ export const collaborationKeys = {
   list: (filters: Record<string, unknown>) => [...collaborationKeys.lists(), filters] as const,
   details: () => [...collaborationKeys.all, 'detail'] as const,
   detail: (id: number) => [...collaborationKeys.details(), id] as const,
-  history: (id: number) => [...collaborationKeys.all, 'history', id] as const,
   byApplication: (applicationId: number) => [...collaborationKeys.all, 'application', applicationId] as const,
   collaboratorDashboard: () => [...collaborationKeys.all, 'collaborator-dashboard'] as const,
 };
@@ -48,15 +47,6 @@ export function useCollaboration(collaborationId: number | null) {
   });
 }
 
-// Fetch collaboration history
-export function useCollaborationHistory(collaborationId: number | null) {
-  return useQuery({
-    queryKey: collaborationKeys.history(collaborationId!),
-    queryFn: () => apiGet<any[]>(`/collaborations/${collaborationId}/history`),
-    enabled: !!collaborationId,
-  });
-}
-
 // Create collaboration mutation
 export function useCreateCollaboration() {
   const queryClient = useQueryClient();
@@ -89,11 +79,6 @@ export function useUpdateCollaboration() {
       // Invalidate the specific collaboration
       queryClient.invalidateQueries({
         queryKey: collaborationKeys.detail(updatedCollaboration.id)
-      });
-
-      // Invalidate the collaboration history
-      queryClient.invalidateQueries({
-        queryKey: collaborationKeys.history(updatedCollaboration.id)
       });
 
       // Invalidate all collaboration lists
@@ -135,10 +120,6 @@ export function useSendInvitation() {
         queryKey: collaborationKeys.detail(collaborationId)
       });
 
-      // Invalidate history to show the new "invited" action
-      queryClient.invalidateQueries({
-        queryKey: collaborationKeys.history(collaborationId)
-      });
     },
   });
 }
@@ -156,10 +137,6 @@ export function useResendInvitation() {
         queryKey: collaborationKeys.detail(collaborationId)
       });
 
-      // Invalidate history to show the new "resent" action
-      queryClient.invalidateQueries({
-        queryKey: collaborationKeys.history(collaborationId)
-      });
     },
   });
 }

@@ -180,77 +180,6 @@ export const deleteCollaboration = asyncHandler(async (req: Request, res: Respon
 });
 
 /**
- * POST /api/collaborations/:id/history
- * Add history entry to collaboration
- */
-export const addCollaborationHistory = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    httpResponse.unauthorized(res);
-    return;
-  }
-
-  // Validate route parameter
-  const paramResult = idParamSchema.safeParse(req.params);
-  if (!paramResult.success) {
-    httpResponse.validationError(res, 'Invalid collaboration ID');
-    return;
-  }
-
-  const collaborationId = paramResult.data.id;
-
-  const { action, details } = req.body;
-
-  if (!action) {
-    httpResponse.validationError(res, 'action is required');
-    return;
-  }
-
-  const historyEntry = await collaborationsService.addCollaborationHistory(
-    collaborationId,
-    req.user.userId,
-    {
-      action,
-      details,
-    }
-  );
-
-  // Convert to camelCase
-  const response = toCamelCase(historyEntry);
-
-  httpResponse.created(res, response);
-});
-
-/**
- * GET /api/collaborations/:id/history
- * Get collaboration history
- */
-export const getCollaborationHistory = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    httpResponse.unauthorized(res);
-    return;
-  }
-
-  // Validate route parameter
-  const paramResult = idParamSchema.safeParse(req.params);
-  if (!paramResult.success) {
-    httpResponse.validationError(res, 'Invalid collaboration ID');
-    return;
-  }
-
-  const collaborationId = paramResult.data.id;
-
-  const history = await collaborationsService.getCollaborationHistory(
-    collaborationId,
-    req.user.userId
-  );
-
-  // Convert to camelCase
-  const response = history.map((entry) => toCamelCase(entry));
-
-  res.json(response);
-});
-
-/**
  * POST /api/collaborations/:id/invite
  * Send collaboration invitation now
  */
@@ -360,4 +289,3 @@ export const resendInvite = asyncHandler(async (req: Request, res: Response) => 
 
   res.json(response);
 });
-
