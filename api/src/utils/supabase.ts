@@ -4,6 +4,14 @@ import {
   isDbErrorCode,
 } from '../constants/db-errors.js';
 
+interface UserProfileRow {
+  id: number;
+  auth_user_id: string;
+  email_address: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+
 /**
  * Helper to get user profile by auth user ID
  */
@@ -14,8 +22,50 @@ export const getUserProfileByAuthId = async (authUserId: string) => {
     .eq('auth_user_id', authUserId)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (isDbErrorCode(error, DB_ERROR_CODES.NO_ROWS_FOUND)) return null;
+    throw error;
+  }
   return data;
+};
+
+/**
+ * Create a missing profile for an already-validated Supabase auth user.
+ */
+export const createUserProfileForAuthUser = async (
+  authUserId: string,
+  emailAddress: string
+): Promise<UserProfileRow> => {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .insert({
+      auth_user_id: authUserId,
+      email_address: emailAddress,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (isDbErrorCode(error, DB_ERROR_CODES.UNIQUE_VIOLATION)) {
+      const profile = await getUserProfileByAuthId(authUserId);
+      if (profile) return profile as UserProfileRow;
+    }
+
+    throw error;
+  }
+
+  const { error: roleError } = await supabase
+    .from('user_roles')
+    .insert({
+      user_id: data.id,
+      role: 'student',
+    });
+
+  if (roleError && !isDbErrorCode(roleError, DB_ERROR_CODES.UNIQUE_VIOLATION)) {
+    throw roleError;
+  }
+
+  return data as UserProfileRow;
 };
 
 /**

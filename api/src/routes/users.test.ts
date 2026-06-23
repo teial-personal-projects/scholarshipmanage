@@ -28,6 +28,7 @@ vi.mock('../config/supabase.js', () => ({
 // Mock utils
 vi.mock('../utils/supabase.js', () => ({
   getUserProfileByAuthId: vi.fn(),
+  createUserProfileForAuthUser: vi.fn(),
   getUserProfileById: vi.fn(),
 }));
 
@@ -42,6 +43,7 @@ vi.mock('@scholarshipmanage/shared', async () => {
   urlSchema: z.string().url(),
   htmlNoteSchema: z.string().max(5000).optional(),
   DONE_APPLICATION_STATUSES: ['Submitted', 'Awarded', 'Not Awarded'],
+  COLLABORATOR_RELATIONSHIPS: ['Teacher', 'Professor', 'Counselor'],
   };
 });
 
@@ -88,6 +90,37 @@ describe('Users Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('email_address');
+    });
+
+    it('should create a missing profile for a valid Supabase user', async () => {
+      const { supabase } = await import('../config/supabase.js');
+      const {
+        createUserProfileForAuthUser,
+        getUserProfileByAuthId,
+      } = await import('../utils/supabase.js');
+      const usersService = await import('../services/users.service.js');
+      const restoredProfile = {
+        ...mockUsers.student1,
+        id: 22,
+        auth_user_id: 'auth-user-22',
+        email_address: 'restored@example.com',
+      };
+
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(
+        mockSupabaseAuth.getUser({ id: 'auth-user-22', email: 'restored@example.com' })
+      );
+      vi.mocked(getUserProfileByAuthId).mockResolvedValue(null);
+      vi.mocked(createUserProfileForAuthUser).mockResolvedValue(restoredProfile);
+      vi.mocked(usersService.getUserProfile).mockResolvedValue({
+        ...restoredProfile,
+        searchPreferences: null,
+      });
+
+      const response = await authenticatedRequest(agent, 'valid-token').get('/api/users/me');
+
+      expect(response.status).toBe(200);
+      expect(createUserProfileForAuthUser).toHaveBeenCalledWith('auth-user-22', 'restored@example.com');
+      expect(usersService.getUserProfile).toHaveBeenCalledWith(restoredProfile.id);
     });
 
     it('should return 401 when not authenticated', async () => {
@@ -194,4 +227,3 @@ describe('Users Routes', () => {
   });
 
 });
-

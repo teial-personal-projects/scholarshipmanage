@@ -28,6 +28,7 @@ vi.mock('../config/supabase.js', () => ({
 // Mock utils
 vi.mock('../utils/supabase.js', () => ({
   getUserProfileByAuthId: vi.fn(),
+  createUserProfileForAuthUser: vi.fn(),
 }));
 
 // Mock shared package
@@ -41,6 +42,7 @@ vi.mock('@scholarshipmanage/shared', async () => {
   urlSchema: z.string().url(),
   htmlNoteSchema: z.string().max(5000).optional(),
   DONE_APPLICATION_STATUSES: ['Submitted', 'Awarded', 'Not Awarded'],
+  COLLABORATOR_RELATIONSHIPS: ['Teacher', 'Professor', 'Counselor'],
   };
 });
 
@@ -157,6 +159,24 @@ describe('Auth Routes', () => {
       });
 
       expect([400, 422]).toContain(response.status);
+    });
+
+    it('should return 409 when Supabase reports the email is already registered', async () => {
+      const authService = await import('../services/auth.service.js');
+
+      vi.mocked(authService.register).mockRejectedValue(
+        new Error('A user with this email address has already been registered')
+      );
+
+      const response = await agent.post('/api/auth/register').send({
+        email: 'existing@example.com',
+        password: 'SecurePassword123!',
+        firstName: 'Existing',
+        lastName: 'User',
+      });
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe('Email is already registered');
     });
   });
 
@@ -400,4 +420,3 @@ describe('Auth Routes', () => {
     });
   });
 });
-
