@@ -40,40 +40,78 @@ export const RateLimitWindows = {
 /**
  * Request Limit Constants
  */
+const DEFAULT_REQUEST_LIMITS = {
+  AUTH_LOGIN: 5,
+  AUTH_REGISTER: 3,
+  AUTH_PASSWORD_RESET: 3,
+  AUTH_EMAIL_VERIFY: 5,
+  WRITE_OPERATIONS: 30,
+  DELETE_OPERATIONS: 10,
+  READ_OPERATIONS: 100,
+  LIST_OPERATIONS: 50,
+  GENERAL_API: 150,
+  PUBLIC_ENDPOINTS: 60,
+  WEBHOOK: 100,
+} as const;
+
+const getRequestLimit = (
+  envName: string,
+  fallback: number,
+): number => {
+  const rawValue = process.env[envName];
+  if (rawValue === undefined || rawValue.trim() === '') {
+    return fallback;
+  }
+
+  const parsedValue = Number(rawValue);
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    console.warn(`[rate-limit] Ignoring invalid ${envName}="${rawValue}". Using fallback ${fallback}.`);
+    return fallback;
+  }
+
+  return parsedValue;
+};
+
 export const RequestLimits = {
   // Authentication endpoints (strictest)
   /** Login attempts per 15 minutes */
-  AUTH_LOGIN: 5,
+  AUTH_LOGIN: getRequestLimit('RATE_LIMIT_AUTH_LOGIN', DEFAULT_REQUEST_LIMITS.AUTH_LOGIN),
 
   /** Registration attempts per hour */
-  AUTH_REGISTER: 3,
+  AUTH_REGISTER: getRequestLimit('RATE_LIMIT_AUTH_REGISTER', DEFAULT_REQUEST_LIMITS.AUTH_REGISTER),
 
   /** Password reset requests per hour */
-  AUTH_PASSWORD_RESET: 3,
+  AUTH_PASSWORD_RESET: getRequestLimit(
+    'RATE_LIMIT_AUTH_PASSWORD_RESET',
+    DEFAULT_REQUEST_LIMITS.AUTH_PASSWORD_RESET,
+  ),
 
   /** Email verification requests per hour */
-  AUTH_EMAIL_VERIFY: 5,
+  AUTH_EMAIL_VERIFY: getRequestLimit('RATE_LIMIT_AUTH_EMAIL_VERIFY', DEFAULT_REQUEST_LIMITS.AUTH_EMAIL_VERIFY),
 
   // Write operations (strict)
   /** Create/update operations per 15 minutes */
-  WRITE_OPERATIONS: 30,
+  WRITE_OPERATIONS: getRequestLimit('RATE_LIMIT_WRITE_OPERATIONS', DEFAULT_REQUEST_LIMITS.WRITE_OPERATIONS),
 
   /** Delete operations per 15 minutes */
-  DELETE_OPERATIONS: 10,
+  DELETE_OPERATIONS: getRequestLimit('RATE_LIMIT_DELETE_OPERATIONS', DEFAULT_REQUEST_LIMITS.DELETE_OPERATIONS),
 
   // Read operations (moderate)
   /** Read operations per 15 minutes */
-  READ_OPERATIONS: 100,
+  READ_OPERATIONS: getRequestLimit('RATE_LIMIT_READ_OPERATIONS', DEFAULT_REQUEST_LIMITS.READ_OPERATIONS),
 
   /** List/search operations per 15 minutes */
-  LIST_OPERATIONS: 50,
+  LIST_OPERATIONS: getRequestLimit('RATE_LIMIT_LIST_OPERATIONS', DEFAULT_REQUEST_LIMITS.LIST_OPERATIONS),
 
   // General API access (lenient)
   /** General API requests per 15 minutes */
-  GENERAL_API: 150,
+  GENERAL_API: getRequestLimit('RATE_LIMIT_GENERAL_API', DEFAULT_REQUEST_LIMITS.GENERAL_API),
 
   /** Public endpoints per 15 minutes */
-  PUBLIC_ENDPOINTS: 60,
+  PUBLIC_ENDPOINTS: getRequestLimit('RATE_LIMIT_PUBLIC_ENDPOINTS', DEFAULT_REQUEST_LIMITS.PUBLIC_ENDPOINTS),
+
+  /** Webhook requests per 15 minutes */
+  WEBHOOK: getRequestLimit('RATE_LIMIT_WEBHOOK', DEFAULT_REQUEST_LIMITS.WEBHOOK),
 } as const;
 
 /**
@@ -301,7 +339,7 @@ export const publicEndpointLimiter = rateLimit({
 export const webhookLimiter = rateLimit({
   ...createBaseConfig(),
   windowMs: RateLimitWindows.FIFTEEN_MINUTES,
-  max: 100,
+  max: RequestLimits.WEBHOOK,
   message: 'Webhook rate limit exceeded',
   // Use custom key generator for webhooks (by IP or webhook signature)
   keyGenerator: (req) => {
