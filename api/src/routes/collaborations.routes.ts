@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/role.js';
 import * as collaborationsController from '../controllers/collaborations.controller.js';
+import { writeRateLimiters } from '../config/rate-limit.js';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.get('/:id', collaborationsController.getCollaboration);
 router.patch('/:id', collaborationsController.updateCollaboration);
 
 // DELETE /api/collaborations/:id - Delete collaboration
-router.delete('/:id', collaborationsController.deleteCollaboration);
+router.delete('/:id', writeRateLimiters.delete, collaborationsController.deleteCollaboration);
 
 // POST /api/collaborations/:id/invite - Send invitation now
 router.post('/:id/invite', collaborationsController.sendInvite);

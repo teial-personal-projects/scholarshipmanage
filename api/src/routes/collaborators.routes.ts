@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/role.js';
 import * as collaboratorsController from '../controllers/collaborators.controller.js';
+import { writeRateLimiters } from '../config/rate-limit.js';
 
 const router = Router();
 
@@ -22,7 +23,6 @@ router.get('/:id', collaboratorsController.getCollaborator);
 router.patch('/:id', collaboratorsController.updateCollaborator);
 
 // DELETE /api/collaborators/:id - Delete collaborator
-router.delete('/:id', collaboratorsController.deleteCollaborator);
+router.delete('/:id', writeRateLimiters.delete, collaboratorsController.deleteCollaborator);
 
 export default router;
-

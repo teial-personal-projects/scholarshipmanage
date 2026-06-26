@@ -57,7 +57,7 @@ router.get('/:id', readRateLimiters.read, applicationsController.getApplication)
 router.patch('/:id', writeRateLimiters.createUpdate, applicationsController.updateApplication);
 
 // DELETE /api/applications/:id - Delete application
-// Rate limit: 10 requests per 15 minutes
+// Rate limit: 60 requests per 15 minutes by default
 router.delete('/:id', writeRateLimiters.delete, applicationsController.deleteApplication);
 
 export default router;

@@ -3,6 +3,7 @@ import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/role.js';
 import * as essaysController from '../controllers/essays.controller.js';
 import * as collaborationsController from '../controllers/collaborations.controller.js';
+import { writeRateLimiters } from '../config/rate-limit.js';
 
 const router = Router();
 
@@ -21,7 +22,6 @@ router.get('/:id', essaysController.getEssay);
 router.patch('/:id', essaysController.updateEssay);
 
 // DELETE /api/essays/:id - Delete essay
-router.delete('/:id', essaysController.deleteEssay);
+router.delete('/:id', writeRateLimiters.delete, essaysController.deleteEssay);
 
 export default router;
-
