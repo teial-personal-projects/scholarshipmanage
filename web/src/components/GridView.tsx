@@ -6,6 +6,7 @@ import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/
 import { getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { formatMinimumAwardAmount } from '../utils/award';
+import { getApplicationOrganizationLabel } from '../utils/applicationOrganization';
 import { getPendingWorkChips } from '../utils/pendingWork';
 import { useToastHelpers } from '../utils/toast';
 
@@ -281,7 +282,14 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
       ) : (
         <>
           <div className="hidden md:block overflow-x-auto">
-            <table className="table-root">
+            <table className="table-root table-fixed">
+              <colgroup>
+                <col className="w-[43%]" />
+                <col className="w-[13%]" />
+                <col className="w-[13%]" />
+                <col className="w-[12%]" />
+                <col className="w-[19%]" />
+              </colgroup>
               <thead>
                 <tr className="table-header-row">
                   {GRID_COLUMNS.map((column) => {
@@ -310,16 +318,30 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                 {pageApplications.map((application) => {
                   const urgency = getDeadlineUrgency(application.dueDate, application.status);
                   const pendingWorkChips = getPendingWorkChips(application);
+                  const currentAction = getCurrentAction(application);
+                  const organizationLabel = getApplicationOrganizationLabel(application);
 
                   return (
                     <tr
                       key={application.id}
-                      className={`border-b border-gray-100 cursor-pointer transition-colors ${urgencyRowStyles[urgency]}`}
+                      className={`h-14 border-b border-gray-100 cursor-pointer transition-colors ${urgencyRowStyles[urgency]}`}
                       onClick={() => onApplicationOpen(application)}
                     >
-                      <td className="px-4 py-2 font-medium text-brand-700">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="block min-w-0 truncate">{application.scholarshipName}</span>
+                      <td className="px-4 py-1.5 font-medium text-brand-700">
+                        <div className="flex min-w-0 items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <span className="block truncate" title={application.scholarshipName}>
+                              {application.scholarshipName}
+                            </span>
+                            {organizationLabel && (
+                              <span
+                                className="block truncate text-[11px] font-medium leading-3 text-gray-500"
+                                title={organizationLabel}
+                              >
+                                {organizationLabel}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
@@ -346,17 +368,17 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-1.5">
                         <span className={STATUS_BADGE[application.status] ?? 'badge badge-gray'}>
                           {application.status}
                         </span>
                       </td>
-                      <td className={`px-4 py-2 ${urgencyDueDateStyles[urgency]}`}>
+                      <td className={`px-4 py-1.5 ${urgencyDueDateStyles[urgency]}`}>
                         {formatDate(application.dueDate)}
                       </td>
-                      <td className="px-4 py-2 text-gray-700">{formatMinimumAwardAmount(application)}</td>
-                      <td className="px-4 py-2 text-gray-700 max-w-xs">
-                        <span className="line-clamp-1">{getCurrentAction(application)}</span>
+                      <td className="px-4 py-1.5 text-gray-700">{formatMinimumAwardAmount(application)}</td>
+                      <td className="px-4 py-1.5 text-gray-700">
+                        <span className="block truncate" title={currentAction}>{currentAction}</span>
                         {pendingWorkChips.length > 0 && (
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {pendingWorkChips.map((chip) => (
@@ -378,6 +400,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
             {pageApplications.map((application) => {
               const urgency = getDeadlineUrgency(application.dueDate, application.status);
               const pendingWorkChips = getPendingWorkChips(application);
+              const organizationLabel = getApplicationOrganizationLabel(application);
 
               return (
                 <div
@@ -392,9 +415,11 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-bold text-brand-700 truncate">{application.scholarshipName}</p>
-                        <p className="text-xs text-gray-600 mt-0.5 truncate">
-                          {application.organization || 'No organization set'}
-                        </p>
+                        {organizationLabel && (
+                          <p className="truncate text-[11px] font-medium leading-3 text-gray-500">
+                            {organizationLabel}
+                          </p>
+                        )}
                       </div>
                       <span className={STATUS_BADGE[application.status] ?? 'badge badge-gray'}>
                         {application.status}

@@ -13,6 +13,7 @@ import {
 import { parseDateOnlyToLocalDate } from '../utils/date';
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { formatMinimumAwardAmount } from '../utils/award';
+import { getApplicationOrganizationLabel } from '../utils/applicationOrganization';
 import { getPendingWorkChips } from '../utils/pendingWork';
 import { useToastHelpers } from '../utils/toast';
 
@@ -28,6 +29,15 @@ const urgencyStyles: Record<DeadlineUrgency, string> = {
   warning: 'border-l-yellow-400',
   normal: 'border-l-gray-200',
 };
+
+const urgencySurfaceStyles: Record<DeadlineUrgency, string> = {
+  overdue: 'from-red-50 via-red-50/45',
+  critical: 'from-orange-50 via-orange-50/45',
+  warning: 'from-yellow-50 via-yellow-50/45',
+  normal: 'from-gray-50 via-gray-50/45',
+};
+
+const NOT_STARTED_SURFACE_STYLE = 'from-blue-50 via-blue-50/45';
 const FAR_FUTURE_DEADLINE_DAYS = 100;
 
 function getDeadlineBorderStyle(application: ApplicationResponse): string {
@@ -35,6 +45,13 @@ function getDeadlineBorderStyle(application: ApplicationResponse): string {
   if (urgency !== 'normal') return urgencyStyles[urgency];
   if (application.status === 'Not Started') return 'border-l-blue-500';
   return urgencyStyles.normal;
+}
+
+function getDeadlineSurfaceStyle(application: ApplicationResponse): string {
+  const urgency = getDeadlineUrgency(application.dueDate, application.status);
+  if (urgency !== 'normal') return urgencySurfaceStyles[urgency];
+  if (application.status === 'Not Started') return NOT_STARTED_SURFACE_STYLE;
+  return urgencySurfaceStyles.normal;
 }
 
 function formatDueDate(dueDate: string | null | undefined): string | null {
@@ -49,6 +66,7 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
   const { showError } = useToastHelpers();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const deadlineBorderStyle = getDeadlineBorderStyle(application);
+  const deadlineSurfaceStyle = getDeadlineSurfaceStyle(application);
   const daysRemaining = getDeadlineDaysRemaining(application.dueDate);
   const hasFarFutureDeadline = daysRemaining !== null && daysRemaining > FAR_FUTURE_DEADLINE_DAYS;
   const urgencyLabel = hasFarFutureDeadline ? null : getDeadlineBadgeLabel(application.dueDate, application.status);
@@ -58,6 +76,7 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
   const isWaiting = nextAction.kind === 'waiting';
   const pendingWorkChips = hasFarFutureDeadline ? [] : getPendingWorkChips(application);
   const minimumAwardAmount = formatMinimumAwardAmount(application);
+  const organizationLabel = getApplicationOrganizationLabel(application);
 
   const handleOpen = () => {
     if (onOpen) { onOpen(application); return; }
@@ -78,12 +97,12 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
   };
 
   return (
-    <div className={`relative h-full min-h-28 w-full border border-gray-200 border-l-4 rounded-lg bg-white shadow-sm ${deadlineBorderStyle} ${isWaiting ? 'opacity-75' : ''}`}>
+    <div className={`relative h-full min-h-28 w-full overflow-hidden rounded-lg border border-gray-200 border-l-4 bg-gradient-to-r to-white shadow-sm ${deadlineBorderStyle} ${deadlineSurfaceStyle} ${isWaiting ? 'opacity-75' : ''}`}>
       {/* Full-card click overlay */}
       <button
         type="button"
         aria-label={`Edit ${application.scholarshipName}`}
-        className="absolute inset-0 w-full h-full rounded-lg hover:bg-gray-50/80 transition-colors"
+        className="absolute inset-0 w-full h-full rounded-lg hover:bg-white/35 transition-colors"
         onClick={handleOpen}
       />
 
@@ -92,8 +111,8 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 truncate">{application.scholarshipName}</p>
-            {application.organization && (
-              <p className="text-xs text-gray-600 truncate">{application.organization}</p>
+            {organizationLabel && (
+              <p className="truncate text-[11px] font-medium leading-3 text-gray-500">{organizationLabel}</p>
             )}
             <p className="text-xs font-semibold text-brand-700">{minimumAwardAmount}</p>
           </div>
