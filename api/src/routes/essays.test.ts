@@ -185,6 +185,41 @@ describe('Essays Routes', () => {
       expect(essaysService.createEssay).toHaveBeenCalledWith(1, mockUsers.student1.id, newEssay);
     });
 
+    it('should create new essay without a document URL', async () => {
+      await setupAuth();
+      const applicationsService = await import('../services/applications.service.js');
+      const essaysService = await import('../services/essays.service.js');
+
+      const newEssay = {
+        theme: 'Write about your goals',
+        essayLink: null,
+        status: 'not_started',
+      };
+
+      const createdEssay = {
+        ...mockEssays.draft,
+        theme: 'Write about your goals',
+        essay_link: null,
+        status: 'not_started',
+        id: 11,
+        application_id: 1,
+        user_id: 1,
+      };
+
+      vi.mocked(applicationsService.getApplicationById).mockResolvedValue(
+        mockApplications.inProgress
+      );
+      vi.mocked(essaysService.createEssay).mockResolvedValue(createdEssay);
+
+      const response = await authenticatedRequest(agent, 'valid-token')
+        .post('/api/applications/1/essays')
+        .send(newEssay);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('id');
+      expect(essaysService.createEssay).toHaveBeenCalledWith(1, mockUsers.student1.id, newEssay);
+    });
+
     it('should return 400 for invalid input', async () => {
       await setupAuth();
       const applicationsService = await import('../services/applications.service.js');

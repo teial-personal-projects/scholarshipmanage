@@ -70,7 +70,7 @@ export const getEssayById = async (essayId: number, userId: number) => {
 export const createEssay = async (applicationId: number, userId: number, essayData: {
   theme?: string;
   units?: string;
-  essayLink?: string;
+  essayLink?: string | null;
   wordCount?: number;
   status?: EssayStatus;
 }) => {
@@ -114,7 +114,7 @@ export const createEssay = async (applicationId: number, userId: number, essayDa
 export const updateEssay = async (essayId: number, userId: number, essayData: {
   theme?: string;
   units?: string;
-  essayLink?: string;
+  essayLink?: string | null;
   wordCount?: number;
   status?: EssayStatus;
 }) => {
