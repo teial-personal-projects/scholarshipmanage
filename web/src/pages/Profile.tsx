@@ -11,10 +11,7 @@ function Profile() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [applicationRemindersEnabled, setApplicationRemindersEnabled] = useState(true);
-  const [collaborationRemindersEnabled, setCollaborationRemindersEnabled] = useState(true);
   const [personalOpen, setPersonalOpen] = useState(true);
-  const [notificationsOpen, setNotificationsOpen] = useState(true);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -25,8 +22,6 @@ function Profile() {
         setFirstName(profileData.firstName || '');
         setLastName(profileData.lastName || '');
         setPhoneNumber(profileData.phoneNumber || '');
-        setApplicationRemindersEnabled(profileData.applicationRemindersEnabled ?? true);
-        setCollaborationRemindersEnabled(profileData.collaborationRemindersEnabled ?? true);
       } catch (error) {
         showError('Error', error instanceof Error ? error.message : 'Failed to load profile');
       } finally {
@@ -43,8 +38,6 @@ function Profile() {
         firstName: firstName || null,
         lastName: lastName || null,
         phoneNumber: phoneNumber || null,
-        applicationRemindersEnabled,
-        collaborationRemindersEnabled,
       });
       showSuccess('Profile updated', 'Your profile has been saved successfully.', 3000);
     } catch (error) {
@@ -81,7 +74,7 @@ function Profile() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-8 space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Profile & Preferences</h1>
+      <h1 className="text-xl font-bold text-gray-900">Profile</h1>
 
       <Section title="Personal Information" isOpen={personalOpen} toggle={() => setPersonalOpen(!personalOpen)}>
         <div className="space-y-5">
@@ -103,40 +96,6 @@ function Profile() {
           <div>
             <label className="field-label">Phone Number</label>
             <input type="tel" className="field-input" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Phone number" />
-          </div>
-        </div>
-      </Section>
-
-      <Section
-        title="Notification Preferences"
-        subtitle="Control when you receive reminder emails"
-        isOpen={notificationsOpen}
-        toggle={() => setNotificationsOpen(!notificationsOpen)}
-      >
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex-1">
-              <p className="font-medium text-sm text-gray-800">Application Reminders</p>
-              <p className="text-sm text-gray-500">Receive email reminders for upcoming scholarship application deadlines</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={applicationRemindersEnabled}
-              onChange={(e) => setApplicationRemindersEnabled(e.target.checked)}
-              className="w-5 h-5 accent-brand-500 cursor-pointer"
-            />
-          </div>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex-1">
-              <p className="font-medium text-sm text-gray-800">Collaboration Reminders</p>
-              <p className="text-sm text-gray-500">Receive email reminders for collaboration tasks and deadlines</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={collaborationRemindersEnabled}
-              onChange={(e) => setCollaborationRemindersEnabled(e.target.checked)}
-              className="w-5 h-5 accent-brand-500 cursor-pointer"
-            />
           </div>
         </div>
       </Section>
