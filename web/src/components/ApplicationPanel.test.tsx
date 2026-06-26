@@ -76,6 +76,10 @@ const application: ApplicationResponse & { essays: EssayResponse[] } = {
   essays,
 };
 
+async function openWorkItemsSection(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /Essays & Recommendations/ }));
+}
+
 describe('ApplicationPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -92,6 +96,7 @@ describe('ApplicationPanel', () => {
   });
 
   it('renders the drawer title and read-only smart summary', async () => {
+    const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -99,6 +104,11 @@ describe('ApplicationPanel', () => {
     expect(screen.getByText('State University')).toBeInTheDocument();
     expect(screen.getByText('Finish 1 of 2 essays, then submit')).toBeInTheDocument();
     expect(screen.getByText('1 / 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /2 essays/ })).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Leadership prompt')).not.toBeInTheDocument();
+
+    await openWorkItemsSection(user);
+
     expect(await screen.findByDisplayValue('Leadership prompt')).toBeInTheDocument();
   });
 
@@ -157,6 +167,7 @@ describe('ApplicationPanel', () => {
     const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('Service prompt');
 
     const statusSelects = screen.getAllByLabelText('Status');
@@ -170,6 +181,7 @@ describe('ApplicationPanel', () => {
     const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('Leadership prompt');
     await user.click(screen.getAllByRole('button', { name: 'Open' })[0]);
 
@@ -201,6 +213,7 @@ describe('ApplicationPanel', () => {
 
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('Leadership prompt');
     await user.click(screen.getByRole('button', { name: 'Add Essay' }));
     await user.type(screen.getAllByPlaceholderText('Essay prompt or topic')[2], 'New essay prompt');
@@ -248,6 +261,7 @@ describe('ApplicationPanel', () => {
 
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('2026-06-25');
     await user.selectOptions(screen.getAllByLabelText('Status')[3], 'submitted');
     await user.click(screen.getByRole('button', { name: 'Save' }));
