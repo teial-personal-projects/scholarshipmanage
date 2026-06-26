@@ -71,10 +71,16 @@ const application: ApplicationResponse & { essays: EssayResponse[] } = {
   minAward: 1000,
   maxAward: 5000,
   dueDate: '2026-06-30',
+  orgWebsite: 'state.example.edu',
+  applicationLink: 'https://apply.example.edu/merit',
   createdAt: '2026-06-01T00:00:00Z',
   updatedAt: '2026-06-01T00:00:00Z',
   essays,
 };
+
+async function openWorkItemsSection(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /Essays & Recommendations/ }));
+}
 
 describe('ApplicationPanel', () => {
   beforeEach(() => {
@@ -92,6 +98,7 @@ describe('ApplicationPanel', () => {
   });
 
   it('renders the drawer title and read-only smart summary', async () => {
+    const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -99,6 +106,11 @@ describe('ApplicationPanel', () => {
     expect(screen.getByText('State University')).toBeInTheDocument();
     expect(screen.getByText('Finish 1 of 2 essays, then submit')).toBeInTheDocument();
     expect(screen.getByText('1 / 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /2 essays/ })).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Leadership prompt')).not.toBeInTheDocument();
+
+    await openWorkItemsSection(user);
+
     expect(await screen.findByDisplayValue('Leadership prompt')).toBeInTheDocument();
   });
 
@@ -157,6 +169,7 @@ describe('ApplicationPanel', () => {
     const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('Service prompt');
 
     const statusSelects = screen.getAllByLabelText('Status');
@@ -170,6 +183,7 @@ describe('ApplicationPanel', () => {
     const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('Leadership prompt');
     await user.click(screen.getAllByRole('button', { name: 'Open' })[0]);
 
@@ -177,6 +191,31 @@ describe('ApplicationPanel', () => {
       'https://docs.google.com/document/d/leadership',
       '_blank',
       'noopener,noreferrer',
+    );
+  });
+
+  it('renders application resource URLs as clickable links in the dialog', async () => {
+    const user = userEvent.setup();
+    render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('link', { name: 'Open organization website' })).toHaveAttribute(
+      'href',
+      'https://state.example.edu',
+    );
+    expect(screen.getByRole('link', { name: 'Open application portal' })).toHaveAttribute(
+      'href',
+      'https://apply.example.edu/merit',
+    );
+
+    await user.click(screen.getByRole('button', { name: /Links & Resources/ }));
+
+    expect(screen.getByRole('link', { name: 'Open organization website' })).toHaveAttribute(
+      'href',
+      'https://state.example.edu',
+    );
+    expect(screen.getByRole('link', { name: 'Open application portal' })).toHaveAttribute(
+      'href',
+      'https://apply.example.edu/merit',
     );
   });
 
@@ -201,6 +240,7 @@ describe('ApplicationPanel', () => {
 
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('Leadership prompt');
     await user.click(screen.getByRole('button', { name: 'Add Essay' }));
     await user.type(screen.getAllByPlaceholderText('Essay prompt or topic')[2], 'New essay prompt');
@@ -248,6 +288,7 @@ describe('ApplicationPanel', () => {
 
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
+    await openWorkItemsSection(user);
     await screen.findByDisplayValue('2026-06-25');
     await user.selectOptions(screen.getAllByLabelText('Status')[3], 'submitted');
     await user.click(screen.getByRole('button', { name: 'Save' }));

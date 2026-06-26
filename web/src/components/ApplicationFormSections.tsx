@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 
 import { APPLICATION_STATUSES, TARGET_TYPES } from '@scholarshipmanage/shared';
 import type { TApplicationStatus, TTargetType } from '@scholarshipmanage/shared';
@@ -48,20 +49,33 @@ interface SectionProps {
   isOpen: boolean;
   toggle: () => void;
   children: React.ReactNode;
+  compact?: boolean;
+  summary?: string;
+  collapsedActions?: React.ReactNode;
 }
 
-function Section({ title, isOpen, toggle, children }: SectionProps) {
+function Section({ title, isOpen, toggle, children, compact = false, summary, collapsedActions }: SectionProps) {
   return (
-    <div className="card mb-2">
-      <button
-        type="button"
-        className="w-full text-left flex items-center justify-between px-5 py-2.5 border-b border-gray-200 hover:bg-gray-50 rounded-t-xl"
-        onClick={toggle}
-      >
-        <span className="section-heading">{title}</span>
-        <span className="text-gray-400 text-sm">{isOpen ? '▼' : '▶'}</span>
-      </button>
-      {isOpen && <div className="px-5 py-3">{children}</div>}
+    <div className={`card ${compact ? 'mb-1.5' : 'mb-2'}`}>
+      <div className="flex items-center border-b border-gray-200 rounded-t-xl">
+        <button
+          type="button"
+          className={`min-w-0 flex-1 text-left flex items-center justify-between hover:bg-gray-50 rounded-tl-xl ${compact ? 'px-4 py-2' : 'px-5 py-2.5'}`}
+          onClick={toggle}
+        >
+          <span className="section-heading truncate">{title}</span>
+          <span className="flex items-center gap-2 text-xs text-gray-500 pl-3">
+            {!isOpen && summary && <span>{summary}</span>}
+            <span className="text-sm text-gray-400">{isOpen ? '▼' : '▶'}</span>
+          </span>
+        </button>
+        {!isOpen && collapsedActions && (
+          <div className={`flex shrink-0 items-center gap-2 ${compact ? 'pr-4' : 'pr-5'}`}>
+            {collapsedActions}
+          </div>
+        )}
+      </div>
+      {isOpen && <div className={compact ? 'px-4 py-2.5' : 'px-5 py-3'}>{children}</div>}
     </div>
   );
 }
@@ -69,6 +83,7 @@ function Section({ title, isOpen, toggle, children }: SectionProps) {
 interface ApplicationFormSectionsProps {
   values: ApplicationFormValues;
   onChange: (updates: Partial<ApplicationFormValues>) => void;
+  compact?: boolean;
 }
 
 const FIELD_IDS: Record<keyof ApplicationFormValues, string> = {
@@ -91,26 +106,105 @@ const FIELD_IDS: Record<keyof ApplicationFormValues, string> = {
   requirements: 'application-requirements',
 };
 
-export function ApplicationFormSections({ values, onChange }: ApplicationFormSectionsProps) {
+function formatAwardSummary(values: ApplicationFormValues): string | undefined {
+  const minAward = Number(values.minAward);
+  const maxAward = Number(values.maxAward);
+  const hasMinAward = values.minAward.trim() !== '' && !Number.isNaN(minAward);
+  const hasMaxAward = values.maxAward.trim() !== '' && !Number.isNaN(maxAward);
+
+  if (hasMinAward && hasMaxAward && minAward !== maxAward) {
+    return `$${minAward.toLocaleString()} - $${maxAward.toLocaleString()}`;
+  }
+
+  if (hasMaxAward) return `Max $${maxAward.toLocaleString()}`;
+  if (hasMinAward) return `$${minAward.toLocaleString()}`;
+  return undefined;
+}
+
+function getExternalUrl(url: string): string | undefined {
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) return undefined;
+
+  return /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`;
+}
+
+interface UrlFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
+  placeholder: string;
+  openLabel: string;
+}
+
+interface ResourceLinkProps {
+  url: string;
+  label: string;
+  ariaLabel: string;
+}
+
+function ResourceLink({ url, label, ariaLabel }: ResourceLinkProps) {
+  const externalUrl = getExternalUrl(url);
+  if (!externalUrl) return null;
+
+  return (
+    <a
+      href={externalUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+      aria-label={ariaLabel}
+    >
+      <span>{label}</span>
+      <ExternalLink size={13} />
+    </a>
+  );
+}
+
+function UrlField({ id, label, value, onChange, placeholder, openLabel }: UrlFieldProps) {
+  const externalUrl = getExternalUrl(value);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor={id} className="field-label">{label}</label>
+        {externalUrl && (
+          <ResourceLink url={value} label="Open" ariaLabel={openLabel} />
+        )}
+      </div>
+      <input id={id} type="url" className="field-input" value={value} onChange={onChange} placeholder={placeholder} />
+    </div>
+  );
+}
+
+export function ApplicationFormSections({ values, onChange, compact = false }: ApplicationFormSectionsProps) {
   const [basicOpen, setBasicOpen] = useState(true);
   const [statusOpen, setStatusOpen] = useState(true);
-  const [awardOpen, setAwardOpen] = useState(true);
-  const [requirementsOpen, setRequirementsOpen] = useState(true);
-  const [linksOpen, setLinksOpen] = useState(true);
+  const [awardOpen, setAwardOpen] = useState(!compact);
+  const [requirementsOpen, setRequirementsOpen] = useState(!compact);
+  const [linksOpen, setLinksOpen] = useState(!compact);
 
   const field = <K extends keyof ApplicationFormValues>(key: K) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => onChange({ [key]: e.target.value as ApplicationFormValues[K] });
 
+  const hasResourceLinks = values.orgWebsite.trim() !== '' || values.applicationLink.trim() !== '';
+  const collapsedResourceLinks = hasResourceLinks ? (
+    <>
+      <ResourceLink url={values.orgWebsite} label="Org" ariaLabel="Open organization website" />
+      <ResourceLink url={values.applicationLink} label="Portal" ariaLabel="Open application portal" />
+    </>
+  ) : undefined;
+
   return (
     <>
-      <Section title="Basic Information" isOpen={basicOpen} toggle={() => setBasicOpen((v) => !v)}>
-        <div className="space-y-3">
+      <Section title="Basic Information" isOpen={basicOpen} toggle={() => setBasicOpen((v) => !v)} compact={compact}>
+        <div className={compact ? 'space-y-2.5' : 'space-y-3'}>
           <div>
             <label htmlFor={FIELD_IDS.scholarshipName} className="field-label">Scholarship Name *</label>
             <input id={FIELD_IDS.scholarshipName} className="field-input" value={values.scholarshipName} onChange={field('scholarshipName')} placeholder="Enter scholarship name" required />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-3'}`}>
             <div>
               <label htmlFor={FIELD_IDS.organization} className="field-label">Organization</label>
               <input id={FIELD_IDS.organization} className="field-input" value={values.organization} onChange={field('organization')} placeholder="e.g., Gates Foundation" />
@@ -120,7 +214,7 @@ export function ApplicationFormSections({ values, onChange }: ApplicationFormSec
               <input id={FIELD_IDS.platform} className="field-input" value={values.platform} onChange={field('platform')} placeholder="e.g., Common App, ScholarshipOwl" />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className={`grid grid-cols-1 md:grid-cols-3 ${compact ? 'gap-2.5' : 'gap-3'}`}>
             <div>
               <label htmlFor={FIELD_IDS.openDate} className="field-label">Open Date</label>
               <input id={FIELD_IDS.openDate} type="date" className="field-input" value={values.openDate} onChange={field('openDate')} />
@@ -134,7 +228,7 @@ export function ApplicationFormSections({ values, onChange }: ApplicationFormSec
               <input id={FIELD_IDS.submissionDate} type="date" className="field-input" value={values.submissionDate} onChange={field('submissionDate')} />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-3'}`}>
             <div>
               <label htmlFor={FIELD_IDS.targetType} className="field-label">Scholarship Type</label>
               <select id={FIELD_IDS.targetType} className="field-select" value={values.targetType} onChange={field('targetType')}>
@@ -150,8 +244,8 @@ export function ApplicationFormSections({ values, onChange }: ApplicationFormSec
         </div>
       </Section>
 
-      <Section title="Status & Tracking" isOpen={statusOpen} toggle={() => setStatusOpen((v) => !v)}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <Section title="Status & Tracking" isOpen={statusOpen} toggle={() => setStatusOpen((v) => !v)} compact={compact}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-3'}`}>
           <div>
             <label htmlFor={FIELD_IDS.status} className="field-label">Status</label>
             <select id={FIELD_IDS.status} className="field-select" value={values.status} onChange={field('status')} required>
@@ -165,9 +259,15 @@ export function ApplicationFormSections({ values, onChange }: ApplicationFormSec
         </div>
       </Section>
 
-      <Section title="Award" isOpen={awardOpen} toggle={() => setAwardOpen((v) => !v)}>
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <Section
+        title="Award"
+        isOpen={awardOpen}
+        toggle={() => setAwardOpen((v) => !v)}
+        compact={compact}
+        summary={formatAwardSummary(values)}
+      >
+        <div className={compact ? 'space-y-2.5' : 'space-y-3'}>
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-3'}`}>
             <div>
               <label htmlFor={FIELD_IDS.minAward} className="field-label">Min Award ($)</label>
               <input id={FIELD_IDS.minAward} type="number" inputMode="numeric" min={0} className="field-input" value={values.minAward} onChange={field('minAward')} placeholder="0" />
@@ -196,23 +296,37 @@ export function ApplicationFormSections({ values, onChange }: ApplicationFormSec
         </div>
       </Section>
 
-      <Section title="Requirements & Eligibility" isOpen={requirementsOpen} toggle={() => setRequirementsOpen((v) => !v)}>
+      <Section title="Requirements & Eligibility" isOpen={requirementsOpen} toggle={() => setRequirementsOpen((v) => !v)} compact={compact}>
         <div>
           <label htmlFor={FIELD_IDS.requirements} className="field-label">Requirements</label>
           <textarea id={FIELD_IDS.requirements} className="field-textarea" value={values.requirements} onChange={field('requirements')} placeholder="List any specific requirements (GPA, major, citizenship, etc.)" rows={2} />
         </div>
       </Section>
 
-      <Section title="Links & Resources" isOpen={linksOpen} toggle={() => setLinksOpen((v) => !v)}>
-        <div className="space-y-3">
-          <div>
-            <label htmlFor={FIELD_IDS.orgWebsite} className="field-label">Organization Website</label>
-            <input id={FIELD_IDS.orgWebsite} type="url" className="field-input" value={values.orgWebsite} onChange={field('orgWebsite')} placeholder="https://example.com" />
-          </div>
-          <div>
-            <label htmlFor={FIELD_IDS.applicationLink} className="field-label">Application Portal Link</label>
-            <input id={FIELD_IDS.applicationLink} type="url" className="field-input" value={values.applicationLink} onChange={field('applicationLink')} placeholder="https://apply.example.com" />
-          </div>
+      <Section
+        title="Links & Resources"
+        isOpen={linksOpen}
+        toggle={() => setLinksOpen((v) => !v)}
+        compact={compact}
+        collapsedActions={collapsedResourceLinks}
+      >
+        <div className={compact ? 'space-y-2.5' : 'space-y-3'}>
+          <UrlField
+            id={FIELD_IDS.orgWebsite}
+            label="Organization Website"
+            value={values.orgWebsite}
+            onChange={field('orgWebsite')}
+            placeholder="https://example.com"
+            openLabel="Open organization website"
+          />
+          <UrlField
+            id={FIELD_IDS.applicationLink}
+            label="Application Portal Link"
+            value={values.applicationLink}
+            onChange={field('applicationLink')}
+            placeholder="https://apply.example.com"
+            openLabel="Open application portal"
+          />
         </div>
       </Section>
     </>
