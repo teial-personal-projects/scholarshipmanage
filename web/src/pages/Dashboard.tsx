@@ -52,6 +52,7 @@ function PriorityApplications({
   onApplicationOpen: (application: ApplicationResponse) => void;
   onDelete: (id: number) => Promise<void>;
 }) {
+  const [isExpanded, setIsExpanded] = useState(true);
   const groups: { key: DeadlineUrgency; title: string; applications: ApplicationResponse[] }[] = [
     { key: 'overdue', title: 'Overdue', applications: [] },
     { key: 'critical', title: 'Due this week', applications: [] },
@@ -68,40 +69,51 @@ function PriorityApplications({
     });
 
   const visibleGroups = groups.filter((group) => group.applications.length > 0);
+  const priorityCount = visibleGroups.reduce((total, group) => total + group.applications.length, 0);
 
   return (
     <section className="card">
       <div className="flex items-center justify-between gap-3 px-5 py-4">
-        <h2 className="text-sm font-bold text-gray-900">Priority Applications</h2>
-        <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700">
-          {visibleGroups.reduce((total, group) => total + group.applications.length, 0)}
-        </span>
+        <button
+          type="button"
+          className="flex items-center gap-2 text-left"
+          aria-expanded={isExpanded}
+          onClick={() => setIsExpanded((current) => !current)}
+        >
+          <h2 className="text-sm font-bold text-gray-900">Priority Applications</h2>
+          <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700">
+            {priorityCount}
+          </span>
+          {isExpanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        </button>
       </div>
-      <div className="space-y-5 px-5 pb-5">
-        {visibleGroups.length === 0 ? (
-          <p className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
-            No urgent applications due in the next two weeks.
-          </p>
-        ) : (
-          visibleGroups.map((group) => (
-            <section key={group.key} className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                {group.title} ({group.applications.length})
-              </h3>
-              <div className="space-y-3">
-                {group.applications.map((application) => (
-                  <ActionRow
-                    key={application.id}
-                    application={application}
-                    onOpen={onApplicationOpen}
-                    onDelete={onDelete}
-                  />
-                ))}
-              </div>
-            </section>
-          ))
-        )}
-      </div>
+      {isExpanded && (
+        <div className="space-y-5 px-5 pb-5">
+          {visibleGroups.length === 0 ? (
+            <p className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
+              No urgent applications due in the next two weeks.
+            </p>
+          ) : (
+            visibleGroups.map((group) => (
+              <section key={group.key} className="space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  {group.title} ({group.applications.length})
+                </h3>
+                <div className="space-y-3">
+                  {group.applications.map((application) => (
+                    <ActionRow
+                      key={application.id}
+                      application={application}
+                      onOpen={onApplicationOpen}
+                      onDelete={onDelete}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))
+          )}
+        </div>
+      )}
     </section>
   );
 }
