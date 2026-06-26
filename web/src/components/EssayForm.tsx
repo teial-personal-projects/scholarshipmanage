@@ -39,12 +39,22 @@ function EssayForm({ isOpen, onClose, applicationId, essay, onSuccess }: EssayFo
     try {
       setSubmitting(true);
       const parsedWordCount = wordCount ? parseInt(wordCount, 10) : null;
-      const payload = {
-        theme: theme.trim() || null,
-        wordCount: parsedWordCount && !isNaN(parsedWordCount) ? parsedWordCount : null,
-        essayLink: essayLink.trim() || null,
+      const trimmedTheme = theme.trim();
+      const trimmedEssayLink = essayLink.trim();
+      const payload: {
+        theme?: string;
+        wordCount?: number;
+        essayLink?: string | null;
+        status: string;
+      } = {
         status,
       };
+
+      if (trimmedTheme) payload.theme = trimmedTheme;
+      if (parsedWordCount && !isNaN(parsedWordCount)) payload.wordCount = parsedWordCount;
+      if (trimmedEssayLink) payload.essayLink = trimmedEssayLink;
+      if (isEditMode && essay?.essayLink && !trimmedEssayLink) payload.essayLink = null;
+
       if (isEditMode && essay) {
         await apiPatch(`/essays/${essay.id}`, payload);
         showSuccess('Success', 'Essay updated successfully', 3000);
