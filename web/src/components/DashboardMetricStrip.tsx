@@ -78,14 +78,9 @@ const DEFAULT_METRIC_VISUAL: MetricVisual = {
 
 function DashboardMetricStrip({ metrics, variant = 'default' }: DashboardMetricStripProps) {
   const containerClass = variant === 'rail'
-    ? 'grid grid-cols-2 gap-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm'
+    ? 'space-y-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm'
     : 'grid grid-cols-2 gap-3 lg:grid-cols-4';
-  const itemBaseClass = variant === 'rail'
-    ? 'min-h-20 rounded-lg border px-2.5 py-2.5'
-    : 'min-h-28 rounded-lg border px-4 py-4 shadow-sm';
-  const valueClass = variant === 'rail' ? 'text-2xl' : 'text-3xl';
-  const iconClass = variant === 'rail' ? 'h-7 w-7' : 'h-8 w-8';
-  const iconSize = variant === 'rail' ? 14 : 16;
+  const itemBaseClass = 'min-h-28 rounded-lg border px-4 py-4 shadow-sm';
 
   return (
     <section
@@ -96,11 +91,34 @@ function DashboardMetricStrip({ metrics, variant = 'default' }: DashboardMetricS
         const visual = METRIC_VISUALS[metric.label] ?? DEFAULT_METRIC_VISUAL;
         const Icon = visual.Icon;
 
+        if (variant === 'rail') {
+          return (
+            <div key={metric.label} className={`rounded-md border px-3 py-2 ${visual.cardClass}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${visual.iconClass}`}>
+                    <Icon size={12} aria-hidden />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-xs font-bold leading-tight text-gray-900">
+                      {metric.label}
+                    </div>
+                    <div className="text-[11px] font-semibold text-gray-500">
+                      {visual.helperText}
+                    </div>
+                  </div>
+                </div>
+                <div className={`text-lg font-bold leading-none ${visual.valueClass}`}>{metric.value}</div>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div key={metric.label} className={`${itemBaseClass} ${visual.cardClass}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className={`${valueClass} font-bold leading-none ${visual.valueClass}`}>{metric.value}</div>
+                <div className={`text-3xl font-bold leading-none ${visual.valueClass}`}>{metric.value}</div>
                 <div className="mt-1.5 text-xs font-bold leading-tight text-gray-900">
                   {metric.label}
                 </div>
@@ -108,8 +126,8 @@ function DashboardMetricStrip({ metrics, variant = 'default' }: DashboardMetricS
                   {visual.helperText}
                 </div>
               </div>
-              <div className={`flex ${iconClass} shrink-0 items-center justify-center rounded-md ${visual.iconClass}`}>
-                <Icon size={iconSize} aria-hidden />
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${visual.iconClass}`}>
+                <Icon size={16} aria-hidden />
               </div>
             </div>
           </div>
