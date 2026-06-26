@@ -46,7 +46,7 @@ const DEFAULT_REQUEST_LIMITS = {
   AUTH_PASSWORD_RESET: 3,
   AUTH_EMAIL_VERIFY: 5,
   WRITE_OPERATIONS: 30,
-  DELETE_OPERATIONS: 10,
+  DELETE_OPERATIONS: 60,
   READ_OPERATIONS: 100,
   LIST_OPERATIONS: 50,
   GENERAL_API: 150,
@@ -59,11 +59,13 @@ const getRequestLimit = (
   fallback: number,
 ): number => {
   const rawValue = process.env[envName];
-  if (rawValue === undefined || rawValue.trim() === '') {
+  const trimmedValue = rawValue?.trim();
+  if (trimmedValue === undefined || trimmedValue === '') {
     return fallback;
   }
 
-  const parsedValue = Number(rawValue);
+  const normalizedValue = trimmedValue.replace(/^(['"])(.*)\1$/, '$2');
+  const parsedValue = Number(normalizedValue);
   if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
     console.warn(`[rate-limit] Ignoring invalid ${envName}="${rawValue}". Using fallback ${fallback}.`);
     return fallback;
@@ -191,10 +193,20 @@ const createRateLimitStore = (): Options['store'] | undefined => {
   });
 };
 
+const getRateLimitKey: Options['keyGenerator'] = (req) => {
+  if (req.user?.authUserId) {
+    return `user:${req.user.authUserId}`;
+  }
+
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  return ipKeyGenerator(ip, 56);
+};
+
 const createBaseConfig = (): Partial<Options> => ({
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   handler: standardHandler,
+  keyGenerator: getRateLimitKey,
   skip: skipInTest,
   store: createRateLimitStore(),
 });
@@ -269,7 +281,7 @@ export const writeRateLimiters = {
 
   /**
    * Delete operations rate limiter
-   * 10 requests per 15 minutes
+   * 60 requests per 15 minutes
    */
   delete: rateLimit({
     ...createBaseConfig(),
@@ -317,6 +329,7 @@ export const generalApiLimiter = rateLimit({
   windowMs: RateLimitWindows.FIFTEEN_MINUTES,
   max: RequestLimits.GENERAL_API,
   message: RateLimitMessages.general,
+  skip: (req, res) => skipInTest(req, res) || req.method === 'DELETE',
 });
 
 /**

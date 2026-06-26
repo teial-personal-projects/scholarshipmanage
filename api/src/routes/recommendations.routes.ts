@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/role.js';
 import * as recommendationsController from '../controllers/recommendations.controller.js';
+import { writeRateLimiters } from '../config/rate-limit.js';
 
 const router = Router();
 
@@ -19,7 +20,6 @@ router.get('/:id', recommendationsController.getRecommendation);
 router.patch('/:id', recommendationsController.updateRecommendation);
 
 // DELETE /api/recommendations/:id - Delete recommendation
-router.delete('/:id', recommendationsController.deleteRecommendation);
+router.delete('/:id', writeRateLimiters.delete, recommendationsController.deleteRecommendation);
 
 export default router;
-
