@@ -146,10 +146,6 @@ function Dashboard() {
   }, [fetchData]);
 
   const dashboardMetrics = useMemo(() => getDashboardMetrics(applications), [applications]);
-  const nonPriorityApplications = useMemo(
-    () => applications.filter((application) => !isPriorityApplication(application)),
-    [applications],
-  );
 
   const handleDeleteApplication = async (id: number) => {
     if (!confirm('Delete this application and all its essays?')) return;
@@ -181,7 +177,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen pb-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-5">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem] xl:grid-cols-[minmax(0,1fr)_21rem]">
           <main className="min-w-0 space-y-4">
             <section className="rounded-lg border border-gray-200 border-l-4 border-l-brand-500 bg-white px-5 py-4 shadow-sm">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -208,6 +204,12 @@ function Dashboard() {
               </div>
             </section>
 
+            <PriorityApplications
+              applications={applications}
+              onApplicationOpen={setSelectedApplication}
+              onDelete={handleDeleteApplication}
+            />
+
             <div className="card">
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
                 <button
@@ -215,9 +217,9 @@ function Dashboard() {
                   className="flex items-center gap-2 text-left"
                   onClick={() => setShowYourApplications((v) => !v)}
                 >
-                  <h2 className="text-sm font-bold text-gray-900">Your Applications</h2>
+                  <h2 className="text-sm font-bold text-gray-900">All Applications</h2>
                   <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700">
-                    {nonPriorityApplications.length}
+                    {applications.length}
                   </span>
                   {showYourApplications ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
                 </button>
@@ -236,20 +238,15 @@ function Dashboard() {
                         Create Your First Application
                       </button>
                     </div>
-                  ) : nonPriorityApplications.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-4xl mb-3">📝</div>
-                      <p className="text-gray-600 text-sm">All active applications are in the priority rail.</p>
-                    </div>
                   ) : viewMode === 'feed' ? (
                     <ActionFeed
-                      applications={nonPriorityApplications}
+                      applications={applications}
                       onApplicationOpen={setSelectedApplication}
                       onDelete={handleDeleteApplication}
                     />
                   ) : (
                     <GridView
-                      applications={nonPriorityApplications}
+                      applications={applications}
                       onApplicationOpen={setSelectedApplication}
                       onDelete={handleDeleteApplication}
                     />
@@ -261,12 +258,6 @@ function Dashboard() {
 
           <aside className="space-y-4">
             <DashboardMetricStrip metrics={dashboardMetrics.summary} variant="rail" />
-
-            <PriorityApplications
-              applications={applications}
-              onApplicationOpen={setSelectedApplication}
-              onDelete={handleDeleteApplication}
-            />
           </aside>
         </div>
       </div>
