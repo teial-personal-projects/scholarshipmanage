@@ -109,7 +109,7 @@ function PriorityApplications({
 function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { showError } = useToastHelpers();
+  const { showError, showSuccess } = useToastHelpers();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [applications, setApplications] = useState<ApplicationResponse[]>([]);
@@ -149,8 +149,13 @@ function Dashboard() {
 
   const handleDeleteApplication = async (id: number) => {
     if (!confirm('Delete this application and all its essays?')) return;
-    await apiDelete(`/applications/${id}`);
-    setApplications((prev) => prev.filter((a) => a.id !== id));
+    try {
+      await apiDelete(`/applications/${id}`);
+      setApplications((prev) => prev.filter((a) => a.id !== id));
+      showSuccess('Deleted', 'Application deleted successfully.', 3000);
+    } catch {
+      showError('Delete failed', 'We could not delete that application. Please try again.', 5000);
+    }
   };
 
   const handleApplicationSaveSuccess = () => {

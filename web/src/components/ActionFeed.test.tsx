@@ -1,10 +1,18 @@
 import { MemoryRouter } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import toast from 'react-hot-toast';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import ActionFeed from './ActionFeed';
 
 import type { ApplicationResponse } from '@scholarshipmanage/shared';
+
+vi.mock('react-hot-toast', () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
 
 const makeApplication = (
   overrides: Partial<ApplicationResponse>,
@@ -21,15 +29,19 @@ const makeApplication = (
   ...overrides,
 });
 
-function renderFeed(applications: ApplicationResponse[]) {
+function renderFeed(applications: ApplicationResponse[], onDelete?: (id: number) => Promise<void>) {
   return render(
     <MemoryRouter>
-      <ActionFeed applications={applications} />
+      <ActionFeed applications={applications} onDelete={onDelete} />
     </MemoryRouter>,
   );
 }
 
 describe('ActionFeed', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('groups active applications by deadline tier and hides decided applications', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 5, 21));
@@ -99,6 +111,24 @@ describe('ActionFeed', () => {
 
     expect(screen.getByText('Essays 2 left')).toBeInTheDocument();
     expect(screen.getByText('Recs 1 pending')).toBeInTheDocument();
+  });
+
+  it('shows an error toast when board delete fails', async () => {
+    renderFeed([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Failing Board Delete Scholarship',
+      }),
+    ], vi.fn().mockRejectedValue(new Error('rate limited')));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Failing Board Delete Scholarship' }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Delete failed: We could not delete that application. Please try again.',
+        { duration: 5000 },
+      );
+    });
   });
 
   it('includes ready-to-start applications in deadline groups when no separate section is rendered', () => {

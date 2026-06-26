@@ -13,6 +13,7 @@ import {
 import { parseDateOnlyToLocalDate } from '../utils/date';
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { getPendingWorkChips } from '../utils/pendingWork';
+import { useToastHelpers } from '../utils/toast';
 
 interface ActionRowProps {
   application: ApplicationResponse;
@@ -44,6 +45,7 @@ function formatDueDate(dueDate: string | null | undefined): string | null {
 
 export default function ActionRow({ application, onOpen, onDelete }: ActionRowProps) {
   const navigate = useNavigate();
+  const { showError } = useToastHelpers();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const deadlineBorderStyle = getDeadlineBorderStyle(application);
   const daysRemaining = getDeadlineDaysRemaining(application.dueDate);
@@ -66,6 +68,8 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
     setDeletingId(application.id);
     try {
       await onDelete(application.id);
+    } catch {
+      showError('Delete failed', 'We could not delete that application. Please try again.', 5000);
     } finally {
       setDeletingId(null);
     }
