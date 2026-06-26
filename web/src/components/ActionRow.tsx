@@ -12,6 +12,7 @@ import {
 } from '../utils/deadline';
 import { parseDateOnlyToLocalDate } from '../utils/date';
 import { deriveNextAction } from '../utils/deriveNextAction';
+import { formatMinimumAwardAmount } from '../utils/award';
 import { getPendingWorkChips } from '../utils/pendingWork';
 import { useToastHelpers } from '../utils/toast';
 
@@ -56,6 +57,7 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
   const actionLabel = hasFarFutureDeadline ? 'Start Application' : nextAction.label;
   const isWaiting = nextAction.kind === 'waiting';
   const pendingWorkChips = hasFarFutureDeadline ? [] : getPendingWorkChips(application);
+  const minimumAwardAmount = formatMinimumAwardAmount(application);
 
   const handleOpen = () => {
     if (onOpen) { onOpen(application); return; }
@@ -93,6 +95,7 @@ export default function ActionRow({ application, onOpen, onDelete }: ActionRowPr
             {application.organization && (
               <p className="text-xs text-gray-600 truncate">{application.organization}</p>
             )}
+            <p className="text-xs font-semibold text-brand-700">{minimumAwardAmount}</p>
           </div>
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 shrink-0">
             <SquarePen size={14} aria-hidden />

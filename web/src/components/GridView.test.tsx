@@ -114,6 +114,22 @@ describe('GridView', () => {
     expect(screen.getAllByText('Recs 1 pending').length).toBeGreaterThan(0);
   });
 
+  it('shows minimum amount in the grid without a desktop organization column', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Minimum Amount Scholarship',
+        minAward: 2500,
+        maxAward: 10000,
+      }),
+    ]);
+
+    expect(screen.queryByRole('button', { name: 'Organization' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Min Amount' })).toBeInTheDocument();
+    expect(screen.getAllByText('$2,500').length).toBeGreaterThan(0);
+    expect(screen.queryByText('$10,000')).not.toBeInTheDocument();
+  });
+
   it('shows delete controls when deletion is available', () => {
     renderGrid([
       makeApplication({

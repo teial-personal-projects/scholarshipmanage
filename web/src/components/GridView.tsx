@@ -5,6 +5,7 @@ import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/
 
 import { getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
+import { formatMinimumAwardAmount } from '../utils/award';
 import { getPendingWorkChips } from '../utils/pendingWork';
 import { useToastHelpers } from '../utils/toast';
 
@@ -15,7 +16,7 @@ interface GridViewProps {
 }
 
 type SortDirection = 'asc' | 'desc';
-type SortKey = 'scholarshipName' | 'organization' | 'status' | 'dueDate' | 'awardAmount' | 'currentAction';
+type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'currentAction';
 type QuickFilter = 'needsAction' | 'waiting' | 'notStarted' | 'all';
 
 const ITEMS_PER_PAGE = 10;
@@ -30,10 +31,9 @@ const STATUS_BADGE: Record<string, string> = {
 
 const GRID_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'scholarshipName', label: 'Scholarship Name' },
-  { key: 'organization', label: 'Organization' },
   { key: 'status', label: 'Status' },
   { key: 'dueDate', label: 'Due Date' },
-  { key: 'awardAmount', label: 'Award Amount' },
+  { key: 'awardAmount', label: 'Min Amount' },
   { key: 'currentAction', label: 'Current Action' },
 ];
 
@@ -62,12 +62,6 @@ function formatDate(value: string | null | undefined): string {
   return value ? new Date(value).toLocaleDateString() : '-';
 }
 
-function formatAwardAmount(application: ApplicationResponse): string {
-  if (application.minAward) return `$${application.minAward.toLocaleString()}`;
-  if (application.maxAward) return `$${application.maxAward.toLocaleString()}`;
-  return '-';
-}
-
 function getCurrentAction(application: ApplicationResponse): string {
   return application.currentAction || deriveNextAction(application).label || '-';
 }
@@ -76,14 +70,12 @@ function getSortValue(application: ApplicationResponse, sortKey: SortKey): strin
   switch (sortKey) {
     case 'scholarshipName':
       return application.scholarshipName.toLowerCase();
-    case 'organization':
-      return (application.organization ?? '').toLowerCase();
     case 'status':
       return application.status.toLowerCase();
     case 'dueDate':
       return application.dueDate ? new Date(application.dueDate).getTime() : Number.POSITIVE_INFINITY;
     case 'awardAmount':
-      return application.maxAward ?? application.minAward ?? 0;
+      return application.minAward ?? 0;
     case 'currentAction':
       return getCurrentAction(application).toLowerCase();
   }
@@ -354,7 +346,6 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-gray-600">{application.organization || '-'}</td>
                       <td className="px-4 py-2">
                         <span className={STATUS_BADGE[application.status] ?? 'badge badge-gray'}>
                           {application.status}
@@ -363,7 +354,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       <td className={`px-4 py-2 ${urgencyDueDateStyles[urgency]}`}>
                         {formatDate(application.dueDate)}
                       </td>
-                      <td className="px-4 py-2 text-gray-700">{formatAwardAmount(application)}</td>
+                      <td className="px-4 py-2 text-gray-700">{formatMinimumAwardAmount(application)}</td>
                       <td className="px-4 py-2 text-gray-700 max-w-xs">
                         <span className="line-clamp-1">{getCurrentAction(application)}</span>
                         {pendingWorkChips.length > 0 && (
@@ -415,8 +406,8 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                         <span className={urgencyDueDateStyles[urgency]}>{formatDate(application.dueDate)}</span>
                       </div>
                       <div>
-                        <span className="block text-xs font-semibold uppercase text-gray-500">Award</span>
-                        <span>{formatAwardAmount(application)}</span>
+                        <span className="block text-xs font-semibold uppercase text-gray-500">Min amount</span>
+                        <span>{formatMinimumAwardAmount(application)}</span>
                       </div>
                     </div>
                     <p className="mt-2 line-clamp-1 text-sm text-gray-700">{getCurrentAction(application)}</p>
