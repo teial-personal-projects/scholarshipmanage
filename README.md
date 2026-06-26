@@ -170,6 +170,7 @@ API variables live in `api/.env.local`:
 | `NODE_ENV` | Runtime environment, usually `development` locally |
 | `APP_URL` | Frontend URL used for CORS and email links |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated trusted browser origins |
+| `TRUST_PROXY` | Express proxy trust setting. Use `1` on Railway so rate limits use the real client IP |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_ANON_KEY` | Supabase anon key, useful for selected API flows |
 | `SUPABASE_SERVICE_ROLE_KEY` | Backend service-role key; keep secret |
@@ -182,7 +183,7 @@ API variables live in `api/.env.local`:
 | `REDIS_PRIVATE_URL` | Optional private Redis URL for hosted environments |
 | `ALLOW_IN_MEMORY_RATE_LIMIT` | Set `true` only for intentional single-instance deployments |
 | `RATE_LIMIT_AUTH_LOGIN` | Login attempts per 15 minutes, defaults to `5` |
-| `RATE_LIMIT_AUTH_REGISTER` | Registration attempts per hour, defaults to `3` |
+| `RATE_LIMIT_AUTH_REGISTER` | Registration attempts per hour, defaults to `30` |
 | `RATE_LIMIT_AUTH_PASSWORD_RESET` | Password reset requests per hour, defaults to `3` |
 | `RATE_LIMIT_AUTH_EMAIL_VERIFY` | Email verification requests per hour, defaults to `5` |
 | `RATE_LIMIT_WRITE_OPERATIONS` | Create/update requests per 15 minutes, defaults to `30` |

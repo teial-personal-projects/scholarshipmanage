@@ -23,10 +23,34 @@ if (fs.existsSync(envPath)) {
   console.warn(`[config] Environment file "${envFileName}" not found at ${envPath}.`);
 }
 
+type TrustProxyConfig = boolean | number | string;
+
+const parseTrustProxy = (rawValue: string | undefined): TrustProxyConfig => {
+  if (rawValue === undefined || rawValue.trim() === '') {
+    return false;
+  }
+
+  const normalizedValue = rawValue.trim().toLowerCase();
+  if (normalizedValue === 'true') {
+    return 1;
+  }
+
+  if (normalizedValue === 'false' || normalizedValue === '0') {
+    return false;
+  }
+
+  const numericValue = Number(normalizedValue);
+  if (Number.isInteger(numericValue) && numericValue > 0) {
+    return numericValue;
+  }
+
+  return rawValue.trim();
+};
 
 interface Config {
   port: number;
   nodeEnv: string;
+  trustProxy: TrustProxyConfig;
   supabase: {
     url: string;
     serviceRoleKey: string;
@@ -45,6 +69,7 @@ interface Config {
 export const config: Config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'local',
+  trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
   supabase: {
     url: process.env.SUPABASE_URL || '',
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
