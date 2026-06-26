@@ -97,6 +97,7 @@ describe('ActionFeed', () => {
     renderFeed([
       makeApplication({
         id: 1,
+        minAward: 2500,
         essays: [
           { status: 'completed' },
           { status: 'in_progress' },
@@ -111,6 +112,7 @@ describe('ActionFeed', () => {
 
     expect(screen.getByText('Essays 2 left')).toBeInTheDocument();
     expect(screen.getByText('Recs 1 pending')).toBeInTheDocument();
+    expect(screen.getByText('$2,500')).toBeInTheDocument();
   });
 
   it('shows an error toast when board delete fails', async () => {
