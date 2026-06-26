@@ -367,6 +367,9 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
       return;
     }
 
+    const hasPendingDeletions = essayDrafts.some((essay) => essay.isDeleted) ||
+      recommendationDrafts.some((rec) => rec.isDeleted) ||
+      savedEssayDrafts.some((savedEssay) => !essayDrafts.some((essay) => essay.id === savedEssay.id));
     let shouldResetSaving = true;
 
     try {
@@ -458,7 +461,10 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
       setIsSaving(false);
       onSaveSuccess?.();
     } catch (error) {
-      showError('Save failed', error instanceof Error ? error.message : 'Failed to save application');
+      const message = hasPendingDeletions
+        ? 'We could not delete one or more items. Please try again.'
+        : error instanceof Error ? error.message : 'Failed to save application';
+      showError('Save failed', message);
     } finally {
       if (shouldResetSaving) setIsSaving(false);
     }

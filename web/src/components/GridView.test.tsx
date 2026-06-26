@@ -1,10 +1,18 @@
 import { MemoryRouter } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import toast from 'react-hot-toast';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import GridView from './GridView';
 
 import type { ApplicationResponse } from '@scholarshipmanage/shared';
+
+vi.mock('react-hot-toast', () => ({
+  default: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
 
 const makeApplication = (
   overrides: Partial<ApplicationResponse>,
@@ -30,6 +38,10 @@ function renderGrid(applications: ApplicationResponse[], onDelete?: (id: number)
 }
 
 describe('GridView', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('defaults to all applications when no applications need action', () => {
     renderGrid([
       makeApplication({
@@ -112,6 +124,25 @@ describe('GridView', () => {
     ], vi.fn());
 
     expect(screen.getAllByRole('button', { name: 'Delete Deletable Scholarship' }).length).toBeGreaterThan(0);
+  });
+
+  it('shows an error toast when grid delete fails', async () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Failing Delete Scholarship',
+        status: 'Not Started',
+      }),
+    ], vi.fn().mockRejectedValue(new Error('rate limited')));
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete Failing Delete Scholarship' })[0]);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Delete failed: We could not delete that application. Please try again.',
+        { duration: 5000 },
+      );
+    });
   });
 
   it('includes pending recommendations in waiting on others', () => {

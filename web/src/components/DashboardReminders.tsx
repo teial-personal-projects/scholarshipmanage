@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet, apiDelete } from '../services/api';
 import type { DashboardReminders } from '@scholarshipmanage/shared';
 import { parseDateOnlyToLocalDate } from '../utils/date';
+import { useToastHelpers } from '../utils/toast';
 
 interface DashboardRemindersProps {
   onDelete?: (id: number) => Promise<void>;
@@ -16,6 +17,7 @@ function formatDueDate(dueDate: string): string {
 
 function DashboardReminders({ onDelete }: DashboardRemindersProps) {
   const navigate = useNavigate();
+  const { showError, showSuccess } = useToastHelpers();
   const [reminders, setReminders] = useState<DashboardReminders | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +75,9 @@ function DashboardReminders({ onDelete }: DashboardRemindersProps) {
           const filter = (list: typeof prev.applications.overdue) => list.filter((a) => a.id !== id);
           return { ...prev, applications: { overdue: filter(prev.applications.overdue), dueSoon: filter(prev.applications.dueSoon) } };
         });
+        showSuccess('Deleted', 'Application deleted successfully.', 3000);
+      } catch {
+        showError('Delete failed', 'We could not delete that application. Please try again.', 5000);
       } finally {
         setDeletingId(null);
       }
@@ -86,6 +91,8 @@ function DashboardReminders({ onDelete }: DashboardRemindersProps) {
         const filter = (list: typeof prev.applications.overdue) => list.filter((a) => a.id !== id);
         return { ...prev, applications: { overdue: filter(prev.applications.overdue), dueSoon: filter(prev.applications.dueSoon) } };
       });
+    } catch {
+      showError('Delete failed', 'We could not delete that application. Please try again.', 5000);
     } finally {
       setDeletingId(null);
     }

@@ -6,6 +6,7 @@ import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/
 import { getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { getPendingWorkChips } from '../utils/pendingWork';
+import { useToastHelpers } from '../utils/toast';
 
 interface GridViewProps {
   applications: ApplicationResponse[];
@@ -164,6 +165,7 @@ function Pagination({
 }
 
 export default function GridView({ applications, onApplicationOpen, onDelete }: GridViewProps) {
+  const { showError } = useToastHelpers();
   const [quickFilter, setQuickFilter] = useState<QuickFilter>(() => getDefaultQuickFilter(applications));
   const [userSelectedQuickFilter, setUserSelectedQuickFilter] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
@@ -177,6 +179,8 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
     setDeletingId(id);
     try {
       await onDelete(id);
+    } catch {
+      showError('Delete failed', 'We could not delete that application. Please try again.', 5000);
     } finally {
       setDeletingId(null);
     }

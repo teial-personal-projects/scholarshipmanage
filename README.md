@@ -181,6 +181,17 @@ API variables live in `api/.env.local`:
 | `REDIS_URL` | Optional Redis URL for distributed rate limiting |
 | `REDIS_PRIVATE_URL` | Optional private Redis URL for hosted environments |
 | `ALLOW_IN_MEMORY_RATE_LIMIT` | Set `true` only for intentional single-instance deployments |
+| `RATE_LIMIT_AUTH_LOGIN` | Login attempts per 15 minutes, defaults to `5` |
+| `RATE_LIMIT_AUTH_REGISTER` | Registration attempts per hour, defaults to `3` |
+| `RATE_LIMIT_AUTH_PASSWORD_RESET` | Password reset requests per hour, defaults to `3` |
+| `RATE_LIMIT_AUTH_EMAIL_VERIFY` | Email verification requests per hour, defaults to `5` |
+| `RATE_LIMIT_WRITE_OPERATIONS` | Create/update requests per 15 minutes, defaults to `30` |
+| `RATE_LIMIT_DELETE_OPERATIONS` | Delete requests per 15 minutes, defaults to `10` |
+| `RATE_LIMIT_READ_OPERATIONS` | Read requests per 15 minutes, defaults to `100` |
+| `RATE_LIMIT_LIST_OPERATIONS` | List/search requests per 15 minutes, defaults to `50` |
+| `RATE_LIMIT_GENERAL_API` | General API requests per 15 minutes, defaults to `150` |
+| `RATE_LIMIT_PUBLIC_ENDPOINTS` | Public endpoint requests per 15 minutes, defaults to `60` |
+| `RATE_LIMIT_WEBHOOK` | Webhook requests per 15 minutes, defaults to `100` |
 
 Web variables live in `web/.env.local`:
 
