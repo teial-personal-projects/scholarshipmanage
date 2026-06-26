@@ -131,7 +131,7 @@ export default function ActionFeed({ applications, onApplicationOpen, onDelete }
                   {canShowMore && !isCollapsed && (
                     <button
                       type="button"
-                      className="text-xs font-semibold text-brand-700 hover:text-brand-900"
+                      className="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-800 shadow-sm transition-colors hover:border-brand-300 hover:bg-brand-100"
                       onClick={() => setShowAllLater((current) => !current)}
                     >
                       {showAllLater ? 'Show fewer' : `Show ${hiddenApplicationCount} more`}
