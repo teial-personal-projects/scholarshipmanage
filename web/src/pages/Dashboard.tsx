@@ -148,7 +148,9 @@ function Dashboard() {
   const dashboardMetrics = useMemo(() => getDashboardMetrics(applications), [applications]);
 
   const handleDeleteApplication = async (id: number) => {
-    if (!confirm('Delete this application and all its essays?')) return;
+    const application = applications.find((item) => item.id === id);
+    const applicationName = application?.scholarshipName ?? 'this application';
+    if (!confirm(`Delete "${applicationName}" and all its essays?`)) return;
     try {
       await apiDelete(`/applications/${id}`);
       setApplications((prev) => prev.filter((a) => a.id !== id));
