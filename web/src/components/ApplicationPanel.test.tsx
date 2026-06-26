@@ -71,6 +71,8 @@ const application: ApplicationResponse & { essays: EssayResponse[] } = {
   minAward: 1000,
   maxAward: 5000,
   dueDate: '2026-06-30',
+  orgWebsite: 'state.example.edu',
+  applicationLink: 'https://apply.example.edu/merit',
   createdAt: '2026-06-01T00:00:00Z',
   updatedAt: '2026-06-01T00:00:00Z',
   essays,
@@ -189,6 +191,31 @@ describe('ApplicationPanel', () => {
       'https://docs.google.com/document/d/leadership',
       '_blank',
       'noopener,noreferrer',
+    );
+  });
+
+  it('renders application resource URLs as clickable links in the dialog', async () => {
+    const user = userEvent.setup();
+    render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('link', { name: 'Open organization website' })).toHaveAttribute(
+      'href',
+      'https://state.example.edu',
+    );
+    expect(screen.getByRole('link', { name: 'Open application portal' })).toHaveAttribute(
+      'href',
+      'https://apply.example.edu/merit',
+    );
+
+    await user.click(screen.getByRole('button', { name: /Links & Resources/ }));
+
+    expect(screen.getByRole('link', { name: 'Open organization website' })).toHaveAttribute(
+      'href',
+      'https://state.example.edu',
+    );
+    expect(screen.getByRole('link', { name: 'Open application portal' })).toHaveAttribute(
+      'href',
+      'https://apply.example.edu/merit',
     );
   });
 
