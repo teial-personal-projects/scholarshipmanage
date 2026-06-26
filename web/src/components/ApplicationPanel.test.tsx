@@ -85,6 +85,7 @@ async function openWorkItemsSection(user: ReturnType<typeof userEvent.setup>) {
 describe('ApplicationPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     vi.mocked(apiGet).mockImplementation(async (endpoint) => {
       if (endpoint === '/applications/1/essays') return essays;
       if (endpoint === '/applications/1/collaborations') return collaborations;
@@ -129,6 +130,45 @@ describe('ApplicationPanel', () => {
 
     expect(screen.queryByText('Unsaved changes are present.')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Organization')).toHaveValue('State University');
+  });
+
+  it('preserves dirty edits when refreshed application props arrive', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+
+    await user.clear(screen.getByLabelText('Organization'));
+    await user.type(screen.getByLabelText('Organization'), 'Unsaved University');
+
+    rerender(
+      <ApplicationPanel
+        application={{ ...application, organization: 'Server Refresh University', updatedAt: '2026-06-02T00:00:00Z' }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Organization')).toHaveValue('Unsaved University');
+
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+
+    expect(screen.getByLabelText('Organization')).toHaveValue('Server Refresh University');
+  });
+
+  it('restores unsaved edits after the panel remounts', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+
+    await user.clear(screen.getByLabelText('Current Action'));
+    await user.type(screen.getByLabelText('Current Action'), 'Finish FAFSA upload');
+
+    await waitFor(() => expect(window.localStorage.length).toBe(1));
+    await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(3));
+
+    unmount();
+    render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+
+    expect(screen.getByLabelText('Current Action')).toHaveValue('Finish FAFSA upload');
+    expect(screen.getByText('Unsaved changes are present.')).toBeInTheDocument();
+    await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(6));
   });
 
   it('saves changed application fields through the applications API', async () => {

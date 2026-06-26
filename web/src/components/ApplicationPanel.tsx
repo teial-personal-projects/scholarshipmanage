@@ -31,6 +31,9 @@ import { getDeadlineBadgeLabel } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { useToastHelpers } from '../utils/toast';
 
+const DRAFT_STORAGE_VERSION = 1;
+const DRAFT_STORAGE_PREFIX = 'scholarshipmanage:application-panel-draft';
+
 type ApplicationPanelApplication = ApplicationResponse & {
   essays?: readonly Pick<Essay, 'status'>[] | null;
 };
@@ -59,6 +62,15 @@ interface ApplicationDraft {
   requirements: string;
   renewable: boolean;
   renewableTerms: string;
+}
+
+interface StoredApplicationPanelDraft {
+  version: typeof DRAFT_STORAGE_VERSION;
+  applicationId: number;
+  draft: ApplicationDraft;
+  essayDrafts: EssayDraft[];
+  recommendationDrafts: RecommendationDraft[];
+  savedAt: string;
 }
 
 function toDateInputValue(value: string | null | undefined): string {
@@ -147,15 +159,73 @@ function toPayload(draft: ApplicationDraft) {
   };
 }
 
+function getDraftStorageKey(applicationId: number): string {
+  return `${DRAFT_STORAGE_PREFIX}:${applicationId}`;
+}
+
+function readStoredDraft(applicationId: number): StoredApplicationPanelDraft | null {
+  try {
+    const item = window.localStorage.getItem(getDraftStorageKey(applicationId));
+    if (!item) return null;
+
+    const parsed = JSON.parse(item) as Partial<StoredApplicationPanelDraft>;
+    if (
+      parsed.version !== DRAFT_STORAGE_VERSION ||
+      parsed.applicationId !== applicationId ||
+      !parsed.draft ||
+      !Array.isArray(parsed.essayDrafts) ||
+      !Array.isArray(parsed.recommendationDrafts)
+    ) {
+      return null;
+    }
+
+    return parsed as StoredApplicationPanelDraft;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredDraft(
+  applicationId: number,
+  draft: ApplicationDraft,
+  essayDrafts: EssayDraft[],
+  recommendationDrafts: RecommendationDraft[],
+): void {
+  try {
+    const payload: StoredApplicationPanelDraft = {
+      version: DRAFT_STORAGE_VERSION,
+      applicationId,
+      draft,
+      essayDrafts,
+      recommendationDrafts,
+      savedAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(getDraftStorageKey(applicationId), JSON.stringify(payload));
+  } catch {
+    // Browser storage can be unavailable or full; the in-memory dirty guard still protects active edits.
+  }
+}
+
+function clearStoredDraft(applicationId: number): void {
+  try {
+    window.localStorage.removeItem(getDraftStorageKey(applicationId));
+  } catch {
+    // Nothing actionable for the user if clearing local draft storage fails.
+  }
+}
+
 export default function ApplicationPanel({ application, onClose, onSaveSuccess }: ApplicationPanelProps) {
   const { showSuccess, showError } = useToastHelpers();
   const initialDraft = useMemo(() => createDraft(application), [application]);
   const initialEssayDrafts = useMemo(() => createEssayDrafts(application), [application]);
-  const [draft, setDraft] = useState<ApplicationDraft>(initialDraft);
+  const initialStoredDraft = useMemo(() => readStoredDraft(application.id), [application.id]);
+  const [draft, setDraft] = useState<ApplicationDraft>(initialStoredDraft?.draft ?? initialDraft);
   const [savedDraft, setSavedDraft] = useState<ApplicationDraft>(initialDraft);
-  const [essayDrafts, setEssayDrafts] = useState<EssayDraft[]>(initialEssayDrafts);
+  const [essayDrafts, setEssayDrafts] = useState<EssayDraft[]>(initialStoredDraft?.essayDrafts ?? initialEssayDrafts);
   const [savedEssayDrafts, setSavedEssayDrafts] = useState<EssayDraft[]>(initialEssayDrafts);
-  const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>([]);
+  const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>(
+    initialStoredDraft?.recommendationDrafts ?? [],
+  );
   const [savedRecommendationDrafts, setSavedRecommendationDrafts] = useState<RecommendationDraft[]>([]);
   const [collaborators, setCollaborators] = useState<CollaboratorResponse[]>([]);
   const [isLoadingEssays, setIsLoadingEssays] = useState(false);
@@ -164,13 +234,14 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
 
   useEffect(() => {
     let isMounted = true;
+    const storedDraft = readStoredDraft(application.id);
 
-    setDraft(initialDraft);
     setSavedDraft(initialDraft);
-    setEssayDrafts(initialEssayDrafts);
     setSavedEssayDrafts(initialEssayDrafts);
-    setRecommendationDrafts([]);
     setSavedRecommendationDrafts([]);
+    setDraft(storedDraft?.draft ?? initialDraft);
+    setEssayDrafts(storedDraft?.essayDrafts ?? initialEssayDrafts);
+    setRecommendationDrafts(storedDraft?.recommendationDrafts ?? []);
     setIsLoadingEssays(true);
 
     Promise.all([
@@ -180,16 +251,18 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
     ]).then(([essays, collaborations, collabs]) => {
       if (!isMounted) return;
       const nextEssayDrafts = (essays ?? []).map(createEssayDraft);
-      setEssayDrafts(nextEssayDrafts);
       setSavedEssayDrafts(nextEssayDrafts);
       const nextRecDrafts = (collaborations ?? [])
         .filter((collaboration) => collaboration.collaborationType === 'recommendation')
         .map(createRecommendationDraft);
-      setRecommendationDrafts(nextRecDrafts);
       setSavedRecommendationDrafts(nextRecDrafts);
+      if (!storedDraft) {
+        setEssayDrafts(nextEssayDrafts);
+        setRecommendationDrafts(nextRecDrafts);
+      }
       setCollaborators(collabs ?? []);
     }).catch(() => {
-      if (isMounted) setEssayDrafts(initialEssayDrafts);
+      if (isMounted && !storedDraft) setEssayDrafts(initialEssayDrafts);
     }).finally(() => {
       if (isMounted) setIsLoadingEssays(false);
     });
@@ -205,6 +278,15 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
     JSON.stringify(getComparableEssayDrafts(essayDrafts)) !== JSON.stringify(getComparableEssayDrafts(savedEssayDrafts));
   const recommendationsAreDirty = JSON.stringify(recommendationDrafts) !== JSON.stringify(savedRecommendationDrafts);
   const isDirty = applicationIsDirty || essaysAreDirty || recommendationsAreDirty;
+
+  useEffect(() => {
+    if (isDirty) {
+      writeStoredDraft(application.id, draft, essayDrafts, recommendationDrafts);
+      return;
+    }
+
+    clearStoredDraft(application.id);
+  }, [application.id, draft, essayDrafts, isDirty, recommendationDrafts]);
 
   useEffect(() => {
     if (!isDirty) return;
@@ -254,6 +336,7 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
     setDraft(savedDraft);
     setEssayDrafts(savedEssayDrafts);
     setRecommendationDrafts(savedRecommendationDrafts);
+    clearStoredDraft(application.id);
   };
 
   const handleAddRecommendation = () => {
@@ -394,6 +477,7 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
       setSavedEssayDrafts(nextEssayDrafts);
       setRecommendationDrafts(nextRecDrafts);
       setSavedRecommendationDrafts(nextRecDrafts);
+      clearStoredDraft(application.id);
       showSuccess('Saved', 'Application updated successfully', 3000);
       shouldResetSaving = false;
       setIsSaving(false);
