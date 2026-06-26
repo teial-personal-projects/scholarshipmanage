@@ -308,7 +308,6 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       </th>
                     );
                   })}
-                  <th className="table-th">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -323,7 +322,33 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       onClick={() => onApplicationOpen(application)}
                     >
                       <td className="px-4 py-2 font-medium text-brand-700">
-                        <span className="block truncate">{application.scholarshipName}</span>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="block min-w-0 truncate">{application.scholarshipName}</span>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <button
+                              type="button"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                              aria-label={`Edit ${application.scholarshipName}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onApplicationOpen(application);
+                              }}
+                            >
+                              <SquarePen size={14} aria-hidden />
+                            </button>
+                            {onDelete && (
+                              <button
+                                type="button"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
+                                aria-label={`Delete ${application.scholarshipName}`}
+                                disabled={deletingId === application.id}
+                                onClick={(event) => handleDelete(event, application.id)}
+                              >
+                                <Trash2 size={14} aria-hidden />
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-2 text-gray-600">{application.organization || '-'}</td>
                       <td className="px-4 py-2">
@@ -346,32 +371,6 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                             ))}
                           </div>
                         )}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
-                            aria-label={`Edit ${application.scholarshipName}`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onApplicationOpen(application);
-                            }}
-                          >
-                            <SquarePen size={14} aria-hidden />
-                          </button>
-                          {onDelete && (
-                            <button
-                              type="button"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
-                              aria-label={`Delete ${application.scholarshipName}`}
-                              disabled={deletingId === application.id}
-                              onClick={(event) => handleDelete(event, application.id)}
-                            >
-                              <Trash2 size={14} aria-hidden />
-                            </button>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   );
@@ -427,17 +426,27 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       </div>
                     )}
                   </button>
-                  {onDelete && (
+                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-3 py-2">
                     <button
                       type="button"
-                      aria-label={`Delete ${application.scholarshipName}`}
-                      className="absolute top-3 right-3 text-red-300 hover:text-red-600 transition-colors disabled:opacity-40"
-                      disabled={deletingId === application.id}
-                      onClick={(e) => handleDelete(e, application.id)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                      aria-label={`Edit ${application.scholarshipName}`}
+                      onClick={() => onApplicationOpen(application)}
                     >
-                      <Trash2 size={15} aria-hidden />
+                      <SquarePen size={15} aria-hidden />
                     </button>
-                  )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        aria-label={`Delete ${application.scholarshipName}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
+                        disabled={deletingId === application.id}
+                        onClick={(e) => handleDelete(e, application.id)}
+                      >
+                        <Trash2 size={15} aria-hidden />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

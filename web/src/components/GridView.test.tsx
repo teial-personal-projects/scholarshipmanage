@@ -21,10 +21,10 @@ const makeApplication = (
   ...overrides,
 });
 
-function renderGrid(applications: ApplicationResponse[]) {
+function renderGrid(applications: ApplicationResponse[], onDelete?: (id: number) => Promise<void>) {
   return render(
     <MemoryRouter>
-      <GridView applications={applications} onApplicationOpen={vi.fn()} />
+      <GridView applications={applications} onApplicationOpen={vi.fn()} onDelete={onDelete} />
     </MemoryRouter>,
   );
 }
@@ -100,6 +100,18 @@ describe('GridView', () => {
 
     expect(screen.getAllByText('Essays 1 left').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Recs 1 pending').length).toBeGreaterThan(0);
+  });
+
+  it('shows delete controls when deletion is available', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Deletable Scholarship',
+        status: 'Not Started',
+      }),
+    ], vi.fn());
+
+    expect(screen.getAllByRole('button', { name: 'Delete Deletable Scholarship' }).length).toBeGreaterThan(0);
   });
 
   it('includes pending recommendations in waiting on others', () => {
