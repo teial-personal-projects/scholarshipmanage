@@ -130,6 +130,24 @@ describe('GridView', () => {
     expect(screen.queryByText('$10,000')).not.toBeInTheDocument();
   });
 
+  it('shows organization beneath the scholarship name in grid rows', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Named Scholarship',
+        organization: 'Named Foundation',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Hyundai Women in STEM',
+        organization: null,
+      }),
+    ]);
+
+    expect(screen.getAllByText('Named Foundation').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Hyundai').length).toBeGreaterThan(0);
+  });
+
   it('shows delete controls when deletion is available', () => {
     renderGrid([
       makeApplication({
