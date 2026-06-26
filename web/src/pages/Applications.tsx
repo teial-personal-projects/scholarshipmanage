@@ -65,6 +65,7 @@ function Applications() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const itemsPerPage = 10;
+  const deleteApplicationName = applications.find((app) => app.id === deleteId)?.scholarshipName;
 
   useEffect(() => {
     async function fetchApplications() {
@@ -285,7 +286,8 @@ function Applications() {
             </div>
             <div className="modal-body">
               <p className="text-sm text-gray-700">
-                Are you sure? This will permanently delete the application and all associated essays and collaborations. This action cannot be undone.
+                Are you sure you want to delete {deleteApplicationName ? `"${deleteApplicationName}"` : 'this application'}?
+                This will permanently delete the application and all associated essays and collaborations. This action cannot be undone.
               </p>
             </div>
             <div className="modal-footer">
