@@ -5,7 +5,7 @@ import { authRateLimiters } from '../config/rate-limit.js';
 const router = Router();
 
 // POST /api/auth/register - Register new user
-// Rate limit: 3 requests per hour
+// Rate limit: 30 requests per hour by default
 router.post('/register', authRateLimiters.register, authController.register);
 
 // POST /api/auth/login - Login user (proxy to Supabase Auth)
@@ -19,4 +19,3 @@ router.post('/logout', authController.logout);
 router.post('/refresh', authController.refresh);
 
 export default router;
-

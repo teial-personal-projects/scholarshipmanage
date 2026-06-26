@@ -11,6 +11,8 @@ import { generalApiLimiter, publicEndpointLimiter } from './config/rate-limit.js
 
 const app = express();
 
+app.set('trust proxy', config.trustProxy);
+
 // Security headers middleware
 app.use(helmet(securityHeadersConfig));
 

@@ -42,7 +42,7 @@ export const RateLimitWindows = {
  */
 const DEFAULT_REQUEST_LIMITS = {
   AUTH_LOGIN: 5,
-  AUTH_REGISTER: 3,
+  AUTH_REGISTER: 30,
   AUTH_PASSWORD_RESET: 3,
   AUTH_EMAIL_VERIFY: 5,
   WRITE_OPERATIONS: 30,
@@ -218,7 +218,7 @@ export const authRateLimiters = {
 
   /**
    * Registration rate limiter
-   * 3 requests per hour
+   * 30 requests per hour
    */
   register: rateLimit({
     ...createBaseConfig(),
