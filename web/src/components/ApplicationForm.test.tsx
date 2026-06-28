@@ -29,6 +29,7 @@ const renderApplicationForm = () => render(
 describe('ApplicationForm', () => {
   afterEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
   });
 
   it('shows an error toast when creating an application fails', async () => {
@@ -93,5 +94,27 @@ describe('ApplicationForm', () => {
       collaborationType: 'recommendation',
       nextActionDueDate: '2026-06-20',
     }));
+  });
+
+  it('restores unsaved add application edits after the form remounts', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiGet).mockImplementation(() => new Promise(() => undefined));
+
+    const { unmount } = renderApplicationForm();
+
+    await user.type(screen.getByLabelText('Scholarship Name *'), 'Draft Scholarship');
+    await user.type(screen.getByLabelText('Due Date *'), '2026-07-01');
+    await user.click(screen.getByRole('button', { name: /Essays & Recommendations/ }));
+    await user.click(screen.getByRole('button', { name: 'Add Essay' }));
+    await user.type(screen.getByPlaceholderText('Essay prompt or topic'), 'Community impact essay');
+
+    await waitFor(() => expect(window.localStorage.length).toBe(1));
+
+    unmount();
+    renderApplicationForm();
+
+    expect(screen.getByLabelText('Scholarship Name *')).toHaveValue('Draft Scholarship');
+    expect(screen.getByLabelText('Due Date *')).toHaveValue('2026-07-01');
+    expect(screen.getByPlaceholderText('Essay prompt or topic')).toHaveValue('Community impact essay');
   });
 });
