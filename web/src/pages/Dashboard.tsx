@@ -70,47 +70,58 @@ function PriorityApplications({
 
   const visibleGroups = groups.filter((group) => group.applications.length > 0);
   const priorityCount = visibleGroups.reduce((total, group) => total + group.applications.length, 0);
+  const priorityApplications = visibleGroups.flatMap((group) => group.applications);
 
   return (
-    <section className="card">
-      <div className="flex items-center justify-between gap-3 px-5 py-4">
+    <section className="overflow-hidden rounded-lg border border-red-200 bg-white shadow-sm ring-1 ring-red-100">
+      <div className="flex flex-col gap-3 border-b border-red-100 bg-red-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
-          className="flex items-center gap-2 text-left"
+          className="flex min-w-0 items-center gap-3 text-left"
           aria-expanded={isExpanded}
           onClick={() => setIsExpanded((current) => !current)}
         >
-          <h2 className="text-sm font-bold text-gray-900">Priority Applications</h2>
-          <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700">
+          <span className="rounded-md bg-red-600 px-2.5 py-1 text-sm font-black uppercase tracking-wide text-white shadow-sm">
+            Urgent
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-2xl font-black leading-tight text-red-900">Priority Applications</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
+              Deadlines need attention now
+            </p>
+          </div>
+          <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-red-700 shadow-sm ring-1 ring-red-200">
             {priorityCount}
           </span>
-          {isExpanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {isExpanded ? <ChevronUp size={18} className="shrink-0 text-red-500" /> : <ChevronDown size={18} className="shrink-0 text-red-500" />}
         </button>
+        {visibleGroups.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {visibleGroups.map((group) => (
+              <span key={group.key} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-red-700 ring-1 ring-red-200">
+                {group.title}: {group.applications.length}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       {isExpanded && (
-        <div className="space-y-5 px-5 pb-5">
+        <div className="px-5 py-4">
           {visibleGroups.length === 0 ? (
             <p className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
               No urgent applications due in the next two weeks.
             </p>
           ) : (
-            visibleGroups.map((group) => (
-              <section key={group.key} className="space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                  {group.title} ({group.applications.length})
-                </h3>
-                <div className="space-y-3">
-                  {group.applications.map((application) => (
-                    <ActionRow
-                      key={application.id}
-                      application={application}
-                      onOpen={onApplicationOpen}
-                      onDelete={onDelete}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {priorityApplications.map((application) => (
+                <ActionRow
+                  key={application.id}
+                  application={application}
+                  onOpen={onApplicationOpen}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
           )}
         </div>
       )}
