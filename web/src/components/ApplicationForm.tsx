@@ -15,6 +15,19 @@ import {
   type RecommendationDraft,
 } from './ApplicationWorkItemsDrafts';
 
+const DRAFT_STORAGE_VERSION = 1;
+const DRAFT_STORAGE_PREFIX = 'scholarshipmanage:application-form-draft';
+
+interface StoredApplicationFormDraft {
+  version: typeof DRAFT_STORAGE_VERSION;
+  storageKey: string;
+  values: ApplicationFormValues;
+  essayDrafts: EssayDraft[];
+  recommendationDrafts: RecommendationDraft[];
+  workItemsOpen: boolean;
+  savedAt: string;
+}
+
 function toPayload(values: ApplicationFormValues) {
   const toNum = (s: string) => { const n = Number(s); return s.trim() && !Number.isNaN(n) ? n : null; };
   return {
@@ -38,17 +51,91 @@ function toPayload(values: ApplicationFormValues) {
   };
 }
 
+function getDraftStorageKey(applicationId: string | undefined): string {
+  return `${DRAFT_STORAGE_PREFIX}:${applicationId ?? 'new'}`;
+}
+
+function readStoredDraft(storageKey: string): StoredApplicationFormDraft | null {
+  try {
+    const item = window.localStorage.getItem(storageKey);
+    if (!item) return null;
+
+    const parsed = JSON.parse(item) as Partial<StoredApplicationFormDraft>;
+    if (
+      parsed.version !== DRAFT_STORAGE_VERSION ||
+      parsed.storageKey !== storageKey ||
+      !parsed.values ||
+      !Array.isArray(parsed.essayDrafts) ||
+      !Array.isArray(parsed.recommendationDrafts)
+    ) {
+      return null;
+    }
+
+    return parsed as StoredApplicationFormDraft;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredDraft(
+  storageKey: string,
+  values: ApplicationFormValues,
+  essayDrafts: EssayDraft[],
+  recommendationDrafts: RecommendationDraft[],
+  workItemsOpen: boolean,
+): void {
+  try {
+    const payload: StoredApplicationFormDraft = {
+      version: DRAFT_STORAGE_VERSION,
+      storageKey,
+      values,
+      essayDrafts,
+      recommendationDrafts,
+      workItemsOpen,
+      savedAt: new Date().toISOString(),
+    };
+    window.localStorage.setItem(storageKey, JSON.stringify(payload));
+  } catch {
+    // Browser storage can be unavailable or full; the active form state still holds the edits.
+  }
+}
+
+function clearStoredDraft(storageKey: string): void {
+  try {
+    window.localStorage.removeItem(storageKey);
+  } catch {
+    // Nothing actionable for the user if clearing local draft storage fails.
+  }
+}
+
+function hasUnsavedDraft(
+  values: ApplicationFormValues,
+  savedValues: ApplicationFormValues,
+  essayDrafts: EssayDraft[],
+  recommendationDrafts: RecommendationDraft[],
+): boolean {
+  return JSON.stringify(values) !== JSON.stringify(savedValues) ||
+    essayDrafts.length > 0 ||
+    recommendationDrafts.length > 0;
+}
+
 function ApplicationForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { showSuccess, showError } = useToastHelpers();
   const isEditMode = !!id;
+  const storageKey = getDraftStorageKey(id);
+  const [initialStoredDraft] = useState(() => readStoredDraft(storageKey));
+  const hasStoredDraft = Boolean(initialStoredDraft);
 
-  const [values, setValues] = useState<ApplicationFormValues>(EMPTY_FORM_VALUES);
-  const [essayDrafts, setEssayDrafts] = useState<EssayDraft[]>([]);
-  const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>([]);
+  const [values, setValues] = useState<ApplicationFormValues>(initialStoredDraft?.values ?? EMPTY_FORM_VALUES);
+  const [savedValues, setSavedValues] = useState<ApplicationFormValues>(EMPTY_FORM_VALUES);
+  const [essayDrafts, setEssayDrafts] = useState<EssayDraft[]>(initialStoredDraft?.essayDrafts ?? []);
+  const [recommendationDrafts, setRecommendationDrafts] = useState<RecommendationDraft[]>(
+    initialStoredDraft?.recommendationDrafts ?? [],
+  );
   const [collaborators, setCollaborators] = useState<CollaboratorResponse[]>([]);
-  const [workItemsOpen, setWorkItemsOpen] = useState(false);
+  const [workItemsOpen, setWorkItemsOpen] = useState(initialStoredDraft?.workItemsOpen ?? false);
   const [loading, setLoading] = useState(isEditMode);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +206,7 @@ function ApplicationForm() {
         setLoading(true);
         setError(null);
         const data = await apiGet<ApplicationResponse>(`/applications/${id}`);
-        setValues({
+        const loadedValues: ApplicationFormValues = {
           scholarshipName: data.scholarshipName,
           organization: data.organization ?? '',
           orgWebsite: data.orgWebsite ?? '',
@@ -137,7 +224,9 @@ function ApplicationForm() {
           submissionDate: data.submissionDate ? data.submissionDate.split('T')[0] : '',
           openDate: data.openDate ? data.openDate.split('T')[0] : '',
           dueDate: data.dueDate ? data.dueDate.split('T')[0] : '',
-        });
+        };
+        setSavedValues(loadedValues);
+        if (!hasStoredDraft) setValues(loadedValues);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Failed to load application';
         setError(msg);
@@ -147,7 +236,41 @@ function ApplicationForm() {
       }
     }
     fetchApplication();
-  }, [id, isEditMode, showError]);
+  }, [hasStoredDraft, id, isEditMode, showError]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (hasUnsavedDraft(values, savedValues, essayDrafts, recommendationDrafts)) {
+      writeStoredDraft(storageKey, values, essayDrafts, recommendationDrafts, workItemsOpen);
+      return;
+    }
+
+    clearStoredDraft(storageKey);
+  }, [essayDrafts, loading, recommendationDrafts, savedValues, storageKey, values, workItemsOpen]);
+
+  useEffect(() => {
+    if (!hasUnsavedDraft(values, savedValues, essayDrafts, recommendationDrafts)) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      writeStoredDraft(storageKey, values, essayDrafts, recommendationDrafts, workItemsOpen);
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        writeStoredDraft(storageKey, values, essayDrafts, recommendationDrafts, workItemsOpen);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [essayDrafts, recommendationDrafts, savedValues, storageKey, values, workItemsOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +290,7 @@ function ApplicationForm() {
       setError(null);
       if (isEditMode) {
         await apiPatch(`/applications/${id}`, toPayload(values));
+        clearStoredDraft(storageKey);
         showSuccess('Success', 'Application updated successfully', 3000);
         navigate(`/applications/${id}`);
       } else {
@@ -188,6 +312,7 @@ function ApplicationForm() {
               : undefined,
             nextActionDueDate: recommendation.dueDate,
           })));
+        clearStoredDraft(storageKey);
         showSuccess('Success', 'Application created successfully', 3000);
         navigate(`/applications/${created.id}`);
       }
@@ -229,7 +354,10 @@ function ApplicationForm() {
           <button
             type="button"
             className="btn-outline"
-            onClick={() => navigate(isEditMode ? `/applications/${id}` : '/dashboard')}
+            onClick={() => {
+              clearStoredDraft(storageKey);
+              navigate(isEditMode ? `/applications/${id}` : '/dashboard');
+            }}
             disabled={submitting}
           >
             Cancel

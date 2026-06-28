@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import {
   isApplicationDone,
@@ -18,6 +19,25 @@ import { getDeadlineDaysRemaining, getDeadlineUrgency, type DeadlineUrgency } fr
 import { getDashboardMetrics, type DashboardMetric } from '../utils/dashboardMetrics';
 import { DASHBOARD_VIEW_STORAGE_KEY, getStoredDashboardView, type DashboardView } from '../utils/dashboardView';
 import { useToastHelpers } from '../utils/toast';
+
+interface DashboardData {
+  profile: UserProfile;
+  applications: ApplicationResponse[];
+}
+
+const DASHBOARD_QUERY_KEY = ['dashboard'] as const;
+
+async function fetchDashboardData(): Promise<DashboardData> {
+  const [profile, applications] = await Promise.all([
+    apiGet<UserProfile>('/users/me'),
+    apiGet<ApplicationResponse[]>('/applications'),
+  ]);
+
+  return {
+    profile,
+    applications: applications || [],
+  };
+}
 
 function Spinner() {
   return (
@@ -152,43 +172,31 @@ function PriorityApplications({
 function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { showError, showSuccess } = useToastHelpers();
 
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [applications, setApplications] = useState<ApplicationResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<DashboardView>(getStoredDashboardView);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
   const [showYourApplications, setShowYourApplications] = useState(true);
   const [gridFilterRequest, setGridFilterRequest] = useState<GridFilterRequest | null>(null);
   const allApplicationsRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchData = useCallback(async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  const dashboardQuery = useQuery({
+    queryKey: DASHBOARD_QUERY_KEY,
+    queryFn: fetchDashboardData,
+    enabled: Boolean(user),
+  });
 
-    try {
-      setLoading(true);
-      setError(null);
-      const profileData = await apiGet<UserProfile>('/users/me');
-      setProfile(profileData);
-      const applicationsData = await apiGet<ApplicationResponse[]>('/applications');
-      setApplications(applicationsData || []);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load dashboard data';
-      setError(msg);
-      showError('Error', msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError, user]);
+  const profile = dashboardQuery.data?.profile ?? null;
+  const applications = useMemo(() => dashboardQuery.data?.applications ?? [], [dashboardQuery.data?.applications]);
 
   useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
+    if (!dashboardQuery.error) return;
+    const message = dashboardQuery.error instanceof Error
+      ? dashboardQuery.error.message
+      : 'Failed to load dashboard data';
+    showError('Error', message);
+  }, [dashboardQuery.error, showError]);
 
   const dashboardMetrics = useMemo(() => getDashboardMetrics(applications), [applications]);
 
@@ -198,7 +206,11 @@ function Dashboard() {
     if (!confirm(`Delete "${applicationName}" and all its essays?`)) return;
     try {
       await apiDelete(`/applications/${id}`);
-      setApplications((prev) => prev.filter((a) => a.id !== id));
+      queryClient.setQueryData<DashboardData>(DASHBOARD_QUERY_KEY, (current) => (
+        current
+          ? { ...current, applications: current.applications.filter((item) => item.id !== id) }
+          : current
+      ));
       showSuccess('Deleted', 'Application deleted successfully.', 3000);
     } catch {
       showError('Delete failed', 'We could not delete that application. Please try again.', 5000);
@@ -207,7 +219,7 @@ function Dashboard() {
 
   const handleApplicationSaveSuccess = () => {
     setSelectedApplication(null);
-    void fetchData();
+    void queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY });
   };
 
   const handleMetricSelect = (metric: DashboardMetric) => {
@@ -223,16 +235,18 @@ function Dashboard() {
     });
   };
 
-  if (authLoading || loading) return (
+  if (authLoading || dashboardQuery.isLoading) return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
       <Spinner />
     </div>
   );
 
-  if (error) return (
+  if (dashboardQuery.error) return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
       <div className="card card-body">
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-500">
+          {dashboardQuery.error instanceof Error ? dashboardQuery.error.message : 'Failed to load dashboard data'}
+        </p>
       </div>
     </div>
   );
