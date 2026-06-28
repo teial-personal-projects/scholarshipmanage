@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import {
@@ -12,11 +12,11 @@ import ActionFeed from '../components/ActionFeed';
 import ActionRow from '../components/ActionRow';
 import ApplicationPanel from '../components/ApplicationPanel';
 import DashboardMetricStrip from '../components/DashboardMetricStrip';
-import GridView from '../components/GridView';
+import GridView, { type GridFilterRequest } from '../components/GridView';
 import ViewToggle from '../components/ViewToggle';
 import { getDeadlineDaysRemaining, getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
-import { getDashboardMetrics } from '../utils/dashboardMetrics';
-import { getStoredDashboardView, type DashboardView } from '../utils/dashboardView';
+import { getDashboardMetrics, type DashboardMetric } from '../utils/dashboardMetrics';
+import { DASHBOARD_VIEW_STORAGE_KEY, getStoredDashboardView, type DashboardView } from '../utils/dashboardView';
 import { useToastHelpers } from '../utils/toast';
 
 function Spinner() {
@@ -37,6 +37,26 @@ function sortByDeadline(first: ApplicationResponse, second: ApplicationResponse)
 }
 
 const PRIORITY_URGENCIES = new Set<DeadlineUrgency>(['overdue', 'critical', 'warning']);
+
+function getMetricFilterRequest(metric: DashboardMetric): Omit<GridFilterRequest, 'id'> {
+  switch (metric.label) {
+    case 'Needs action':
+      return { statusFilter: 'needsAction', dueDateFilter: 'all', showSubmitted: false };
+    case 'Overdue':
+      return { statusFilter: 'all', dueDateFilter: 'overdue', showSubmitted: false };
+    case 'Due this week':
+      return { statusFilter: 'all', dueDateFilter: 'next7', showSubmitted: false };
+    case 'Due next 2 weeks':
+      return { statusFilter: 'all', dueDateFilter: 'nextTwoWeeks', showSubmitted: false };
+    case 'Not started':
+      return { statusFilter: 'notStarted', dueDateFilter: 'all', showSubmitted: true };
+    case 'Submitted':
+      return { statusFilter: 'submitted', dueDateFilter: 'all', showSubmitted: true };
+    case 'Total Applications':
+    default:
+      return { statusFilter: 'all', dueDateFilter: 'all', showSubmitted: true };
+  }
+}
 
 function isPriorityApplication(application: ApplicationResponse): boolean {
   if (isApplicationDone(application.status)) return false;
@@ -141,6 +161,8 @@ function Dashboard() {
   const [viewMode, setViewMode] = useState<DashboardView>(getStoredDashboardView);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationResponse | null>(null);
   const [showYourApplications, setShowYourApplications] = useState(true);
+  const [gridFilterRequest, setGridFilterRequest] = useState<GridFilterRequest | null>(null);
+  const allApplicationsRef = useRef<HTMLDivElement | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user) {
@@ -186,6 +208,19 @@ function Dashboard() {
   const handleApplicationSaveSuccess = () => {
     setSelectedApplication(null);
     void fetchData();
+  };
+
+  const handleMetricSelect = (metric: DashboardMetric) => {
+    setShowYourApplications(true);
+    setViewMode('grid');
+    window.localStorage.setItem(DASHBOARD_VIEW_STORAGE_KEY, 'grid');
+    setGridFilterRequest((previous) => ({
+      id: (previous?.id ?? 0) + 1,
+      ...getMetricFilterRequest(metric),
+    }));
+    window.requestAnimationFrame(() => {
+      allApplicationsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   if (authLoading || loading) return (
@@ -240,7 +275,7 @@ function Dashboard() {
               onDelete={handleDeleteApplication}
             />
 
-            <div className="card">
+            <div ref={allApplicationsRef} className="card">
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
                 <button
                   type="button"
@@ -279,6 +314,7 @@ function Dashboard() {
                       applications={applications}
                       onApplicationOpen={setSelectedApplication}
                       onDelete={handleDeleteApplication}
+                      filterRequest={gridFilterRequest}
                     />
                   )}
                 </div>
@@ -287,7 +323,11 @@ function Dashboard() {
           </main>
 
           <aside className="space-y-4">
-            <DashboardMetricStrip metrics={dashboardMetrics.summary} variant="rail" />
+            <DashboardMetricStrip
+              metrics={dashboardMetrics.summary}
+              variant="rail"
+              onMetricSelect={handleMetricSelect}
+            />
           </aside>
         </div>
       </div>

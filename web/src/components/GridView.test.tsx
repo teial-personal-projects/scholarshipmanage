@@ -215,6 +215,7 @@ describe('GridView', () => {
       }),
     ], vi.fn());
 
+    expect(screen.getByText('Actions')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Delete Deletable Scholarship' }).length).toBeGreaterThan(0);
   });
 
@@ -293,5 +294,37 @@ describe('GridView', () => {
     expect(screen.getAllByText('Essays 1 left').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Recs 1 pending').length).toBeGreaterThan(0);
     expect(screen.queryByText('Plain Not Started Scholarship')).not.toBeInTheDocument();
+  });
+
+  it('applies an external filter request from dashboard metrics', () => {
+    render(
+      <MemoryRouter>
+        <GridView
+          applications={[
+            makeApplication({
+              id: 1,
+              scholarshipName: 'Draft Scholarship',
+              status: 'In Progress',
+            }),
+            makeApplication({
+              id: 2,
+              scholarshipName: 'Submitted Scholarship',
+              status: 'Submitted',
+            }),
+          ]}
+          onApplicationOpen={vi.fn()}
+          filterRequest={{
+            id: 1,
+            statusFilter: 'submitted',
+            dueDateFilter: 'all',
+            showSubmitted: true,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Submitted (1)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Draft Scholarship')).not.toBeInTheDocument();
   });
 });
