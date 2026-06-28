@@ -42,7 +42,7 @@ describe('GridView', () => {
     vi.clearAllMocks();
   });
 
-  it('defaults to all applications when no applications need action', () => {
+  it('defaults to all applications with submitted applications visible', () => {
     renderGrid([
       makeApplication({
         id: 1,
@@ -60,6 +60,7 @@ describe('GridView', () => {
 
     expect(screen.getByRole('button', { name: 'Needs action (0)' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('button', { name: 'All (2)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Show Submitted')).toBeChecked();
     expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
   });
@@ -80,8 +81,8 @@ describe('GridView', () => {
 
     expect(screen.getByRole('button', { name: 'Needs action (1)' })).toBeInTheDocument();
     expect(screen.getAllByText('Active Scholarship').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Future Scholarship')).not.toBeInTheDocument();
-    expect(screen.queryByText('Urgent Scholarship')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Urgent Scholarship').length).toBeGreaterThan(0);
 
     expect(screen.getByRole('button', { name: 'Not Started (2)' })).toBeInTheDocument();
 
@@ -92,6 +93,63 @@ describe('GridView', () => {
     expect(screen.queryByText('Active Scholarship')).not.toBeInTheDocument();
 
     vi.useRealTimers();
+  });
+
+  it('hides submitted applications when show submitted is turned off', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Draft Scholarship',
+        status: 'In Progress',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Submitted Scholarship',
+        status: 'Submitted',
+      }),
+    ]);
+
+    fireEvent.click(screen.getByLabelText('Show Submitted'));
+
+    expect(screen.getAllByText('Draft Scholarship').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Submitted Scholarship')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All (1)' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('filters by due date presets', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 21));
+    renderGrid([
+      makeApplication({ id: 1, scholarshipName: 'Soon Scholarship', dueDate: '2026-06-28' }),
+      makeApplication({ id: 2, scholarshipName: 'Later Scholarship', dueDate: '2026-07-25' }),
+    ]);
+
+    fireEvent.change(screen.getByLabelText('Due date range'), { target: { value: 'next7' } });
+
+    expect(screen.getAllByText('Soon Scholarship').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Later Scholarship')).not.toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('searches scholarship and organization names with partial matching', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'STEM Scholarship',
+        organization: 'Northstar Foundation',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Arts Award',
+        organization: 'Microsoft',
+      }),
+    ]);
+
+    fireEvent.change(screen.getByLabelText('Search scholarship or company'), { target: { value: 'soft' } });
+
+    expect(screen.getAllByText('Arts Award').length).toBeGreaterThan(0);
+    expect(screen.queryByText('STEM Scholarship')).not.toBeInTheDocument();
   });
 
   it('shows pending essay and recommendation counts in application rows', () => {
@@ -157,6 +215,7 @@ describe('GridView', () => {
       }),
     ], vi.fn());
 
+    expect(screen.getByText('Actions')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Delete Deletable Scholarship' }).length).toBeGreaterThan(0);
   });
 
@@ -179,7 +238,7 @@ describe('GridView', () => {
     });
   });
 
-  it('includes pending recommendations in waiting on others', () => {
+  it('includes pending recommendations in needs action', () => {
     renderGrid([
       makeApplication({
         id: 1,
@@ -196,13 +255,76 @@ describe('GridView', () => {
       }),
     ]);
 
-    expect(screen.getByRole('button', { name: 'Waiting on others (1)' })).toBeInTheDocument();
-    expect(screen.queryByText('Recommendation Scholarship')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Waiting on others/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Needs action (2)' })).toBeInTheDocument();
+    expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Waiting on others (1)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Needs action (2)' }));
 
     expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Waiting for recommendation').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Action Scholarship')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Action Scholarship').length).toBeGreaterThan(0);
+  });
+
+  it('includes pending essays and recommendations in needs action even when not started', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Pending Essay Scholarship',
+        status: 'Not Started',
+        essays: [
+          { status: 'not_started' },
+        ],
+        recommendations: [
+          { status: 'Pending' },
+        ],
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Plain Not Started Scholarship',
+        status: 'Not Started',
+      }),
+    ]);
+
+    expect(screen.getByRole('button', { name: 'Needs action (1)' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Needs action (1)' }));
+
+    expect(screen.getAllByText('Pending Essay Scholarship').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Essays 1 left').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Recs 1 pending').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Plain Not Started Scholarship')).not.toBeInTheDocument();
+  });
+
+  it('applies an external filter request from dashboard metrics', () => {
+    render(
+      <MemoryRouter>
+        <GridView
+          applications={[
+            makeApplication({
+              id: 1,
+              scholarshipName: 'Draft Scholarship',
+              status: 'In Progress',
+            }),
+            makeApplication({
+              id: 2,
+              scholarshipName: 'Submitted Scholarship',
+              status: 'Submitted',
+            }),
+          ]}
+          onApplicationOpen={vi.fn()}
+          filterRequest={{
+            id: 1,
+            statusFilter: 'submitted',
+            dueDateFilter: 'all',
+            showSubmitted: true,
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Submitted (1)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Draft Scholarship')).not.toBeInTheDocument();
   });
 });

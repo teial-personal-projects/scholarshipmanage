@@ -5,6 +5,7 @@ import {
 } from '@scholarshipmanage/shared';
 
 import { filterApplicationsByRadar } from './deadlineRadar';
+import { applicationNeedsAction } from './needsAction';
 
 export interface DashboardMetric {
   label: string;
@@ -21,6 +22,7 @@ export interface ApplicationStatusMetric {
 export interface DashboardMetrics {
   totalApplications: number;
   overdue: number;
+  needsAction: number;
   dueThisWeek: number;
   dueNextTwoWeeks: number;
   notStarted: number;
@@ -50,6 +52,7 @@ export function getDashboardMetrics(
 ): DashboardMetrics {
   const totalApplications = applications.length;
   const overdue = filterApplicationsByRadar([...applications], 'overdue').length;
+  const needsAction = applications.filter(applicationNeedsAction).length;
   const dueThisWeek = filterApplicationsByRadar([...applications], 'dueThisWeek').length;
   const dueNextTwoWeeks = filterApplicationsByRadar([...applications], 'nextTwoWeeks').length;
   const notStarted = filterApplicationsByRadar([...applications], 'notStarted').length;
@@ -58,6 +61,7 @@ export function getDashboardMetrics(
 
   const summary = [
     { label: 'Total Applications', value: totalApplications },
+    { label: 'Needs action', value: needsAction },
     { label: 'Overdue', value: overdue },
     { label: 'Due this week', value: dueThisWeek },
     { label: 'Due next 2 weeks', value: dueNextTwoWeeks },
@@ -80,6 +84,7 @@ export function getDashboardMetrics(
   return {
     totalApplications,
     overdue,
+    needsAction,
     dueThisWeek,
     dueNextTwoWeeks,
     notStarted,

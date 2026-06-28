@@ -1,26 +1,42 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, SquarePen, Trash2 } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, SquarePen, Trash2 } from 'lucide-react';
 
 import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/shared';
 
-import { getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
+import { getDeadlineDaysRemaining, getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
 import { formatMinimumAwardAmount } from '../utils/award';
 import { getApplicationOrganizationLabel } from '../utils/applicationOrganization';
 import { getPendingWorkChips } from '../utils/pendingWork';
+import { applicationNeedsAction } from '../utils/needsAction';
+import { formatDateNoTimezone, parseDateOnlyToLocalDate } from '../utils/date';
 import { useToastHelpers } from '../utils/toast';
 
 interface GridViewProps {
   applications: ApplicationResponse[];
   onApplicationOpen: (application: ApplicationResponse) => void;
   onDelete?: (id: number) => Promise<void>;
+  filterRequest?: GridFilterRequest | null;
 }
 
 type SortDirection = 'asc' | 'desc';
 type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'currentAction';
-type QuickFilter = 'needsAction' | 'waiting' | 'notStarted' | 'all';
+export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'inProgress' | 'submitted';
+export type DueDateFilter = 'all' | 'overdue' | 'next7' | 'nextTwoWeeks' | 'next30' | 'custom' | 'noDeadline';
+
+export interface GridFilterRequest {
+  id: number;
+  statusFilter?: StatusFilter;
+  dueDateFilter?: DueDateFilter;
+  showSubmitted?: boolean;
+}
 
 const ITEMS_PER_PAGE = 10;
+const DUE_WINDOW_DAYS = {
+  next7: 7,
+  next14: 14,
+  next30: 30,
+} as const;
 
 const STATUS_BADGE: Record<string, string> = {
   'In Progress': 'badge badge-blue',
@@ -38,12 +54,41 @@ const GRID_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'currentAction', label: 'Current Action' },
 ];
 
-const QUICK_FILTERS: { key: QuickFilter; label: string }[] = [
-  { key: 'needsAction', label: 'Needs action' },
-  { key: 'waiting', label: 'Waiting on others' },
-  { key: 'notStarted', label: 'Not Started' },
+const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
+  { key: 'needsAction', label: 'Needs action' },
+  { key: 'notStarted', label: 'Not Started' },
+  { key: 'inProgress', label: 'In Progress' },
+  { key: 'submitted', label: 'Submitted' },
 ];
+
+const DUE_DATE_FILTERS: { key: DueDateFilter; label: string }[] = [
+  { key: 'all', label: 'Any due date' },
+  { key: 'overdue', label: 'Overdue' },
+  { key: 'next7', label: 'Due in 7 days' },
+  { key: 'nextTwoWeeks', label: 'Due next 2 weeks' },
+  { key: 'next30', label: 'Due in 30 days' },
+  { key: 'custom', label: 'Custom range' },
+  { key: 'noDeadline', label: 'No deadline' },
+];
+
+const STATUS_FILTER_STYLES: Record<StatusFilter, { dot: string }> = {
+  all: {
+    dot: 'bg-brand-500',
+  },
+  needsAction: {
+    dot: 'bg-orange-500',
+  },
+  notStarted: {
+    dot: 'bg-gray-400',
+  },
+  inProgress: {
+    dot: 'bg-blue-500',
+  },
+  submitted: {
+    dot: 'bg-green-600',
+  },
+};
 
 const urgencyRowStyles: Record<DeadlineUrgency, string> = {
   overdue: 'bg-red-50/70 hover:bg-red-50',
@@ -60,7 +105,7 @@ const urgencyDueDateStyles: Record<DeadlineUrgency, string> = {
 };
 
 function formatDate(value: string | null | undefined): string {
-  return value ? new Date(value).toLocaleDateString() : '-';
+  return value ? formatDateNoTimezone(value) : '-';
 }
 
 function getCurrentAction(application: ApplicationResponse): string {
@@ -74,7 +119,7 @@ function getSortValue(application: ApplicationResponse, sortKey: SortKey): strin
     case 'status':
       return application.status.toLowerCase();
     case 'dueDate':
-      return application.dueDate ? new Date(application.dueDate).getTime() : Number.POSITIVE_INFINITY;
+      return parseDateOnlyToLocalDate(application.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
     case 'awardAmount':
       return application.minAward ?? 0;
     case 'currentAction':
@@ -91,19 +136,55 @@ function sortByCreatedDesc(first: ApplicationResponse, second: ApplicationRespon
   return new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime();
 }
 
-function matchesQuickFilter(application: ApplicationResponse, quickFilter: QuickFilter): boolean {
-  if (quickFilter === 'all') return true;
-  if (quickFilter === 'notStarted') return application.status === 'Not Started';
-  if (isApplicationDone(application.status)) return false;
-  if (quickFilter === 'needsAction' && application.status === 'Not Started') return false;
-
-  const nextAction = deriveNextAction(application);
-  if (quickFilter === 'needsAction') return nextAction.actionable;
-  return nextAction.kind === 'waiting';
+function matchesStatusFilter(application: ApplicationResponse, statusFilter: StatusFilter): boolean {
+  if (statusFilter === 'all') return true;
+  if (statusFilter === 'notStarted') return application.status === 'Not Started';
+  if (statusFilter === 'inProgress') return application.status === 'In Progress';
+  if (statusFilter === 'submitted') return isApplicationDone(application.status);
+  return applicationNeedsAction(application);
 }
 
-function getDefaultQuickFilter(applications: ApplicationResponse[]): QuickFilter {
-  return applications.some((application) => matchesQuickFilter(application, 'needsAction')) ? 'needsAction' : 'all';
+function matchesSearch(application: ApplicationResponse, searchTerm: string): boolean {
+  const query = searchTerm.trim().toLowerCase();
+  if (!query) return true;
+
+  return [application.scholarshipName, application.organization]
+    .filter(Boolean)
+    .some((value) => value?.toLowerCase().includes(query));
+}
+
+function matchesDueDateFilter(
+  application: ApplicationResponse,
+  dueDateFilter: DueDateFilter,
+  customStartDate: string,
+  customEndDate: string,
+): boolean {
+  if (dueDateFilter === 'all') return true;
+  if (!application.dueDate) return dueDateFilter === 'noDeadline';
+  if (dueDateFilter === 'noDeadline') return false;
+
+  const dueDate = parseDateOnlyToLocalDate(application.dueDate);
+  if (!dueDate) return false;
+  const dueTime = dueDate.getTime();
+
+  if (dueDateFilter === 'custom') {
+    const startDate = parseDateOnlyToLocalDate(customStartDate);
+    const endDate = parseDateOnlyToLocalDate(customEndDate);
+    const startsAfter = startDate ? dueTime >= startDate.getTime() : true;
+    const endsBefore = endDate ? dueTime <= endDate.getTime() : true;
+    return startsAfter && endsBefore;
+  }
+
+  const daysRemaining = getDeadlineDaysRemaining(application.dueDate);
+  if (daysRemaining === null) return false;
+
+  if (dueDateFilter === 'overdue') return daysRemaining < 0;
+  if (daysRemaining < 0) return false;
+  if (dueDateFilter === 'next7') return daysRemaining <= DUE_WINDOW_DAYS.next7;
+  if (dueDateFilter === 'nextTwoWeeks') {
+    return daysRemaining > DUE_WINDOW_DAYS.next7 && daysRemaining <= DUE_WINDOW_DAYS.next14;
+  }
+  return daysRemaining <= DUE_WINDOW_DAYS.next30;
 }
 
 function Pagination({
@@ -157,10 +238,14 @@ function Pagination({
   );
 }
 
-export default function GridView({ applications, onApplicationOpen, onDelete }: GridViewProps) {
+export default function GridView({ applications, onApplicationOpen, onDelete, filterRequest }: GridViewProps) {
   const { showError } = useToastHelpers();
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>(() => getDefaultQuickFilter(applications));
-  const [userSelectedQuickFilter, setUserSelectedQuickFilter] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSubmitted, setShowSubmitted] = useState(true);
+  const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -179,21 +264,25 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
     }
   };
 
-  const quickFilterCounts = useMemo(() => ({
-    needsAction: applications.filter((application) => matchesQuickFilter(application, 'needsAction')).length,
-    waiting: applications.filter((application) => matchesQuickFilter(application, 'waiting')).length,
-    notStarted: applications.filter((application) => matchesQuickFilter(application, 'notStarted')).length,
-    all: applications.length,
-  }), [applications]);
+  const baseFilteredApplications = useMemo(() => (
+    applications.filter((application) => (
+      matchesSearch(application, searchTerm) &&
+      (showSubmitted || !isApplicationDone(application.status)) &&
+      matchesDueDateFilter(application, dueDateFilter, customStartDate, customEndDate)
+    ))
+  ), [applications, customEndDate, customStartDate, dueDateFilter, searchTerm, showSubmitted]);
 
-  useEffect(() => {
-    if (userSelectedQuickFilter || quickFilter !== 'needsAction' || quickFilterCounts.needsAction > 0) return;
-    setQuickFilter('all');
-  }, [quickFilter, quickFilterCounts.needsAction, userSelectedQuickFilter]);
+  const statusFilterCounts = useMemo(() => ({
+    all: baseFilteredApplications.length,
+    needsAction: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'needsAction')).length,
+    notStarted: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'notStarted')).length,
+    inProgress: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'inProgress')).length,
+    submitted: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'submitted')).length,
+  }), [baseFilteredApplications]);
 
   const filteredApplications = useMemo(() => (
-    applications.filter((application) => matchesQuickFilter(application, quickFilter))
-  ), [applications, quickFilter]);
+    baseFilteredApplications.filter((application) => matchesStatusFilter(application, statusFilter))
+  ), [baseFilteredApplications, statusFilter]);
 
   const sortedApplications = useMemo(() => (
     [...filteredApplications].sort((first, second) => {
@@ -212,7 +301,18 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [applications.length, quickFilter]);
+  }, [applications.length, customEndDate, customStartDate, dueDateFilter, searchTerm, showSubmitted, statusFilter]);
+
+  useEffect(() => {
+    if (!filterRequest) return;
+
+    setSearchTerm('');
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setStatusFilter(filterRequest.statusFilter ?? 'all');
+    setDueDateFilter(filterRequest.dueDateFilter ?? 'all');
+    setShowSubmitted(filterRequest.showSubmitted ?? true);
+  }, [filterRequest]);
 
   const handleSort = (nextSortKey: SortKey) => {
     setCurrentPage(1);
@@ -237,46 +337,128 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setShowSubmitted(true);
+    setDueDateFilter('all');
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setStatusFilter('all');
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {QUICK_FILTERS.map((filter) => {
-          const isActive = quickFilter === filter.key;
-          const count = quickFilterCounts[filter.key];
+      <div className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-[minmax(15rem,1fr)_auto_minmax(13rem,16rem)_auto] lg:items-center">
+          <label className="relative block">
+            <span className="sr-only">Search scholarship or company</span>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+            <input
+              type="search"
+              className="field-input h-10 pl-9"
+              placeholder="Search scholarship or company..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </label>
 
-          return (
-            <button
-              key={filter.key}
-              type="button"
-              aria-label={`${filter.label} (${count})`}
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                isActive
-                  ? 'border-brand-500 bg-brand-50 text-brand-700'
-                  : 'border-gray-300 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700'
-              }`}
-              aria-pressed={isActive}
-              onClick={() => {
-                setUserSelectedQuickFilter(true);
-                setQuickFilter(filter.key);
-              }}
+          <label className="inline-flex h-10 items-center justify-between gap-3 rounded-md border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm">
+            <span>Show Submitted</span>
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-brand-700"
+              checked={showSubmitted}
+              onChange={(event) => setShowSubmitted(event.target.checked)}
+            />
+          </label>
+
+          <label className="relative block">
+            <span className="sr-only">Due date range</span>
+            <Calendar size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+            <select
+              className="field-select h-10 pl-9"
+              value={dueDateFilter}
+              onChange={(event) => setDueDateFilter(event.target.value as DueDateFilter)}
             >
-              {filter.label}
-              <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${
-                isActive ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
-              }`}
+              {DUE_DATE_FILTERS.map((filter) => (
+                <option key={filter.key} value={filter.key}>{filter.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            className="btn-ghost h-10 gap-1.5 px-3 text-xs"
+            onClick={resetFilters}
+          >
+            <RotateCcw size={14} aria-hidden />
+            Reset
+          </button>
+        </div>
+
+        {dueDateFilter === 'custom' && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">
+            <label className="block">
+              <span className="field-label">Due from</span>
+              <input
+                type="date"
+                className="field-input"
+                value={customStartDate}
+                onChange={(event) => setCustomStartDate(event.target.value)}
+              />
+            </label>
+            <label className="block">
+              <span className="field-label">Due through</span>
+              <input
+                type="date"
+                className="field-input"
+                value={customEndDate}
+                onChange={(event) => setCustomEndDate(event.target.value)}
+              />
+            </label>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_FILTERS.map((filter) => {
+            const isActive = statusFilter === filter.key;
+            const count = statusFilterCounts[filter.key];
+            const styles = STATUS_FILTER_STYLES[filter.key];
+
+            return (
+              <button
+                key={filter.key}
+                type="button"
+                aria-label={`${filter.label} (${count})`}
+                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isActive
+                    ? 'border-brand-300 bg-brand-50 text-brand-700'
+                    : 'border-gray-300 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700'
+                }`}
+                aria-pressed={isActive}
+                onClick={() => {
+                  setStatusFilter(filter.key);
+                }}
               >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+                <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} aria-hidden />
+                {filter.label}
+                <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${
+                  isActive ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
+                }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {filteredApplications.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-3">📝</div>
           <p className="text-gray-600 text-sm">
-            No applications match {QUICK_FILTERS.find((filter) => filter.key === quickFilter)?.label.toLowerCase()}.
+            No applications match the current filters.
           </p>
         </div>
       ) : (
@@ -284,11 +466,12 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
           <div className="hidden md:block overflow-x-auto">
             <table className="table-root table-fixed">
               <colgroup>
-                <col className="w-[43%]" />
+                <col className="w-[37%]" />
                 <col className="w-[13%]" />
                 <col className="w-[13%]" />
                 <col className="w-[12%]" />
-                <col className="w-[19%]" />
+                <col className="w-[17%]" />
+                <col className="w-[8%]" />
               </colgroup>
               <thead>
                 <tr className="table-header-row">
@@ -312,6 +495,9 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       </th>
                     );
                   })}
+                  <th className="table-th sticky right-0 bg-white text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -328,44 +514,18 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                       onClick={() => onApplicationOpen(application)}
                     >
                       <td className="px-4 py-1.5 font-medium text-brand-700">
-                        <div className="flex min-w-0 items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <span className="block truncate" title={application.scholarshipName}>
-                              {application.scholarshipName}
-                            </span>
-                            {organizationLabel && (
-                              <span
-                                className="block truncate text-[11px] font-medium leading-3 text-gray-500"
-                                title={organizationLabel}
-                              >
-                                {organizationLabel}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-2">
-                            <button
-                              type="button"
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
-                              aria-label={`Edit ${application.scholarshipName}`}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                onApplicationOpen(application);
-                              }}
+                        <div className="min-w-0">
+                          <span className="block truncate" title={application.scholarshipName}>
+                            {application.scholarshipName}
+                          </span>
+                          {organizationLabel && (
+                            <span
+                              className="block truncate text-[11px] font-medium leading-3 text-gray-500"
+                              title={organizationLabel}
                             >
-                              <SquarePen size={14} aria-hidden />
-                            </button>
-                            {onDelete && (
-                              <button
-                                type="button"
-                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
-                                aria-label={`Delete ${application.scholarshipName}`}
-                                disabled={deletingId === application.id}
-                                onClick={(event) => handleDelete(event, application.id)}
-                              >
-                                <Trash2 size={14} aria-hidden />
-                              </button>
-                            )}
-                          </div>
+                              {organizationLabel}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-1.5">
@@ -388,6 +548,32 @@ export default function GridView({ applications, onApplicationOpen, onDelete }: 
                             ))}
                           </div>
                         )}
+                      </td>
+                      <td className="sticky right-0 bg-inherit px-4 py-1.5">
+                        <div className="flex shrink-0 items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                            aria-label={`Edit ${application.scholarshipName}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onApplicationOpen(application);
+                            }}
+                          >
+                            <SquarePen size={14} aria-hidden />
+                          </button>
+                          {onDelete && (
+                            <button
+                              type="button"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40"
+                              aria-label={`Delete ${application.scholarshipName}`}
+                              disabled={deletingId === application.id}
+                              onClick={(event) => handleDelete(event, application.id)}
+                            >
+                              <Trash2 size={14} aria-hidden />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

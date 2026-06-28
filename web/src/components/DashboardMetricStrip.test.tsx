@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import DashboardMetricStrip from './DashboardMetricStrip';
 
@@ -25,5 +25,25 @@ describe('DashboardMetricStrip', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('14')).toBeInTheDocument();
     expect(screen.getByText('22')).toBeInTheDocument();
+  });
+
+  it('calls the metric select handler when a metric is clicked', () => {
+    const onMetricSelect = vi.fn();
+    const metrics = [
+      { label: 'Total Applications', value: 12 },
+      { label: 'Submitted', value: 3 },
+    ];
+
+    render(
+      <DashboardMetricStrip
+        metrics={metrics}
+        variant="rail"
+        onMetricSelect={onMetricSelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Submitted/ }));
+
+    expect(onMetricSelect).toHaveBeenCalledWith(metrics[1]);
   });
 });
