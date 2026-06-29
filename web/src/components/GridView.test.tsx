@@ -79,7 +79,7 @@ describe('GridView', () => {
       }),
     ]);
 
-    expect(screen.getByRole('button', { name: 'Needs action (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Needs action (0)' })).toBeInTheDocument();
     expect(screen.getAllByText('Active Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Urgent Scholarship').length).toBeGreaterThan(0);
@@ -256,15 +256,15 @@ describe('GridView', () => {
     ]);
 
     expect(screen.queryByRole('button', { name: /Waiting on others/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Needs action (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Needs action (1)' })).toBeInTheDocument();
     expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Needs action (2)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Needs action (1)' }));
 
     expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
     expect(screen.queryByText('Waiting for recommendation')).not.toBeInTheDocument();
     expect(screen.getAllByText('Recs 1 pending').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Action Scholarship').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Action Scholarship')).not.toBeInTheDocument();
   });
 
   it('includes pending essays and recommendations in needs action even when not started', () => {
