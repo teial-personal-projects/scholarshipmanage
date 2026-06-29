@@ -33,12 +33,12 @@ const METRIC_VISUALS: Record<string, MetricVisual> = {
     valueClass: 'text-blue-700',
     helperText: 'All time',
   },
-  'Needs action': {
+  Dependencies: {
     Icon: ListTodo,
     cardClass: 'border-orange-100 bg-orange-50/70',
     iconClass: 'bg-orange-100 text-orange-700',
     valueClass: 'text-orange-700',
-    helperText: 'Work to do',
+    helperText: 'Awaiting items',
   },
   Overdue: {
     Icon: AlertTriangle,

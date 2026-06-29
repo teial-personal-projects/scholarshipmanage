@@ -55,7 +55,7 @@ const GRID_COLUMNS: { key: SortKey; label: string }[] = [
 
 const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'needsAction', label: 'Needs action' },
+  { key: 'needsAction', label: 'Dependencies' },
   { key: 'notStarted', label: 'Not Started' },
   { key: 'inProgress', label: 'In Progress' },
   { key: 'submitted', label: 'Submitted' },
