@@ -144,7 +144,6 @@ Scholarship applications tracked by students.
 | `renewable` | BOOLEAN | DEFAULT FALSE | Whether scholarship is renewable |
 | `renewable_terms` | TEXT | | Terms for renewal |
 | `document_info_link` | TEXT | | Link to document requirements |
-| `current_action` | TEXT | | Current action needed (e.g., "Waiting for Recommendations") |
 | `status` | application_status | DEFAULT 'Not Started' | Application status |
 | `submission_date` | DATE | | Date application was submitted |
 | `open_date` | DATE | | Date application opens |

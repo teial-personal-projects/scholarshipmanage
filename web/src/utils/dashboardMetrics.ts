@@ -61,7 +61,7 @@ export function getDashboardMetrics(
 
   const summary = [
     { label: 'Total Applications', value: totalApplications },
-    { label: 'Needs action', value: needsAction },
+    { label: 'Dependencies', value: needsAction },
     { label: 'Overdue', value: overdue },
     { label: 'Due this week', value: dueThisWeek },
     { label: 'Due next 2 weeks', value: dueNextTwoWeeks },

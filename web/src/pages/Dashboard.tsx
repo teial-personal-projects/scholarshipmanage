@@ -60,7 +60,7 @@ const PRIORITY_URGENCIES = new Set<DeadlineUrgency>(['overdue', 'critical', 'war
 
 function getMetricFilterRequest(metric: DashboardMetric): Omit<GridFilterRequest, 'id'> {
   switch (metric.label) {
-    case 'Needs action':
+    case 'Dependencies':
       return { statusFilter: 'needsAction', dueDateFilter: 'all', showSubmitted: false };
     case 'Overdue':
       return { statusFilter: 'all', dueDateFilter: 'overdue', showSubmitted: false };

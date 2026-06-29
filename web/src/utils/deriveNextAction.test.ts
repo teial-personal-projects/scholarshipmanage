@@ -11,7 +11,6 @@ const baseApplication: ApplicationResponse = {
   targetType: 'Merit',
   organization: 'Example Org',
   status: 'In Progress',
-  currentAction: null,
   dueDate: '2026-07-01',
   createdAt: '2026-06-01T00:00:00Z',
   updatedAt: '2026-06-01T00:00:00Z',
@@ -39,11 +38,10 @@ describe('deriveNextAction', () => {
     });
   });
 
-  it('returns essay work before manual fallback actions', () => {
+  it('returns essay work for unfinished essays', () => {
     expect(
       deriveNextAction({
         ...baseApplication,
-        currentAction: 'Waiting for Recommendations',
         essays: [{ status: 'completed' }, { status: 'in_progress' }],
       }),
     ).toEqual({
@@ -66,25 +64,10 @@ describe('deriveNextAction', () => {
     });
   });
 
-  it('returns waiting when manual current action is blocked externally', () => {
-    expect(
-      deriveNextAction({
-        ...baseApplication,
-        currentAction: 'Waiting for recommender upload',
-        essays: [{ status: 'completed' }],
-      }),
-    ).toEqual({
-      label: 'Waiting for recommender upload',
-      kind: 'waiting',
-      actionable: false,
-    });
-  });
-
   it('returns waiting when recommendations are pending', () => {
     expect(
       deriveNextAction({
         ...baseApplication,
-        currentAction: null,
         essays: [{ status: 'completed' }],
         recommendations: [
           { status: 'Pending' },

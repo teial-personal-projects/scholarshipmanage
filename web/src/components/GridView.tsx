@@ -4,7 +4,6 @@ import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, SquarePen, Trash2 
 import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/shared';
 
 import { getDeadlineDaysRemaining, getDeadlineUrgency, type DeadlineUrgency } from '../utils/deadline';
-import { deriveNextAction } from '../utils/deriveNextAction';
 import { formatMinimumAwardAmount } from '../utils/award';
 import { getApplicationOrganizationLabel } from '../utils/applicationOrganization';
 import { getPendingWorkChips } from '../utils/pendingWork';
@@ -20,7 +19,7 @@ interface GridViewProps {
 }
 
 type SortDirection = 'asc' | 'desc';
-type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'currentAction';
+type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'currentDependencies';
 export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'inProgress' | 'submitted';
 export type DueDateFilter = 'all' | 'overdue' | 'next7' | 'nextTwoWeeks' | 'next30' | 'custom' | 'noDeadline';
 
@@ -51,12 +50,12 @@ const GRID_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'status', label: 'Status' },
   { key: 'dueDate', label: 'Due Date' },
   { key: 'awardAmount', label: 'Min Amount' },
-  { key: 'currentAction', label: 'Current Action' },
+  { key: 'currentDependencies', label: 'Current Dependencies' },
 ];
 
 const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'needsAction', label: 'Needs action' },
+  { key: 'needsAction', label: 'Dependencies' },
   { key: 'notStarted', label: 'Not Started' },
   { key: 'inProgress', label: 'In Progress' },
   { key: 'submitted', label: 'Submitted' },
@@ -108,8 +107,9 @@ function formatDate(value: string | null | undefined): string {
   return value ? formatDateNoTimezone(value) : '-';
 }
 
-function getCurrentAction(application: ApplicationResponse): string {
-  return application.currentAction || deriveNextAction(application).label || '-';
+function getCurrentDependenciesLabel(application: ApplicationResponse): string {
+  const labels = getPendingWorkChips(application).map((chip) => chip.label);
+  return labels.length ? labels.join(', ') : '-';
 }
 
 function getSortValue(application: ApplicationResponse, sortKey: SortKey): string | number {
@@ -122,8 +122,8 @@ function getSortValue(application: ApplicationResponse, sortKey: SortKey): strin
       return parseDateOnlyToLocalDate(application.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
     case 'awardAmount':
       return application.minAward ?? 0;
-    case 'currentAction':
-      return getCurrentAction(application).toLowerCase();
+    case 'currentDependencies':
+      return getCurrentDependenciesLabel(application).toLowerCase();
   }
 }
 
@@ -504,7 +504,6 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
                 {pageApplications.map((application) => {
                   const urgency = getDeadlineUrgency(application.dueDate, application.status);
                   const pendingWorkChips = getPendingWorkChips(application);
-                  const currentAction = getCurrentAction(application);
                   const organizationLabel = getApplicationOrganizationLabel(application);
 
                   return (
@@ -538,9 +537,8 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
                       </td>
                       <td className="px-4 py-1.5 text-gray-700">{formatMinimumAwardAmount(application)}</td>
                       <td className="px-4 py-1.5 text-gray-700">
-                        <span className="block truncate" title={currentAction}>{currentAction}</span>
-                        {pendingWorkChips.length > 0 && (
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {pendingWorkChips.length === 0 ? '-' : (
+                          <div className="flex flex-wrap gap-1.5">
                             {pendingWorkChips.map((chip) => (
                               <span key={chip.key} className="badge bg-amber-50 text-amber-800 border border-amber-200">
                                 {chip.label}
@@ -621,7 +619,6 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
                         <span>{formatMinimumAwardAmount(application)}</span>
                       </div>
                     </div>
-                    <p className="mt-2 line-clamp-1 text-sm text-gray-700">{getCurrentAction(application)}</p>
                     {pendingWorkChips.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {pendingWorkChips.map((chip) => (

@@ -68,7 +68,6 @@ export interface ApplicationResponse {
   requirements?: string | null;
   renewable?: boolean | null;
   renewableTerms?: string | null;
-  currentAction?: string | null;
   status: TApplicationStatus;
   submissionDate?: string | null;
   openDate?: string | null;
@@ -77,6 +76,7 @@ export interface ApplicationResponse {
   updatedAt: string;
   essays?: readonly Pick<Essay, 'status'>[] | null;
   recommendations?: readonly Pick<Recommendation, 'status'>[] | null;
+  collaborations?: readonly Pick<CollaborationResponse, 'collaborationType' | 'status'>[] | null;
 }
 
 /**

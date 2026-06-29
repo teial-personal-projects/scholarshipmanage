@@ -42,7 +42,7 @@ describe('applications.service', () => {
 
       expect(result).toEqual(mockApps);
       expect(mockFrom).toHaveBeenCalledWith('applications');
-      expect(mockSelect).toHaveBeenCalledWith('*, essays(status), recommendations(status)');
+      expect(mockSelect).toHaveBeenCalledWith('*, essays(status), collaborations(status, collaboration_type)');
     });
   });
 

@@ -35,7 +35,7 @@ describe('getDashboardMetrics', () => {
         id: 7,
         status: 'In Progress',
         dueDate: '2026-07-20',
-        recommendations: [{ status: 'Pending' }],
+        collaborations: [{ collaborationType: 'recommendation', status: 'pending' }],
       }),
       makeApplication({
         id: 8,
@@ -47,7 +47,7 @@ describe('getDashboardMetrics', () => {
 
     expect(metrics.summary).toEqual([
       { label: 'Total Applications', value: 8 },
-      { label: 'Needs action', value: 5 },
+      { label: 'Dependencies', value: 2 },
       { label: 'Overdue', value: 1 },
       { label: 'Due this week', value: 2 },
       { label: 'Due next 2 weeks', value: 1 },

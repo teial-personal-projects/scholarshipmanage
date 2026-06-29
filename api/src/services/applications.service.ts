@@ -11,7 +11,7 @@ import {
 export const getUserApplications = async (userId: number) => {
   const { data, error } = await supabase
     .from('applications')
-    .select('*, essays(status), recommendations(status)')
+    .select('*, essays(status), collaborations(status, collaboration_type)')
     .eq('user_id', userId)
     .order('due_date', { ascending: true });
 
@@ -60,7 +60,6 @@ export const createApplication = async (
     renewable?: boolean;
     renewableTerms?: string | null;
     documentInfoLink?: string | null;
-    currentAction?: string | null;
     status?: string;
     submissionDate?: string | null;
     openDate?: string | null;
@@ -86,7 +85,6 @@ export const createApplication = async (
   if (applicationData.renewable !== undefined) dbData.renewable = applicationData.renewable;
   if (applicationData.renewableTerms !== undefined) dbData.renewable_terms = applicationData.renewableTerms;
   if (applicationData.documentInfoLink !== undefined) dbData.document_info_link = applicationData.documentInfoLink;
-  if (applicationData.currentAction !== undefined) dbData.current_action = applicationData.currentAction;
   if (applicationData.status !== undefined) dbData.status = applicationData.status;
   if (applicationData.submissionDate !== undefined) dbData.submission_date = applicationData.submissionDate;
   if (applicationData.openDate !== undefined) dbData.open_date = applicationData.openDate;
@@ -122,7 +120,6 @@ export const updateApplication = async (
     renewable?: boolean;
     renewableTerms?: string | null;
     documentInfoLink?: string | null;
-    currentAction?: string | null;
     status?: string;
     submissionDate?: string | null;
     openDate?: string | null;
@@ -148,7 +145,6 @@ export const updateApplication = async (
   if (updates.renewable !== undefined) dbUpdates.renewable = updates.renewable;
   if (updates.renewableTerms !== undefined) dbUpdates.renewable_terms = updates.renewableTerms;
   if (updates.documentInfoLink !== undefined) dbUpdates.document_info_link = updates.documentInfoLink;
-  if (updates.currentAction !== undefined) dbUpdates.current_action = updates.currentAction;
   if (updates.status !== undefined) dbUpdates.status = updates.status;
   if (updates.submissionDate !== undefined) dbUpdates.submission_date = updates.submissionDate;
   if (updates.openDate !== undefined) dbUpdates.open_date = updates.openDate;

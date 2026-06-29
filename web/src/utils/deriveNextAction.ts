@@ -60,10 +60,6 @@ export function deriveNextAction(app: ApplicationWithEssays): NextAction {
     };
   }
 
-  if (looksLikeWaiting(app.currentAction)) {
-    return { label: app.currentAction, kind: 'waiting', actionable: false };
-  }
-
   if (app.status === 'Not Started') {
     return { label: 'Start application', kind: 'start', actionable: true };
   }

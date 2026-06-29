@@ -1,8 +1,8 @@
 import {
   CalendarCheck,
-  CheckCircle2,
   CircleDollarSign,
   FileCheck2,
+  ListTodo,
   ShieldCheck,
   UsersRound,
   type LucideIcon,
@@ -96,18 +96,18 @@ export function AuthCardShell({
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-brand-900">7</p>
-                <p className="text-[11px] font-medium text-gray-600">Actions due soon</p>
+                <p className="text-[11px] font-medium text-gray-600">Deadlines due soon</p>
               </div>
 
               <div className="rounded-md bg-accent-50 px-4 py-3">
-                <div className="mb-4 flex items-center justify-between">
-                  <CheckCircle2 size={16} className="text-accent-600" aria-hidden="true" />
-                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-700">
-                    Synced
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <ListTodo size={16} className="shrink-0 text-accent-600" aria-hidden="true" />
+                  <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-700">
+                    Deps
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-accent-900">12</p>
-                <p className="text-[11px] font-medium text-accent-700/70">Active applications</p>
+                <p className="text-[11px] font-medium text-accent-700/70">Items awaiting updates</p>
               </div>
             </div>
           </div>

@@ -53,7 +53,6 @@ interface ApplicationDraft {
   theme: string;
   targetType: TTargetType | '';
   status: TApplicationStatus;
-  currentAction: string;
   minAward: string;
   maxAward: string;
   openDate: string;
@@ -87,7 +86,6 @@ function createDraft(application: ApplicationPanelApplication): ApplicationDraft
     theme: application.theme ?? '',
     targetType: application.targetType ?? '',
     status: application.status,
-    currentAction: application.currentAction ?? '',
     minAward: application.minAward?.toString() ?? '',
     maxAward: application.maxAward?.toString() ?? '',
     openDate: toDateInputValue(application.openDate),
@@ -147,7 +145,6 @@ function toPayload(draft: ApplicationDraft) {
     theme: draft.theme.trim() || null,
     targetType: draft.targetType || null,
     status: draft.status,
-    currentAction: draft.currentAction.trim() || null,
     minAward: toOptionalNumber(draft.minAward),
     maxAward: toOptionalNumber(draft.maxAward),
     openDate: draft.openDate || null,
@@ -303,7 +300,6 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
   const summaryApplication = {
     ...application,
     status: draft.status,
-    currentAction: draft.currentAction,
     essays: visibleEssayDrafts.map((essay) => ({ status: essay.status })),
   };
   const nextAction = deriveNextAction(summaryApplication);

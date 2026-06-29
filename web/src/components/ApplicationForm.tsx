@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { apiGet, apiPost, apiPatch } from '../services/api';
-import type { ApplicationResponse, CollaborationResponse, CollaboratorResponse, EssayResponse } from '@scholarshipmanage/shared';
+import {
+  type ApplicationResponse,
+  type CollaborationResponse,
+  type CollaboratorResponse,
+  type EssayResponse,
+} from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 import { ApplicationFormSections, EMPTY_FORM_VALUES } from './ApplicationFormSections';
 import type { ApplicationFormValues } from './ApplicationFormSections';
@@ -42,7 +47,6 @@ function toPayload(values: ApplicationFormValues) {
     requirements: values.requirements.trim() || null,
     renewable: values.renewable,
     renewableTerms: values.renewable ? values.renewableTerms.trim() || null : null,
-    currentAction: values.currentAction.trim() || null,
     status: values.status,
     targetType: values.targetType || null,
     submissionDate: values.submissionDate || null,
@@ -71,7 +75,13 @@ function readStoredDraft(storageKey: string): StoredApplicationFormDraft | null 
       return null;
     }
 
-    return parsed as StoredApplicationFormDraft;
+    return {
+      ...(parsed as StoredApplicationFormDraft),
+      values: {
+        ...EMPTY_FORM_VALUES,
+        ...parsed.values,
+      },
+    };
   } catch {
     return null;
   }
@@ -218,7 +228,6 @@ function ApplicationForm() {
           requirements: data.requirements ?? '',
           renewable: data.renewable ?? false,
           renewableTerms: data.renewableTerms ?? '',
-          currentAction: data.currentAction ?? '',
           status: data.status,
           targetType: data.targetType ?? '',
           submissionDate: data.submissionDate ? data.submissionDate.split('T')[0] : '',

@@ -73,7 +73,6 @@ Each file should contain an array of objects, where each object represents a row
     "renewable": false,
     "renewableTerms": null,
     "documentInfoLink": "https://example.com/docs",
-    "currentAction": "Waiting for Recommendations",
     "status": "In Progress",
     "submissionDate": null,
     "openDate": "2024-01-01",
