@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 
-import { APPLICATION_STATUSES, TARGET_TYPES, currentActionOptions } from '@scholarshipmanage/shared';
-import type { CurrentAction, TApplicationStatus, TTargetType } from '@scholarshipmanage/shared';
+import { APPLICATION_STATUSES, TARGET_TYPES } from '@scholarshipmanage/shared';
+import type { TApplicationStatus, TTargetType } from '@scholarshipmanage/shared';
 
 export interface ApplicationFormValues {
   scholarshipName: string;
@@ -11,7 +11,6 @@ export interface ApplicationFormValues {
   dueDate: string;
   submissionDate: string;
   status: TApplicationStatus;
-  currentAction: CurrentAction | '';
   targetType: TTargetType | '';
   renewable: boolean;
   renewableTerms: string;
@@ -31,7 +30,6 @@ export const EMPTY_FORM_VALUES: ApplicationFormValues = {
   dueDate: '',
   submissionDate: '',
   status: 'Not Started',
-  currentAction: '',
   targetType: '',
   renewable: false,
   renewableTerms: '',
@@ -93,7 +91,6 @@ const FIELD_IDS: Record<keyof ApplicationFormValues, string> = {
   dueDate: 'application-due-date',
   submissionDate: 'application-submission-date',
   status: 'application-status',
-  currentAction: 'application-current-action',
   targetType: 'application-target-type',
   renewable: 'application-renewable',
   renewableTerms: 'application-renewable-terms',
@@ -245,18 +242,11 @@ export function ApplicationFormSections({ values, onChange, compact = false }: A
       </Section>
 
       <Section title="Status & Tracking" isOpen={statusOpen} toggle={() => setStatusOpen((v) => !v)} compact={compact}>
-        <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-3'}`}>
+        <div className={`grid grid-cols-1 ${compact ? 'gap-2.5' : 'gap-3'}`}>
           <div>
             <label htmlFor={FIELD_IDS.status} className="field-label">Status</label>
             <select id={FIELD_IDS.status} className="field-select" value={values.status} onChange={field('status')} required>
               {APPLICATION_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor={FIELD_IDS.currentAction} className="field-label">Current Action</label>
-            <select id={FIELD_IDS.currentAction} className="field-select" value={values.currentAction} onChange={field('currentAction')}>
-              <option value="">Select current action</option>
-              {currentActionOptions.map((action) => <option key={action} value={action}>{action}</option>)}
             </select>
           </div>
         </div>

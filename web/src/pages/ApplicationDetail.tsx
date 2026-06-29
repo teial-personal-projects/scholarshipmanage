@@ -923,12 +923,6 @@ function ApplicationDetail() {
                     </div>
                   )}
 
-                  {application.currentAction && (
-                    <div>
-                      <dt className="font-bold text-brand-700 mb-1">Current Action</dt>
-                      <dd>{application.currentAction}</dd>
-                    </div>
-                  )}
                 </dl>
 
                 {application.requirements && (

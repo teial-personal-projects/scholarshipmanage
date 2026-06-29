@@ -145,8 +145,8 @@ the grid, and the Ready to start group.
 
 ## [x] 5. Next Action Derivation
 
-The next action line is the product. It is computed from the record, with the
-manual `currentAction` text used only as a fallback.
+The next action line is the product. It is computed from application status,
+essay progress, and recommendation state.
 
 ### [x] 5.1 The function
 
@@ -177,10 +177,6 @@ manual `currentAction` text used only as a fallback.
         kind: 'essays',
         actionable: true,
       };
-    }
-
-    if (looksLikeWaiting(app.currentAction)) {
-      return { label: app.currentAction, kind: 'waiting', actionable: false };
     }
 
     if (app.status === 'Not Started') {

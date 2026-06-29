@@ -40,6 +40,7 @@ function renderFeed(applications: ApplicationResponse[], onDelete?: (id: number)
 describe('ActionFeed', () => {
   afterEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   it('groups active applications by deadline tier and hides decided applications', () => {
@@ -52,7 +53,7 @@ describe('ActionFeed', () => {
         id: 2,
         scholarshipName: 'Waiting Scholarship',
         dueDate: '2026-06-22',
-        currentAction: 'Waiting for recommendation letter',
+        collaborations: [{ collaborationType: 'recommendation', status: 'pending' }],
       }),
       makeApplication({ id: 5, scholarshipName: 'Soon Scholarship', dueDate: '2026-06-24' }),
       makeApplication({ id: 3, scholarshipName: 'Warning Scholarship', dueDate: '2026-07-02' }),
@@ -75,22 +76,22 @@ describe('ActionFeed', () => {
     expect(screen.getByText(/1 submitted or decided/)).toBeInTheDocument();
 
     const feedText = container.textContent ?? '';
-    expect(feedText.indexOf('Soon Scholarship')).toBeLessThan(feedText.indexOf('Waiting Scholarship'));
+    expect(feedText.indexOf('Waiting Scholarship')).toBeLessThan(feedText.indexOf('Soon Scholarship'));
     expect(feedText.indexOf('No deadline set')).toBeGreaterThan(feedText.indexOf('Next two weeks'));
     expect(feedText.indexOf('1 submitted or decided')).toBeGreaterThan(feedText.indexOf('No deadline set'));
 
     vi.useRealTimers();
   });
 
-  it('renders waiting rows with the manual next action', () => {
+  it('renders waiting rows from pending recommendations', () => {
     renderFeed([
       makeApplication({
         id: 1,
-        currentAction: 'Waiting for recommendation letter',
+        collaborations: [{ collaborationType: 'recommendation', status: 'pending' }],
       }),
     ]);
 
-    expect(screen.getByText('Waiting for recommendation letter')).toBeInTheDocument();
+    expect(screen.getByText('Recs 1 pending')).toBeInTheDocument();
   });
 
   it('shows pending essay and recommendation counts on cards', () => {
@@ -103,9 +104,9 @@ describe('ActionFeed', () => {
           { status: 'in_progress' },
           { status: 'not_started' },
         ],
-        recommendations: [
-          { status: 'Pending' },
-          { status: 'Submitted' },
+        collaborations: [
+          { collaborationType: 'recommendation', status: 'pending' },
+          { collaborationType: 'recommendation', status: 'completed' },
         ],
       }),
     ]);

@@ -73,8 +73,6 @@ const COLUMN_MAPPINGS = {
   'renewable_terms': 'renewable_terms',
   'documentInfoLink': 'document_info_link',
   'document_info_link': 'document_info_link',
-  'currentAction': 'current_action',
-  'current_action': 'current_action',
   'submissionDate': 'submission_date',
   'submission_date': 'submission_date',
   'openDate': 'open_date',
@@ -117,6 +115,13 @@ const COLUMN_MAPPINGS = {
   'updated_at': 'updated_at',
 };
 
+const IGNORED_COLUMNS = new Set([
+  'currentAction',
+  'current_action',
+  'currentDependencies',
+  'current_dependencies',
+]);
+
 // Special handling for recommenders -> collaborators
 function convertRecommenderToCollaborator(row, userIdMap) {
   // Map recommender data to collaborator structure
@@ -145,6 +150,8 @@ function convertRow(row, tableName) {
   const converted = {};
 
   for (const [oldKey, value] of Object.entries(row)) {
+    if (IGNORED_COLUMNS.has(oldKey)) continue;
+
     // Skip null/undefined values (PostgreSQL will use defaults)
     if (value === null || value === undefined) continue;
 
@@ -327,4 +334,3 @@ Examples:
 }
 
 export { convertFile, convertRow, convertRecommenderToCollaborator };
-

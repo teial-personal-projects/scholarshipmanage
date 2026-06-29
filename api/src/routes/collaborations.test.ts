@@ -44,7 +44,6 @@ vi.mock('@scholarshipmanage/shared', async () => {
   urlSchema: z.string().url(),
   htmlNoteSchema: z.string().max(5000).optional(),
   DONE_APPLICATION_STATUSES: ['Submitted', 'Awarded', 'Not Awarded'],
-  currentActionOptions: ['Review and Submit', 'Editing Essays', 'Awaiting Recommendation', 'Awaiting Essay Feedback'],
   COLLABORATOR_RELATIONSHIPS: ['Teacher', 'Professor', 'Counselor'],
   };
 });

@@ -162,8 +162,8 @@ describe('GridView', () => {
           { status: 'completed' },
           { status: 'not_started' },
         ],
-        recommendations: [
-          { status: 'Pending' },
+        collaborations: [
+          { collaborationType: 'recommendation', status: 'pending' },
         ],
       }),
     ]);
@@ -245,7 +245,7 @@ describe('GridView', () => {
         scholarshipName: 'Recommendation Scholarship',
         status: 'In Progress',
         essays: [{ status: 'completed' }],
-        recommendations: [{ status: 'Pending' }],
+        collaborations: [{ collaborationType: 'recommendation', status: 'pending' }],
       }),
       makeApplication({
         id: 2,
@@ -262,7 +262,8 @@ describe('GridView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Needs action (2)' }));
 
     expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Waiting for recommendation').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Waiting for recommendation')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Recs 1 pending').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Action Scholarship').length).toBeGreaterThan(0);
   });
 
@@ -275,8 +276,8 @@ describe('GridView', () => {
         essays: [
           { status: 'not_started' },
         ],
-        recommendations: [
-          { status: 'Pending' },
+        collaborations: [
+          { collaborationType: 'recommendation', status: 'pending' },
         ],
       }),
       makeApplication({

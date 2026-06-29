@@ -124,14 +124,6 @@ export const applicationStatusOptions = [
   'Not Awarded'
 ] as const
 
-export const currentActionOptions = [
-  'Review and Submit',
-  'Editing Essays',
-  'Awaiting Recommendation',
-  'Awaiting Essay Feedback',
-] as const
-
-
 export const academicLevelOptions = [
   'Undergraduate',
   'Graduate',
@@ -146,4 +138,3 @@ export const academicLevelOptions = [
 export type ApplicationStatus = typeof applicationStatusOptions[number]
 export type RecommendationStatus = typeof recomendationOptions[number]
 export type SubmissionMethod = typeof submissionMethodOptions[number]
-export type CurrentAction = typeof currentActionOptions[number]

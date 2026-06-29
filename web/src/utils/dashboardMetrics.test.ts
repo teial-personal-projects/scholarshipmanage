@@ -35,7 +35,7 @@ describe('getDashboardMetrics', () => {
         id: 7,
         status: 'In Progress',
         dueDate: '2026-07-20',
-        recommendations: [{ status: 'Pending' }],
+        collaborations: [{ collaborationType: 'recommendation', status: 'pending' }],
       }),
       makeApplication({
         id: 8,

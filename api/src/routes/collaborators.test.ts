@@ -57,7 +57,6 @@ vi.mock('@scholarshipmanage/shared', async () => {
     'Other',
   ],
   DONE_APPLICATION_STATUSES: ['Submitted', 'Awarded', 'Not Awarded'],
-  currentActionOptions: ['Review and Submit', 'Editing Essays', 'Awaiting Recommendation', 'Awaiting Essay Feedback'],
   };
 });
 

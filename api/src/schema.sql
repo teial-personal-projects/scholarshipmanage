@@ -194,7 +194,6 @@ CREATE TABLE public.applications (
   requirements TEXT,
   renewable BOOLEAN DEFAULT FALSE,
   renewable_terms TEXT,
-  current_action TEXT,
   status public.application_status DEFAULT 'Not Started',
   submission_date DATE,
   open_date DATE,
