@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 
-import { APPLICATION_STATUSES, TARGET_TYPES } from '@scholarshipmanage/shared';
-import type { TApplicationStatus, TTargetType } from '@scholarshipmanage/shared';
+import { APPLICATION_STATUSES, TARGET_TYPES, currentActionOptions } from '@scholarshipmanage/shared';
+import type { CurrentAction, TApplicationStatus, TTargetType } from '@scholarshipmanage/shared';
 
 export interface ApplicationFormValues {
   scholarshipName: string;
@@ -11,7 +11,7 @@ export interface ApplicationFormValues {
   dueDate: string;
   submissionDate: string;
   status: TApplicationStatus;
-  currentAction: string;
+  currentAction: CurrentAction | '';
   targetType: TTargetType | '';
   renewable: boolean;
   renewableTerms: string;
@@ -254,7 +254,10 @@ export function ApplicationFormSections({ values, onChange, compact = false }: A
           </div>
           <div>
             <label htmlFor={FIELD_IDS.currentAction} className="field-label">Current Action</label>
-            <input id={FIELD_IDS.currentAction} className="field-input" value={values.currentAction} onChange={field('currentAction')} placeholder="e.g., Writing essay" />
+            <select id={FIELD_IDS.currentAction} className="field-select" value={values.currentAction} onChange={field('currentAction')}>
+              <option value="">Select current action</option>
+              {currentActionOptions.map((action) => <option key={action} value={action}>{action}</option>)}
+            </select>
           </div>
         </div>
       </Section>

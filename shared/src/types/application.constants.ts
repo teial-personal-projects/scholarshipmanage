@@ -125,10 +125,10 @@ export const applicationStatusOptions = [
 ] as const
 
 export const currentActionOptions = [
-  'Waiting for Recommendations',
-  'Waiting for Essay Review',
-  'Ready to Submit',
-  'N/A'
+  'Review and Submit',
+  'Editing Essays',
+  'Awaiting Recommendation',
+  'Awaiting Essay Feedback',
 ] as const
 
 

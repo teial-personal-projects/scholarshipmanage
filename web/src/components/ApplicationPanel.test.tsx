@@ -67,7 +67,7 @@ const application: ApplicationResponse & { essays: EssayResponse[] } = {
   organization: 'State University',
   targetType: 'Merit',
   status: 'In Progress',
-  currentAction: 'Review requirements',
+  currentAction: 'Editing Essays',
   minAward: 1000,
   maxAward: 5000,
   dueDate: '2026-06-30',
@@ -157,8 +157,7 @@ describe('ApplicationPanel', () => {
     const user = userEvent.setup();
     const { unmount } = render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
-    await user.clear(screen.getByLabelText('Current Action'));
-    await user.type(screen.getByLabelText('Current Action'), 'Finish FAFSA upload');
+    await user.selectOptions(screen.getByLabelText('Current Action'), 'Awaiting Essay Feedback');
 
     await waitFor(() => expect(window.localStorage.length).toBe(1));
     await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(3));
@@ -166,7 +165,7 @@ describe('ApplicationPanel', () => {
     unmount();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
 
-    expect(screen.getByLabelText('Current Action')).toHaveValue('Finish FAFSA upload');
+    expect(screen.getByLabelText('Current Action')).toHaveValue('Awaiting Essay Feedback');
     expect(screen.getByText('Unsaved changes are present.')).toBeInTheDocument();
     await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(6));
   });
@@ -176,12 +175,11 @@ describe('ApplicationPanel', () => {
     const onSaveSuccess = vi.fn();
     render(<ApplicationPanel application={application} onClose={vi.fn()} onSaveSuccess={onSaveSuccess} />);
 
-    await user.clear(screen.getByLabelText('Current Action'));
-    await user.type(screen.getByLabelText('Current Action'), 'Submit application');
+    await user.selectOptions(screen.getByLabelText('Current Action'), 'Review and Submit');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(apiPatch).toHaveBeenCalledWith('/applications/1', expect.objectContaining({
-      currentAction: 'Submit application',
+      currentAction: 'Review and Submit',
       scholarshipName: 'Merit Scholarship',
       dueDate: '2026-06-30',
     })));

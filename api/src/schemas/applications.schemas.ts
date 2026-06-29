@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { urlSchema } from '@scholarshipmanage/shared';
+import { currentActionOptions, urlSchema } from '@scholarshipmanage/shared';
 
 /**
  * Application Validation Schemas
@@ -21,6 +21,7 @@ const nullableUrlSchema = urlSchema.nullable().optional();
 const nullableStringSchema = (maxLength: number) => z.string().max(maxLength).trim().nullable().optional();
 const nullablePositiveNumberSchema = z.number().positive().nullable().optional();
 const nullableTargetTypeSchema = z.enum(['Merit', 'Need', 'Both']).nullable().optional();
+const nullableCurrentActionSchema = z.enum(currentActionOptions).nullable().optional();
 
 /**
  * Input Schema: Create Application
@@ -40,7 +41,7 @@ export const createApplicationInputSchema = z.object({
   renewable: z.boolean().optional(),
   renewableTerms: nullableStringSchema(1000),
   documentInfoLink: nullableUrlSchema,
-  currentAction: nullableStringSchema(255),
+  currentAction: nullableCurrentActionSchema,
   status: applicationStatusSchema.optional(),
   submissionDate: nullableDateSchema,
   openDate: nullableDateSchema,
@@ -65,7 +66,7 @@ export const updateApplicationInputSchema = z.object({
   renewable: z.boolean().optional(),
   renewableTerms: nullableStringSchema(1000),
   documentInfoLink: nullableUrlSchema,
-  currentAction: nullableStringSchema(255),
+  currentAction: nullableCurrentActionSchema,
   status: applicationStatusSchema.optional(),
   submissionDate: nullableDateSchema,
   openDate: nullableDateSchema,

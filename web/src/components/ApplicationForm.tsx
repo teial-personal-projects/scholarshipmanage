@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { apiGet, apiPost, apiPatch } from '../services/api';
-import type { ApplicationResponse, CollaborationResponse, CollaboratorResponse, EssayResponse } from '@scholarshipmanage/shared';
+import {
+  currentActionOptions,
+  type ApplicationResponse,
+  type CollaborationResponse,
+  type CollaboratorResponse,
+  type CurrentAction,
+  type EssayResponse,
+} from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 import { ApplicationFormSections, EMPTY_FORM_VALUES } from './ApplicationFormSections';
 import type { ApplicationFormValues } from './ApplicationFormSections';
@@ -49,6 +56,10 @@ function toPayload(values: ApplicationFormValues) {
     openDate: values.openDate || null,
     dueDate: values.dueDate,
   };
+}
+
+function toCurrentAction(value: string | null | undefined): CurrentAction | '' {
+  return currentActionOptions.find((option) => option === value) ?? '';
 }
 
 function getDraftStorageKey(applicationId: string | undefined): string {
@@ -218,7 +229,7 @@ function ApplicationForm() {
           requirements: data.requirements ?? '',
           renewable: data.renewable ?? false,
           renewableTerms: data.renewableTerms ?? '',
-          currentAction: data.currentAction ?? '',
+          currentAction: toCurrentAction(data.currentAction),
           status: data.status,
           targetType: data.targetType ?? '',
           submissionDate: data.submissionDate ? data.submissionDate.split('T')[0] : '',

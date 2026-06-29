@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 
 import {
+  currentActionOptions,
   essayProgress,
   type ApplicationResponse,
   type CollaborationResponse,
   type CollaborationStatus,
   type CollaboratorResponse,
+  type CurrentAction,
   type Essay,
   type EssayResponse,
   type TApplicationStatus,
@@ -53,7 +55,7 @@ interface ApplicationDraft {
   theme: string;
   targetType: TTargetType | '';
   status: TApplicationStatus;
-  currentAction: string;
+  currentAction: CurrentAction | '';
   minAward: string;
   maxAward: string;
   openDate: string;
@@ -77,6 +79,10 @@ function toDateInputValue(value: string | null | undefined): string {
   return value ? value.split('T')[0] ?? '' : '';
 }
 
+function toCurrentAction(value: string | null | undefined): CurrentAction | '' {
+  return currentActionOptions.find((option) => option === value) ?? '';
+}
+
 function createDraft(application: ApplicationPanelApplication): ApplicationDraft {
   return {
     scholarshipName: application.scholarshipName,
@@ -87,7 +93,7 @@ function createDraft(application: ApplicationPanelApplication): ApplicationDraft
     theme: application.theme ?? '',
     targetType: application.targetType ?? '',
     status: application.status,
-    currentAction: application.currentAction ?? '',
+    currentAction: toCurrentAction(application.currentAction),
     minAward: application.minAward?.toString() ?? '',
     maxAward: application.maxAward?.toString() ?? '',
     openDate: toDateInputValue(application.openDate),
