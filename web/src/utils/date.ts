@@ -13,6 +13,15 @@ export function toDateOnlyString(dateString: string | null | undefined): string 
   return dateString.split('T')[0] || null;
 }
 
+export function getTodayDateInputValue(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 export function parseDateOnlyToLocalDate(dateString: string | null | undefined): Date | null {
   const dateOnly = toDateOnlyString(dateString);
   if (!dateOnly) return null;

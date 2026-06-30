@@ -5,6 +5,15 @@ import {
   isDbErrorCode,
 } from '../constants/db-errors.js';
 
+const SUBMITTED_STATUS = 'Submitted';
+
+const getTodayDate = (): string => new Date().toISOString().slice(0, 10);
+
+const shouldDefaultSubmissionDate = (
+  status: string | undefined,
+  submittedDate: string | null | undefined,
+): boolean => status === SUBMITTED_STATUS && submittedDate == null;
+
 /**
  * Get all applications for a user
  */
@@ -89,6 +98,10 @@ export const createApplication = async (
   if (applicationData.submissionDate !== undefined) dbData.submission_date = applicationData.submissionDate;
   if (applicationData.openDate !== undefined) dbData.open_date = applicationData.openDate;
 
+  if (shouldDefaultSubmissionDate(applicationData.status, applicationData.submissionDate)) {
+    dbData.submission_date = getTodayDate();
+  }
+
   const { data, error } = await supabase
     .from('applications')
     .insert(dbData)
@@ -127,7 +140,7 @@ export const updateApplication = async (
   }
 ) => {
   // First verify the application belongs to the user
-  await getApplicationById(applicationId, userId);
+  const existingApplication = await getApplicationById(applicationId, userId);
 
   // Convert camelCase to snake_case
   const dbUpdates: Record<string, unknown> = {};
@@ -149,6 +162,17 @@ export const updateApplication = async (
   if (updates.submissionDate !== undefined) dbUpdates.submission_date = updates.submissionDate;
   if (updates.openDate !== undefined) dbUpdates.open_date = updates.openDate;
   if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+
+  if (
+    shouldDefaultSubmissionDate(
+      updates.status,
+      updates.submissionDate === undefined
+        ? existingApplication.submission_date
+        : updates.submissionDate,
+    )
+  ) {
+    dbUpdates.submission_date = getTodayDate();
+  }
 
   const { data, error } = await supabase
     .from('applications')

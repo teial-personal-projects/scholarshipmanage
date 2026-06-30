@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react';
 
 import { APPLICATION_STATUSES, TARGET_TYPES } from '@scholarshipmanage/shared';
 import type { TApplicationStatus, TTargetType } from '@scholarshipmanage/shared';
+import { getTodayDateInputValue } from '../utils/date';
 
 export interface ApplicationFormValues {
   scholarshipName: string;
@@ -185,6 +186,16 @@ export function ApplicationFormSections({ values, onChange, compact = false }: A
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => onChange({ [key]: e.target.value as ApplicationFormValues[K] });
 
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextStatus = e.target.value as TApplicationStatus;
+    onChange({
+      status: nextStatus,
+      ...(nextStatus === 'Submitted' && !values.submissionDate && {
+        submissionDate: getTodayDateInputValue(),
+      }),
+    });
+  };
+
   const hasResourceLinks = values.orgWebsite.trim() !== '' || values.applicationLink.trim() !== '';
   const collapsedResourceLinks = hasResourceLinks ? (
     <>
@@ -245,7 +256,7 @@ export function ApplicationFormSections({ values, onChange, compact = false }: A
         <div className={`grid grid-cols-1 ${compact ? 'gap-2.5' : 'gap-3'}`}>
           <div>
             <label htmlFor={FIELD_IDS.status} className="field-label">Status</label>
-            <select id={FIELD_IDS.status} className="field-select" value={values.status} onChange={field('status')} required>
+            <select id={FIELD_IDS.status} className="field-select" value={values.status} onChange={handleStatusChange} required>
               {APPLICATION_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
