@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 
+const RELOAD_VERSION_PARAM = 'reloadVersion';
+
+function refreshWithCacheBust() {
+  const url = new URL(window.location.href);
+  url.searchParams.set(RELOAD_VERSION_PARAM, Date.now().toString());
+  window.location.replace(url.toString());
+}
+
 export function UpdateBanner() {
   const [visible, setVisible] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +60,7 @@ export function UpdateBanner() {
         A new version is available. Refresh to get the latest update.
       </span>
       <button
-        onClick={() => window.location.reload()}
+        onClick={refreshWithCacheBust}
         className="flex items-center gap-1.5 shrink-0 text-sm font-semibold px-3 py-1 rounded bg-yellow-900 text-yellow-50 hover:bg-yellow-800 transition-colors"
       >
         <RefreshCw size={14} />
