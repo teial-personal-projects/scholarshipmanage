@@ -59,7 +59,7 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 px-4 py-3">
+      <nav className="sticky top-[var(--update-banner-height,0px)] z-50 px-4 py-3">
         <div className="max-w-full mx-auto rounded-lg px-4 md:px-5 py-2.5 flex items-center justify-between shadow-md" style={{ backgroundColor: '#496B1E' }}>
           {/* Left: Logo and Mobile Menu Button */}
           <div className="flex items-center gap-3">

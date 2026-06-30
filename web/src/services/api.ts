@@ -12,6 +12,18 @@
 import { parseResponseError, handleNetworkError, ApiException, logError } from '../utils/error-handling';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
+const CLIENT_VERSION = import.meta.env.VITE_APP_VERSION as string;
+
+let versionMismatchDispatched = false;
+
+function checkServerVersion(response: Response) {
+  if (versionMismatchDispatched) return;
+  const serverVersion = response.headers.get('x-app-version');
+  if (serverVersion && serverVersion !== 'unknown' && serverVersion !== CLIENT_VERSION) {
+    versionMismatchDispatched = true;
+    window.dispatchEvent(new CustomEvent('app:version-mismatch'));
+  }
+}
 
 /**
  * Flag to prevent multiple simultaneous refresh attempts
@@ -104,6 +116,8 @@ async function apiRequest<T>(
     throw new ApiException(networkError);
   }
 
+  checkServerVersion(response);
+
   // Handle 401 Unauthorized - attempt token refresh and retry
   if (response.status === 401) {
     console.log('Received 401, attempting to refresh token...');
@@ -121,6 +135,8 @@ async function apiRequest<T>(
         ...options,
         headers: retryHeaders,
       });
+
+      checkServerVersion(retryResponse);
 
       // If retry succeeds, return the response
       if (retryResponse.ok) {
@@ -194,4 +210,3 @@ export async function apiDelete<T>(endpoint: string): Promise<T> {
     method: 'DELETE',
   });
 }
-

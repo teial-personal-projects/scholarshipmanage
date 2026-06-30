@@ -13,12 +13,14 @@ import ResetPassword from './pages/ResetPassword';
 import ScholarshipResources from './pages/ScholarshipResources';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navigation } from './components/Navigation';
+import { UpdateBanner } from './components/UpdateBanner';
 import './App.css';
 
 function App() {
   return (
     <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <div className="app">
+        <UpdateBanner />
         <Navigation />
         <Routes>
           <Route path="/login" element={<Login />} />
