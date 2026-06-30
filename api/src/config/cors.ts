@@ -44,4 +44,5 @@ export const corsOptions: CorsOptions = {
 
     callback(null, allowedCorsOrigins.has(normalizeOrigin(origin)));
   },
+  exposedHeaders: ['X-App-Version'],
 };

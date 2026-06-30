@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
 const loadEnvFile = (filePath: string, override = false) => {
@@ -13,6 +14,7 @@ const loadEnvFile = (filePath: string, override = false) => {
 };
 
 const workspaceRoot = process.cwd();
+const configDir = path.dirname(fileURLToPath(import.meta.url));
 const env = process.env.NODE_ENV || 'local';
 const envFileName = `.env.${env}`;
 const envPath = path.resolve(workspaceRoot, envFileName);
@@ -24,6 +26,22 @@ if (fs.existsSync(envPath)) {
 }
 
 type TrustProxyConfig = boolean | number | string;
+
+const readAppVersion = (): string => {
+  const candidatePaths = [
+    path.resolve(workspaceRoot, 'version.txt'),
+    path.resolve(workspaceRoot, '..', 'version.txt'),
+    path.resolve(configDir, '..', '..', '..', 'version.txt'),
+  ];
+
+  for (const versionPath of candidatePaths) {
+    if (fs.existsSync(versionPath)) {
+      return fs.readFileSync(versionPath, 'utf-8').trim();
+    }
+  }
+
+  return 'unknown';
+};
 
 const parseTrustProxy = (rawValue: string | undefined): TrustProxyConfig => {
   if (rawValue === undefined || rawValue.trim() === '') {
@@ -51,6 +69,7 @@ interface Config {
   port: number;
   nodeEnv: string;
   trustProxy: TrustProxyConfig;
+  appVersion: string;
   supabase: {
     url: string;
     serviceRoleKey: string;
@@ -70,6 +89,7 @@ export const config: Config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'local',
   trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
+  appVersion: readAppVersion(),
   supabase: {
     url: process.env.SUPABASE_URL || '',
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',

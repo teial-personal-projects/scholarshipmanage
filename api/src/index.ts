@@ -24,6 +24,12 @@ app.use((_req, res, next) => {
   next();
 });
 
+// Advertise the current API/app version so clients can detect deploys
+app.use((_req, res, next) => {
+  res.setHeader('X-App-Version', config.appVersion);
+  next();
+});
+
 // CORS middleware
 app.use(cors(corsOptions));
 
