@@ -10,6 +10,7 @@
  */
 
 import { parseResponseError, handleNetworkError, ApiException, logError } from '../utils/error-handling';
+import { supabase } from '../config/supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 const CLIENT_VERSION = import.meta.env.VITE_APP_VERSION as string;
@@ -35,8 +36,6 @@ let refreshPromise: Promise<string | null> | null = null;
  * Get the access token from the session
  */
 async function getAccessToken(): Promise<string | null> {
-  // Try to get session from Supabase
-  const { supabase } = await import('../config/supabase');
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token || null;
 }
@@ -54,7 +53,6 @@ async function refreshAccessToken(): Promise<string | null> {
   isRefreshing = true;
   refreshPromise = (async () => {
     try {
-      const { supabase } = await import('../config/supabase');
       const { data, error } = await supabase.auth.refreshSession();
 
       if (error || !data.session) {
@@ -69,7 +67,6 @@ async function refreshAccessToken(): Promise<string | null> {
     } catch (error) {
       console.error('Token refresh error:', error);
       // Sign out and redirect to login on error
-      const { supabase } = await import('../config/supabase');
       await supabase.auth.signOut();
       window.location.href = '/login';
       return null;
