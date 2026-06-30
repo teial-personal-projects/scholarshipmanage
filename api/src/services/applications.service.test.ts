@@ -2,7 +2,7 @@
  * Tests for applications service
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mockApplications } from '../test/fixtures/applications.fixture';
 
 // Mock the supabase client
@@ -15,6 +15,10 @@ vi.mock('../config/supabase.js', () => ({
 describe('applications.service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('getUserApplications', () => {
@@ -132,6 +136,46 @@ describe('applications.service', () => {
       expect(result).toEqual(createdApp);
       expect(mockInsert).toHaveBeenCalled();
     });
+
+    it('should default submission date when creating a submitted application without one', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-30T16:30:00Z'));
+
+      const { supabase } = await import('../config/supabase.js');
+      const { createApplication } = await import('./applications.service.js');
+
+      const newApp = {
+        scholarshipName: 'Test Scholarship',
+        dueDate: '2026-07-15',
+        status: 'Submitted',
+        submissionDate: null,
+      };
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              ...mockApplications.submitted,
+              submission_date: '2026-06-30',
+            },
+            error: null,
+          }),
+        }),
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        insert: mockInsert,
+      });
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom as any);
+
+      await createApplication(1, newApp);
+
+      expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+        status: 'Submitted',
+        submission_date: '2026-06-30',
+      }));
+    });
   });
 
   describe('updateApplication', () => {
@@ -188,6 +232,217 @@ describe('applications.service', () => {
       const result = await updateApplication(1, 1, updates);
 
       expect(result).toEqual(updatedApp);
+    });
+
+    it('should default submission date when updating status to submitted without one', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-30T16:30:00Z'));
+
+      const { supabase } = await import('../config/supabase.js');
+      const { updateApplication } = await import('./applications.service.js');
+
+      const updates = { status: 'Submitted' };
+      const existingApp = {
+        ...mockApplications.inProgress,
+        submission_date: null,
+      };
+      const updatedApp = {
+        ...existingApp,
+        status: 'Submitted',
+        submission_date: '2026-06-30',
+      };
+
+      // Mock for getApplicationById (called first) - supports chained .eq() calls
+      const mockGetByIdSingle = vi.fn().mockResolvedValue({
+        data: existingApp,
+        error: null,
+      });
+
+      const mockGetByIdSecondEq = vi.fn().mockReturnValue({
+        single: mockGetByIdSingle,
+      });
+
+      const mockGetByIdFirstEq = vi.fn().mockReturnValue({
+        eq: mockGetByIdSecondEq,
+      });
+
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: mockGetByIdFirstEq,
+      });
+
+      // Mock for update - supports chained .eq() calls
+      const mockUpdateSecondEq = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: updatedApp,
+            error: null,
+          }),
+        }),
+      });
+
+      const mockUpdateFirstEq = vi.fn().mockReturnValue({
+        eq: mockUpdateSecondEq,
+      });
+
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: mockUpdateFirstEq,
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: mockSelect,
+        update: mockUpdate,
+      });
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom as any);
+
+      const result = await updateApplication(1, 1, updates);
+
+      expect(result).toEqual(updatedApp);
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+        status: 'Submitted',
+        submission_date: '2026-06-30',
+      }));
+    });
+
+    it('should keep an existing submission date when updating status to submitted', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-30T16:30:00Z'));
+
+      const { supabase } = await import('../config/supabase.js');
+      const { updateApplication } = await import('./applications.service.js');
+
+      const updates = { status: 'Submitted' };
+      const existingApp = {
+        ...mockApplications.inProgress,
+        submission_date: '2026-06-01',
+      };
+      const updatedApp = {
+        ...existingApp,
+        status: 'Submitted',
+      };
+
+      // Mock for getApplicationById (called first) - supports chained .eq() calls
+      const mockGetByIdSingle = vi.fn().mockResolvedValue({
+        data: existingApp,
+        error: null,
+      });
+
+      const mockGetByIdSecondEq = vi.fn().mockReturnValue({
+        single: mockGetByIdSingle,
+      });
+
+      const mockGetByIdFirstEq = vi.fn().mockReturnValue({
+        eq: mockGetByIdSecondEq,
+      });
+
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: mockGetByIdFirstEq,
+      });
+
+      // Mock for update - supports chained .eq() calls
+      const mockUpdateSecondEq = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: updatedApp,
+            error: null,
+          }),
+        }),
+      });
+
+      const mockUpdateFirstEq = vi.fn().mockReturnValue({
+        eq: mockUpdateSecondEq,
+      });
+
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: mockUpdateFirstEq,
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: mockSelect,
+        update: mockUpdate,
+      });
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom as any);
+
+      await updateApplication(1, 1, updates);
+
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+        status: 'Submitted',
+      }));
+      expect(mockUpdate).not.toHaveBeenCalledWith(expect.objectContaining({
+        submission_date: expect.any(String),
+      }));
+    });
+
+    it('should default submission date when submitted update explicitly clears the field', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-30T16:30:00Z'));
+
+      const { supabase } = await import('../config/supabase.js');
+      const { updateApplication } = await import('./applications.service.js');
+
+      const updates = {
+        status: 'Submitted',
+        submissionDate: null,
+      };
+      const existingApp = {
+        ...mockApplications.inProgress,
+        submission_date: '2026-06-01',
+      };
+
+      // Mock for getApplicationById (called first) - supports chained .eq() calls
+      const mockGetByIdSingle = vi.fn().mockResolvedValue({
+        data: existingApp,
+        error: null,
+      });
+
+      const mockGetByIdSecondEq = vi.fn().mockReturnValue({
+        single: mockGetByIdSingle,
+      });
+
+      const mockGetByIdFirstEq = vi.fn().mockReturnValue({
+        eq: mockGetByIdSecondEq,
+      });
+
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: mockGetByIdFirstEq,
+      });
+
+      // Mock for update - supports chained .eq() calls
+      const mockUpdateSecondEq = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              ...existingApp,
+              status: 'Submitted',
+              submission_date: '2026-06-30',
+            },
+            error: null,
+          }),
+        }),
+      });
+
+      const mockUpdateFirstEq = vi.fn().mockReturnValue({
+        eq: mockUpdateSecondEq,
+      });
+
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: mockUpdateFirstEq,
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: mockSelect,
+        update: mockUpdate,
+      });
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom as any);
+
+      await updateApplication(1, 1, updates);
+
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+        status: 'Submitted',
+        submission_date: '2026-06-30',
+      }));
     });
   });
 
