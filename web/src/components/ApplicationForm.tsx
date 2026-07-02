@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 
 import { apiGet, apiPost, apiPatch } from '../services/api';
 import {
@@ -135,6 +135,7 @@ function ApplicationForm() {
   const { showSuccess, showError } = useToastHelpers();
   const isEditMode = !!id;
   const storageKey = getDraftStorageKey(id);
+  const allowNavigationRef = useRef(false);
   const [initialStoredDraft] = useState(() => readStoredDraft(storageKey));
   const hasStoredDraft = Boolean(initialStoredDraft);
 
@@ -149,6 +150,12 @@ function ApplicationForm() {
   const [loading, setLoading] = useState(isEditMode);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = hasUnsavedDraft(values, savedValues, essayDrafts, recommendationDrafts);
+  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+    hasUnsavedChanges &&
+    !allowNavigationRef.current &&
+    currentLocation.pathname !== nextLocation.pathname
+  );
 
   const handleChange = (updates: Partial<ApplicationFormValues>) =>
     setValues((prev) => ({ ...prev, ...updates }));
@@ -259,7 +266,7 @@ function ApplicationForm() {
   }, [essayDrafts, loading, recommendationDrafts, savedValues, storageKey, values, workItemsOpen]);
 
   useEffect(() => {
-    if (!hasUnsavedDraft(values, savedValues, essayDrafts, recommendationDrafts)) return;
+    if (!hasUnsavedChanges) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       writeStoredDraft(storageKey, values, essayDrafts, recommendationDrafts, workItemsOpen);
@@ -279,19 +286,24 @@ function ApplicationForm() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [essayDrafts, recommendationDrafts, savedValues, storageKey, values, workItemsOpen]);
+  }, [essayDrafts, hasUnsavedChanges, recommendationDrafts, storageKey, values, workItemsOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!values.scholarshipName.trim()) { showError('Validation Error', 'Scholarship name is required', 3000); return; }
-    if (!values.dueDate) { showError('Validation Error', 'Due date is required', 3000); return; }
+  const saveApplication = useCallback(async (): Promise<boolean> => {
+    if (!values.scholarshipName.trim()) {
+      showError('Validation Error', 'Scholarship name is required', 3000);
+      return false;
+    }
+    if (!values.dueDate) {
+      showError('Validation Error', 'Due date is required', 3000);
+      return false;
+    }
     const recommendationWithoutDueDate = recommendationDrafts.some((rec) =>
       !rec.isDeleted && rec.recommenderId && !rec.dueDate
     );
 
     if (recommendationWithoutDueDate) {
       showError('Validation Error', 'Due date is required for recommendation collaborations', 3000);
-      return;
+      return false;
     }
 
     try {
@@ -300,6 +312,7 @@ function ApplicationForm() {
       if (isEditMode) {
         await apiPatch(`/applications/${id}`, toPayload(values));
         clearStoredDraft(storageKey);
+        allowNavigationRef.current = true;
         showSuccess('Success', 'Application updated successfully', 3000);
         navigate(`/applications/${id}`);
       } else {
@@ -322,16 +335,45 @@ function ApplicationForm() {
             nextActionDueDate: recommendation.dueDate,
           })));
         clearStoredDraft(storageKey);
+        allowNavigationRef.current = true;
         showSuccess('Success', 'Application created successfully', 3000);
         navigate(`/applications/${created.id}`);
       }
+      return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save application';
       setError(msg);
       showError('Error', msg);
+      return false;
     } finally {
       setSubmitting(false);
     }
+  }, [
+    essayDrafts,
+    id,
+    isEditMode,
+    navigate,
+    recommendationDrafts,
+    showError,
+    showSuccess,
+    storageKey,
+    values,
+  ]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveApplication();
+  };
+
+  const handleSaveBlockedNavigation = async () => {
+    if (blocker.state === 'blocked') blocker.reset();
+    await saveApplication();
+  };
+
+  const handleDiscardBlockedNavigation = () => {
+    clearStoredDraft(storageKey);
+    allowNavigationRef.current = true;
+    if (blocker.state === 'blocked') blocker.proceed();
   };
 
   if (loading) return (
@@ -363,10 +405,7 @@ function ApplicationForm() {
           <button
             type="button"
             className="btn-outline"
-            onClick={() => {
-              clearStoredDraft(storageKey);
-              navigate(isEditMode ? `/applications/${id}` : '/dashboard');
-            }}
+            onClick={() => navigate(isEditMode ? `/applications/${id}` : '/dashboard')}
             disabled={submitting}
           >
             Cancel
@@ -392,6 +431,39 @@ function ApplicationForm() {
           onRecommendationChange={updateRecommendationDraft}
         />
       </form>
+
+      {blocker.state === 'blocked' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="presentation">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="unsaved-application-title"
+            className="w-full max-w-md rounded-lg bg-white shadow-xl border border-gray-200"
+          >
+            <div className="px-5 py-4 border-b border-gray-200">
+              <h2 id="unsaved-application-title" className="text-lg font-semibold text-gray-900">
+                Save this application?
+              </h2>
+            </div>
+            <div className="px-5 py-4">
+              <p className="text-sm text-gray-600">
+                This application has unsaved changes. Save it before leaving, or cancel to discard this draft.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-200">
+              <button type="button" className="btn-outline" onClick={() => blocker.reset()} disabled={submitting}>
+                Keep Editing
+              </button>
+              <button type="button" className="btn-outline" onClick={handleDiscardBlockedNavigation} disabled={submitting}>
+                Cancel Draft
+              </button>
+              <button type="button" className="btn-primary" onClick={handleSaveBlockedNavigation} disabled={submitting}>
+                {submitting ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

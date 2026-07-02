@@ -1,5 +1,10 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Navigation } from './components/Navigation';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -18,33 +23,41 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ScholarshipResources = lazy(() => import('./pages/ScholarshipResources'));
 
-function App() {
+function AppShell({ children }: { children: ReactNode }) {
   return (
-    <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-      <div className="app">
-        <UpdateBanner />
-        <Navigation />
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/invite/:token" element={<CollaboratorInvite />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/applications" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
-            <Route path="/applications/new" element={<ProtectedRoute><ApplicationForm /></ProtectedRoute>} />
-            <Route path="/applications/:id" element={<ProtectedRoute><ApplicationDetail /></ProtectedRoute>} />
-            <Route path="/collaborators" element={<ProtectedRoute><Collaborators /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/resources" element={<ProtectedRoute><ScholarshipResources /></ProtectedRoute>} />
-            <Route path="/collaborator/dashboard" element={<ProtectedRoute><CollaboratorDashboard /></ProtectedRoute>} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Suspense>
-      </div>
-    </BrowserRouter>
+    <div className="app">
+      <UpdateBanner />
+      <Navigation />
+      <Suspense fallback={null}>
+        {children}
+      </Suspense>
+    </div>
   );
+}
+
+const router = createBrowserRouter([
+  { path: '/login', element: <AppShell><Login /></AppShell> },
+  { path: '/register', element: <AppShell><Register /></AppShell> },
+  { path: '/forgot-password', element: <AppShell><ForgotPassword /></AppShell> },
+  { path: '/reset-password', element: <AppShell><ResetPassword /></AppShell> },
+  { path: '/invite/:token', element: <AppShell><CollaboratorInvite /></AppShell> },
+  { path: '/dashboard', element: <AppShell><ProtectedRoute><Dashboard /></ProtectedRoute></AppShell> },
+  { path: '/applications', element: <AppShell><ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute></AppShell> },
+  { path: '/applications/new', element: <AppShell><ProtectedRoute><ApplicationForm /></ProtectedRoute></AppShell> },
+  { path: '/applications/:id', element: <AppShell><ProtectedRoute><ApplicationDetail /></ProtectedRoute></AppShell> },
+  { path: '/collaborators', element: <AppShell><ProtectedRoute><Collaborators /></ProtectedRoute></AppShell> },
+  { path: '/profile', element: <AppShell><ProtectedRoute><Profile /></ProtectedRoute></AppShell> },
+  { path: '/resources', element: <AppShell><ProtectedRoute><ScholarshipResources /></ProtectedRoute></AppShell> },
+  { path: '/collaborator/dashboard', element: <AppShell><ProtectedRoute><CollaboratorDashboard /></ProtectedRoute></AppShell> },
+  { path: '/', element: <AppShell><Navigate to="/dashboard" replace /></AppShell> },
+], {
+  future: {
+    v7_relativeSplatPath: true,
+  },
+});
+
+function App() {
+  return <RouterProvider router={router} future={{ v7_startTransition: true }} />;
 }
 
 export default App;
