@@ -1,6 +1,6 @@
-import { MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,11 +20,18 @@ vi.mock('../services/api', () => ({
   apiPost: vi.fn(),
 }));
 
-const renderApplicationForm = () => render(
-  <MemoryRouter>
-    <ApplicationForm />
-  </MemoryRouter>,
-);
+const renderApplicationForm = (initialEntries = ['/applications/new']) => {
+  const router = createMemoryRouter([
+    { path: '/dashboard', element: <div>Dashboard</div> },
+    { path: '/applications/new', element: <ApplicationForm /> },
+    { path: '/applications/:id', element: <div>Application Detail</div> },
+  ], { initialEntries, initialIndex: initialEntries.length - 1 });
+
+  return {
+    router,
+    ...render(<RouterProvider router={router} />),
+  };
+};
 
 describe('ApplicationForm', () => {
   afterEach(() => {
@@ -116,5 +123,54 @@ describe('ApplicationForm', () => {
     expect(screen.getByLabelText('Scholarship Name *')).toHaveValue('Draft Scholarship');
     expect(screen.getByLabelText('Due Date *')).toHaveValue('2026-07-01');
     expect(screen.getByPlaceholderText('Essay prompt or topic')).toHaveValue('Community impact essay');
+  });
+
+  it('warns before navigating back from an unsaved new application and can discard the draft', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiGet).mockResolvedValue([]);
+
+    const { router } = renderApplicationForm(['/dashboard', '/applications/new']);
+
+    await user.type(screen.getByLabelText('Scholarship Name *'), 'Back Button Scholarship');
+    await user.type(screen.getByLabelText('Due Date *'), '2026-07-01');
+    await waitFor(() => expect(window.localStorage.length).toBe(1));
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+
+    expect(screen.getByRole('dialog', { name: 'Save this application?' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Scholarship Name *')).toHaveValue('Back Button Scholarship');
+
+    await user.click(screen.getByRole('button', { name: 'Cancel Draft' }));
+
+    await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
+    expect(window.localStorage.length).toBe(0);
+  });
+
+  it('saves from the unsaved navigation warning instead of restoring the stale draft later', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiGet).mockResolvedValue([]);
+    vi.mocked(apiPost).mockResolvedValue({ id: 42, scholarshipName: 'Saved Scholarship' });
+
+    const { router } = renderApplicationForm(['/dashboard', '/applications/new']);
+
+    await user.type(screen.getByLabelText('Scholarship Name *'), 'Saved Scholarship');
+    await user.type(screen.getByLabelText('Due Date *'), '2026-07-01');
+    await waitFor(() => expect(window.localStorage.length).toBe(1));
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+
+    const dialog = screen.getByRole('dialog', { name: 'Save this application?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledWith('/applications', expect.objectContaining({
+      scholarshipName: 'Saved Scholarship',
+      dueDate: '2026-07-01',
+    })));
+    await waitFor(() => expect(screen.getByText('Application Detail')).toBeInTheDocument());
+    expect(window.localStorage.length).toBe(0);
   });
 });
