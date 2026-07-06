@@ -422,9 +422,11 @@ function ApplicationForm() {
         <ApplicationWorkItemsSection
           essayDrafts={essayDrafts}
           recommendationDrafts={recommendationDrafts}
+          recommendationCount={values.recommendationCount}
           collaborators={collaborators}
           isOpen={workItemsOpen}
           onOpenChange={setWorkItemsOpen}
+          onRecommendationCountChange={(recommendationCount) => handleChange({ recommendationCount })}
           onAddEssay={handleAddEssay}
           onDeleteEssay={handleDeleteEssay}
           onEssayChange={updateEssayDraft}

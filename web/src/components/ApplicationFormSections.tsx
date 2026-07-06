@@ -274,14 +274,10 @@ export function ApplicationFormSections({ values, onChange, compact = false }: A
         summary={formatAwardSummary(values)}
       >
         <div className={compact ? 'space-y-2.5' : 'space-y-3'}>
-          <div className={`grid grid-cols-1 md:grid-cols-3 ${compact ? 'gap-2.5' : 'gap-3'}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-3'}`}>
             <div>
               <label htmlFor={FIELD_IDS.minAward} className="field-label">Min Award ($)</label>
               <input id={FIELD_IDS.minAward} type="number" inputMode="numeric" min={0} className="field-input" value={values.minAward} onChange={field('minAward')} placeholder="0" />
-            </div>
-            <div>
-              <label htmlFor={FIELD_IDS.recommendationCount} className="field-label">Recommendations</label>
-              <input id={FIELD_IDS.recommendationCount} type="number" inputMode="numeric" min={0} step={1} className="field-input" value={values.recommendationCount} onChange={field('recommendationCount')} placeholder="0" />
             </div>
             <div>
               <label htmlFor={FIELD_IDS.maxAward} className="field-label">Max Award ($)</label>
