@@ -64,6 +64,7 @@ export const createApplication = async (
     applicationLink?: string | null;
     theme?: string | null;
     minAward?: number | null;
+    recommendationCount?: number;
     maxAward?: number | null;
     requirements?: string | null;
     renewable?: boolean;
@@ -89,6 +90,7 @@ export const createApplication = async (
   if (applicationData.applicationLink !== undefined) dbData.application_link = applicationData.applicationLink;
   if (applicationData.theme !== undefined) dbData.theme = applicationData.theme;
   if (applicationData.minAward !== undefined) dbData.min_award = applicationData.minAward;
+  if (applicationData.recommendationCount !== undefined) dbData.recommendation_count = applicationData.recommendationCount;
   if (applicationData.maxAward !== undefined) dbData.max_award = applicationData.maxAward;
   if (applicationData.requirements !== undefined) dbData.requirements = applicationData.requirements;
   if (applicationData.renewable !== undefined) dbData.renewable = applicationData.renewable;
@@ -128,6 +130,7 @@ export const updateApplication = async (
     applicationLink?: string | null;
     theme?: string | null;
     minAward?: number | null;
+    recommendationCount?: number;
     maxAward?: number | null;
     requirements?: string | null;
     renewable?: boolean;
@@ -153,6 +156,7 @@ export const updateApplication = async (
   if (updates.applicationLink !== undefined) dbUpdates.application_link = updates.applicationLink;
   if (updates.theme !== undefined) dbUpdates.theme = updates.theme;
   if (updates.minAward !== undefined) dbUpdates.min_award = updates.minAward;
+  if (updates.recommendationCount !== undefined) dbUpdates.recommendation_count = updates.recommendationCount;
   if (updates.maxAward !== undefined) dbUpdates.max_award = updates.maxAward;
   if (updates.requirements !== undefined) dbUpdates.requirements = updates.requirements;
   if (updates.renewable !== undefined) dbUpdates.renewable = updates.renewable;

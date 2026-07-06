@@ -13,6 +13,7 @@ export interface Application {
   applicationLink: string;
   theme: string;
   minAward: number;
+  recommendationCount?: number;
   maxAward: number;
   requirements: string;
   renewable: boolean;

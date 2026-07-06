@@ -64,6 +64,7 @@ export interface ApplicationResponse {
   applicationLink?: string | null;
   theme?: string | null;
   minAward?: number | null;
+  recommendationCount?: number | null;
   maxAward?: number | null;
   requirements?: string | null;
   renewable?: boolean | null;

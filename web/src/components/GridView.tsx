@@ -19,7 +19,7 @@ interface GridViewProps {
 }
 
 type SortDirection = 'asc' | 'desc';
-type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'currentDependencies';
+type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'recommendationCount' | 'currentDependencies';
 export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'inProgress' | 'submitted';
 export type DueDateFilter = 'all' | 'overdue' | 'next7' | 'nextTwoWeeks' | 'next30' | 'custom' | 'noDeadline';
 
@@ -50,6 +50,7 @@ const GRID_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'status', label: 'Status' },
   { key: 'dueDate', label: 'Due Date' },
   { key: 'awardAmount', label: 'Min Amount' },
+  { key: 'recommendationCount', label: 'Recs' },
   { key: 'currentDependencies', label: 'Current Dependencies' },
 ];
 
@@ -122,6 +123,8 @@ function getSortValue(application: ApplicationResponse, sortKey: SortKey): strin
       return parseDateOnlyToLocalDate(application.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
     case 'awardAmount':
       return application.minAward ?? 0;
+    case 'recommendationCount':
+      return application.recommendationCount ?? 0;
     case 'currentDependencies':
       return getCurrentDependenciesLabel(application).toLowerCase();
   }
@@ -466,11 +469,12 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
           <div className="hidden md:block overflow-x-auto">
             <table className="table-root table-fixed">
               <colgroup>
-                <col className="w-[37%]" />
-                <col className="w-[13%]" />
-                <col className="w-[13%]" />
+                <col className="w-[34%]" />
                 <col className="w-[12%]" />
-                <col className="w-[17%]" />
+                <col className="w-[12%]" />
+                <col className="w-[11%]" />
+                <col className="w-[8%]" />
+                <col className="w-[15%]" />
                 <col className="w-[8%]" />
               </colgroup>
               <thead>
@@ -536,6 +540,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
                         {formatDate(application.dueDate)}
                       </td>
                       <td className="px-4 py-1.5 text-gray-700">{formatMinimumAwardAmount(application)}</td>
+                      <td className="px-4 py-1.5 text-gray-700">{application.recommendationCount ?? 0}</td>
                       <td className="px-4 py-1.5 text-gray-700">
                         {pendingWorkChips.length === 0 ? '-' : (
                           <div className="flex flex-wrap gap-1.5">
@@ -617,6 +622,10 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
                       <div>
                         <span className="block text-xs font-semibold uppercase text-gray-500">Min amount</span>
                         <span>{formatMinimumAwardAmount(application)}</span>
+                      </div>
+                      <div>
+                        <span className="block text-xs font-semibold uppercase text-gray-500">Recs</span>
+                        <span>{application.recommendationCount ?? 0}</span>
                       </div>
                     </div>
                     {pendingWorkChips.length > 0 && (

@@ -16,6 +16,7 @@ export interface ApplicationFormValues {
   renewable: boolean;
   renewableTerms: string;
   minAward: string;
+  recommendationCount: string;
   maxAward: string;
   platform: string;
   theme: string;
@@ -35,6 +36,7 @@ export const EMPTY_FORM_VALUES: ApplicationFormValues = {
   renewable: false,
   renewableTerms: '',
   minAward: '',
+  recommendationCount: '0',
   maxAward: '',
   platform: '',
   theme: '',
@@ -96,6 +98,7 @@ const FIELD_IDS: Record<keyof ApplicationFormValues, string> = {
   renewable: 'application-renewable',
   renewableTerms: 'application-renewable-terms',
   minAward: 'application-min-award',
+  recommendationCount: 'application-recommendation-count',
   maxAward: 'application-max-award',
   platform: 'application-platform',
   theme: 'application-theme',
@@ -271,10 +274,14 @@ export function ApplicationFormSections({ values, onChange, compact = false }: A
         summary={formatAwardSummary(values)}
       >
         <div className={compact ? 'space-y-2.5' : 'space-y-3'}>
-          <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-3'}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-3 ${compact ? 'gap-2.5' : 'gap-3'}`}>
             <div>
               <label htmlFor={FIELD_IDS.minAward} className="field-label">Min Award ($)</label>
               <input id={FIELD_IDS.minAward} type="number" inputMode="numeric" min={0} className="field-input" value={values.minAward} onChange={field('minAward')} placeholder="0" />
+            </div>
+            <div>
+              <label htmlFor={FIELD_IDS.recommendationCount} className="field-label">Recommendations</label>
+              <input id={FIELD_IDS.recommendationCount} type="number" inputMode="numeric" min={0} step={1} className="field-input" value={values.recommendationCount} onChange={field('recommendationCount')} placeholder="0" />
             </div>
             <div>
               <label htmlFor={FIELD_IDS.maxAward} className="field-label">Max Award ($)</label>

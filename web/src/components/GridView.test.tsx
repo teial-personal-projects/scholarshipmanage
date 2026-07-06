@@ -178,13 +178,16 @@ describe('GridView', () => {
         id: 1,
         scholarshipName: 'Minimum Amount Scholarship',
         minAward: 2500,
+        recommendationCount: 2,
         maxAward: 10000,
       }),
     ]);
 
     expect(screen.queryByRole('button', { name: 'Organization' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Min Amount' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Recs' })).toBeInTheDocument();
     expect(screen.getAllByText('$2,500').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     expect(screen.queryByText('$10,000')).not.toBeInTheDocument();
   });
 

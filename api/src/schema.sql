@@ -190,6 +190,7 @@ CREATE TABLE public.applications (
   application_link TEXT,
   theme TEXT,
   min_award NUMERIC(10,2),
+  recommendation_count INTEGER NOT NULL DEFAULT 0 CHECK (recommendation_count >= 0),
   max_award NUMERIC(10,2),
   requirements TEXT,
   renewable BOOLEAN DEFAULT FALSE,

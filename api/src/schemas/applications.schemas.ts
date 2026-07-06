@@ -20,6 +20,8 @@ const nullableDateSchema = dateSchema.nullable().optional();
 const nullableUrlSchema = urlSchema.nullable().optional();
 const nullableStringSchema = (maxLength: number) => z.string().max(maxLength).trim().nullable().optional();
 const nullablePositiveNumberSchema = z.number().positive().nullable().optional();
+const recommendationCountSchema = z.number().int().min(0).optional().default(0);
+const optionalRecommendationCountSchema = z.number().int().min(0).optional();
 const nullableTargetTypeSchema = z.enum(['Merit', 'Need', 'Both']).nullable().optional();
 
 /**
@@ -35,6 +37,7 @@ export const createApplicationInputSchema = z.object({
   applicationLink: nullableUrlSchema,
   theme: nullableStringSchema(500),
   minAward: nullablePositiveNumberSchema,
+  recommendationCount: recommendationCountSchema,
   maxAward: nullablePositiveNumberSchema,
   requirements: nullableStringSchema(5000),
   renewable: z.boolean().optional(),
@@ -59,6 +62,7 @@ export const updateApplicationInputSchema = z.object({
   applicationLink: nullableUrlSchema,
   theme: nullableStringSchema(500),
   minAward: nullablePositiveNumberSchema,
+  recommendationCount: optionalRecommendationCountSchema,
   maxAward: nullablePositiveNumberSchema,
   requirements: nullableStringSchema(5000),
   renewable: z.boolean().optional(),
