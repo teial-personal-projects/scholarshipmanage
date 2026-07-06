@@ -35,6 +35,7 @@ interface StoredApplicationFormDraft {
 
 function toPayload(values: ApplicationFormValues) {
   const toNum = (s: string) => { const n = Number(s); return s.trim() && !Number.isNaN(n) ? n : null; };
+  const toCount = (s: string) => { const n = Number(s); return s.trim() && Number.isInteger(n) && n >= 0 ? n : 0; };
   return {
     scholarshipName: values.scholarshipName.trim(),
     organization: values.organization.trim() || null,
@@ -43,6 +44,7 @@ function toPayload(values: ApplicationFormValues) {
     applicationLink: values.applicationLink.trim() || null,
     theme: values.theme.trim() || null,
     minAward: toNum(values.minAward),
+    recommendationCount: toCount(values.recommendationCount),
     maxAward: toNum(values.maxAward),
     requirements: values.requirements.trim() || null,
     renewable: values.renewable,
@@ -231,6 +233,7 @@ function ApplicationForm() {
           applicationLink: data.applicationLink ?? '',
           theme: data.theme ?? '',
           minAward: data.minAward?.toString() ?? '',
+          recommendationCount: data.recommendationCount?.toString() ?? '0',
           maxAward: data.maxAward?.toString() ?? '',
           requirements: data.requirements ?? '',
           renewable: data.renewable ?? false,

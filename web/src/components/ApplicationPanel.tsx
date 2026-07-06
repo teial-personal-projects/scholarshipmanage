@@ -54,6 +54,7 @@ interface ApplicationDraft {
   targetType: TTargetType | '';
   status: TApplicationStatus;
   minAward: string;
+  recommendationCount: string;
   maxAward: string;
   openDate: string;
   dueDate: string;
@@ -87,6 +88,7 @@ function createDraft(application: ApplicationPanelApplication): ApplicationDraft
     targetType: application.targetType ?? '',
     status: application.status,
     minAward: application.minAward?.toString() ?? '',
+    recommendationCount: application.recommendationCount?.toString() ?? '0',
     maxAward: application.maxAward?.toString() ?? '',
     openDate: toDateInputValue(application.openDate),
     dueDate: toDateInputValue(application.dueDate),
@@ -146,6 +148,7 @@ function toPayload(draft: ApplicationDraft) {
     targetType: draft.targetType || null,
     status: draft.status,
     minAward: toOptionalNumber(draft.minAward),
+    recommendationCount: toRecommendationCount(draft.recommendationCount),
     maxAward: toOptionalNumber(draft.maxAward),
     openDate: draft.openDate || null,
     dueDate: draft.dueDate,
@@ -154,6 +157,13 @@ function toPayload(draft: ApplicationDraft) {
     renewable: draft.renewable,
     renewableTerms: draft.renewable ? draft.renewableTerms.trim() || null : null,
   };
+}
+
+function toRecommendationCount(value: string): number {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return 0;
+  const parsedValue = Number(trimmedValue);
+  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
 }
 
 function getDraftStorageKey(applicationId: number): string {
@@ -216,7 +226,7 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
   const initialDraft = useMemo(() => createDraft(application), [application]);
   const initialEssayDrafts = useMemo(() => createEssayDrafts(application), [application]);
   const initialStoredDraft = useMemo(() => readStoredDraft(application.id), [application.id]);
-  const [draft, setDraft] = useState<ApplicationDraft>(initialStoredDraft?.draft ?? initialDraft);
+  const [draft, setDraft] = useState<ApplicationDraft>({ ...initialDraft, ...initialStoredDraft?.draft });
   const [savedDraft, setSavedDraft] = useState<ApplicationDraft>(initialDraft);
   const [essayDrafts, setEssayDrafts] = useState<EssayDraft[]>(initialStoredDraft?.essayDrafts ?? initialEssayDrafts);
   const [savedEssayDrafts, setSavedEssayDrafts] = useState<EssayDraft[]>(initialEssayDrafts);
@@ -236,7 +246,7 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
     setSavedDraft(initialDraft);
     setSavedEssayDrafts(initialEssayDrafts);
     setSavedRecommendationDrafts([]);
-    setDraft(storedDraft?.draft ?? initialDraft);
+    setDraft({ ...initialDraft, ...storedDraft?.draft });
     setEssayDrafts(storedDraft?.essayDrafts ?? initialEssayDrafts);
     setRecommendationDrafts(storedDraft?.recommendationDrafts ?? []);
     setIsLoadingEssays(true);
