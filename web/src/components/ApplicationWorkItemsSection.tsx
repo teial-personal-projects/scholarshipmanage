@@ -11,10 +11,12 @@ import type { EssayDraft, RecommendationDraft } from './ApplicationWorkItemsDraf
 interface ApplicationWorkItemsSectionProps {
   essayDrafts: EssayDraft[];
   recommendationDrafts: RecommendationDraft[];
+  recommendationCount: string;
   collaborators: CollaboratorResponse[];
   isOpen: boolean;
   isLoadingEssays?: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  onRecommendationCountChange: (value: string) => void;
   onAddEssay: () => void;
   onDeleteEssay: (localId: string) => void;
   onEssayChange: <Key extends keyof EssayDraft>(
@@ -41,10 +43,12 @@ const ESSAY_STATUS_OPTIONS: { value: EssayStatus; label: string }[] = [
 export default function ApplicationWorkItemsSection({
   essayDrafts,
   recommendationDrafts,
+  recommendationCount,
   collaborators,
   isOpen,
   isLoadingEssays = false,
   onOpenChange,
+  onRecommendationCountChange,
   onAddEssay,
   onDeleteEssay,
   onEssayChange,
@@ -55,6 +59,8 @@ export default function ApplicationWorkItemsSection({
 }: ApplicationWorkItemsSectionProps) {
   const visibleEssayDrafts = essayDrafts.filter((essay) => !essay.isDeleted);
   const visibleRecommendationDrafts = recommendationDrafts.filter((rec) => !rec.isDeleted);
+  const parsedRecommendationCount = Number(recommendationCount);
+  const hasRecommendationCount = Number.isInteger(parsedRecommendationCount) && parsedRecommendationCount > 0;
 
   return (
     <section className="card">
@@ -68,6 +74,12 @@ export default function ApplicationWorkItemsSection({
           {visibleEssayDrafts.length} essays
           <span aria-hidden>·</span>
           {visibleRecommendationDrafts.length} recommenders
+          {hasRecommendationCount && (
+            <>
+              <span aria-hidden>·</span>
+              {parsedRecommendationCount} recs required
+            </>
+          )}
           <span className="text-sm text-gray-400">{isOpen ? '▼' : '▶'}</span>
         </span>
       </button>
@@ -183,6 +195,19 @@ export default function ApplicationWorkItemsSection({
                 Add Recommender
               </button>
             </div>
+            <label className="block max-w-xs">
+              <span className="field-label">Number of Recommendations</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1}
+                className="field-input"
+                value={recommendationCount}
+                onChange={(event) => onRecommendationCountChange(event.target.value)}
+                placeholder="0"
+              />
+            </label>
 
             {collaborators.length === 0 ? (
               <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">

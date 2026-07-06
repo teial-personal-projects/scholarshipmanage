@@ -80,6 +80,8 @@ describe('ApplicationForm', () => {
     await user.type(screen.getByLabelText('Scholarship Name *'), 'New Scholarship');
     await user.type(screen.getByLabelText('Due Date *'), '2026-07-01');
     await user.click(screen.getByRole('button', { name: /Essays & Recommendations/ }));
+    await user.clear(screen.getByLabelText('Number of Recommendations'));
+    await user.type(screen.getByLabelText('Number of Recommendations'), '2');
     await user.click(screen.getByRole('button', { name: 'Add Essay' }));
     await user.type(screen.getByPlaceholderText('Essay prompt or topic'), 'Leadership essay');
     await user.click(screen.getByRole('button', { name: 'Add Recommender' }));
@@ -90,6 +92,7 @@ describe('ApplicationForm', () => {
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith('/applications', expect.objectContaining({
       scholarshipName: 'New Scholarship',
       dueDate: '2026-07-01',
+      recommendationCount: 2,
     })));
     expect(apiPost).toHaveBeenCalledWith('/applications/42/essays', expect.objectContaining({
       theme: 'Leadership essay',
@@ -101,6 +104,20 @@ describe('ApplicationForm', () => {
       collaborationType: 'recommendation',
       nextActionDueDate: '2026-06-20',
     }));
+  });
+
+  it('shows the recommendation count in the collapsed essays and recommendations summary', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiGet).mockResolvedValue([]);
+
+    renderApplicationForm();
+
+    await user.click(screen.getByRole('button', { name: /Essays & Recommendations/ }));
+    await user.clear(screen.getByLabelText('Number of Recommendations'));
+    await user.type(screen.getByLabelText('Number of Recommendations'), '3');
+    await user.click(screen.getByRole('button', { name: /Essays & Recommendations/ }));
+
+    expect(screen.getByRole('button', { name: /3 recs required/ })).toBeInTheDocument();
   });
 
   it('restores unsaved add application edits after the form remounts', async () => {

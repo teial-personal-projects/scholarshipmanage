@@ -547,10 +547,12 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
           <ApplicationWorkItemsSection
             essayDrafts={essayDrafts}
             recommendationDrafts={recommendationDrafts}
+            recommendationCount={draft.recommendationCount}
             collaborators={collaborators}
             isOpen={workItemsOpen}
             isLoadingEssays={isLoadingEssays}
             onOpenChange={setWorkItemsOpen}
+            onRecommendationCountChange={(recommendationCount) => setDraft((prev) => ({ ...prev, recommendationCount }))}
             onAddEssay={handleAddEssay}
             onDeleteEssay={handleDeleteEssay}
             onEssayChange={updateEssayDraft}

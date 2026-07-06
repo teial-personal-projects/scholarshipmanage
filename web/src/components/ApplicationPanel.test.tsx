@@ -177,12 +177,16 @@ describe('ApplicationPanel', () => {
 
     await user.clear(screen.getByLabelText('Organization'));
     await user.type(screen.getByLabelText('Organization'), 'Updated University');
+    await openWorkItemsSection(user);
+    await user.clear(screen.getByLabelText('Number of Recommendations'));
+    await user.type(screen.getByLabelText('Number of Recommendations'), '2');
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(apiPatch).toHaveBeenCalledWith('/applications/1', expect.objectContaining({
       organization: 'Updated University',
       scholarshipName: 'Merit Scholarship',
       dueDate: '2026-06-30',
+      recommendationCount: 2,
     })));
     expect(onSaveSuccess).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('Unsaved changes are present.')).not.toBeInTheDocument();
