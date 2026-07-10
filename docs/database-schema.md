@@ -20,6 +20,8 @@ All migrations are located in `api/src/migrations/` and should be run in order:
 3. `003_essays.sql` - Essays associated with applications
 4. `004_collaborators.sql` - Collaborators and collaborations system
 5. `005_recommendations.sql` - Recommendation letters
+6. `006_add_user_id_to_collaborations.sql` through `018_add_recommendation_count_to_applications.sql` - Collaboration, notification, reminder, finder, and cleanup changes
+7. `019_add_awaiting_review_to_essay_status.sql` - Adds `awaiting_review` to allowed essay statuses
 
 ---
 
@@ -471,6 +473,8 @@ supabase db push
 3. `003_essays.sql`
 4. `004_collaborators.sql`
 5. `005_recommendations.sql`
+6. `006_add_user_id_to_collaborations.sql` through `018_add_recommendation_count_to_applications.sql`
+7. `019_add_awaiting_review_to_essay_status.sql`
 
 ---
 

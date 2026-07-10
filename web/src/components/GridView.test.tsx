@@ -42,7 +42,7 @@ describe('GridView', () => {
     vi.clearAllMocks();
   });
 
-  it('defaults to all applications with submitted applications visible', () => {
+  it('defaults to active applications with submitted applications hidden', () => {
     renderGrid([
       makeApplication({
         id: 1,
@@ -59,10 +59,10 @@ describe('GridView', () => {
     ]);
 
     expect(screen.getByRole('button', { name: 'Dependencies (0)' })).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('button', { name: 'All (2)' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByLabelText('Show Submitted')).toBeChecked();
+    expect(screen.getByRole('button', { name: 'All (1)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Show Submitted')).not.toBeChecked();
     expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Submitted Scholarship')).not.toBeInTheDocument();
   });
 
   it('filters not-started applications with the same count as the radar', async () => {
@@ -95,7 +95,7 @@ describe('GridView', () => {
     vi.useRealTimers();
   });
 
-  it('hides submitted applications when show submitted is turned off', () => {
+  it('shows submitted applications when show submitted is turned on', () => {
     renderGrid([
       makeApplication({
         id: 1,
@@ -112,8 +112,33 @@ describe('GridView', () => {
     fireEvent.click(screen.getByLabelText('Show Submitted'));
 
     expect(screen.getAllByText('Draft Scholarship').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Submitted Scholarship')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'All (1)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'All (2)' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('can switch the date column from due date to updated date', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Older Update Scholarship',
+        dueDate: '2026-07-20',
+        updatedAt: '2026-06-01T00:00:00Z',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Newer Update Scholarship',
+        dueDate: '2026-07-21',
+        updatedAt: '2026-06-10T00:00:00Z',
+      }),
+    ]);
+
+    expect(screen.getByRole('button', { name: 'Due Date' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Date column'), { target: { value: 'updatedAt' } });
+
+    expect(screen.getByRole('button', { name: 'Updated' })).toBeInTheDocument();
+    expect(screen.getAllByText('06/10/2026').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('06/01/2026').length).toBeGreaterThan(0);
   });
 
   it('filters by due date presets', () => {

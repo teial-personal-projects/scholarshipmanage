@@ -19,6 +19,7 @@ import {
   type EssayDraft,
   type RecommendationDraft,
 } from './ApplicationWorkItemsDrafts';
+import { moveApplicationStatusToInProgress } from '../utils/applicationStatus';
 
 const DRAFT_STORAGE_VERSION = 1;
 const DRAFT_STORAGE_PREFIX = 'scholarshipmanage:application-form-draft';
@@ -182,7 +183,15 @@ function ApplicationForm() {
     )));
   };
 
+  const moveApplicationToInProgress = () => {
+    setValues((current) => ({
+      ...current,
+      status: moveApplicationStatusToInProgress(current.status),
+    }));
+  };
+
   const handleAddEssay = () => {
+    moveApplicationToInProgress();
     setEssayDrafts((current) => [...current, createBlankEssayDraft()]);
     setWorkItemsOpen(true);
   };
@@ -192,6 +201,7 @@ function ApplicationForm() {
   };
 
   const handleAddRecommendation = () => {
+    moveApplicationToInProgress();
     setRecommendationDrafts((current) => [...current, createBlankRecommendationDraft()]);
     setWorkItemsOpen(true);
   };

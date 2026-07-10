@@ -93,6 +93,7 @@ describe('ApplicationForm', () => {
       scholarshipName: 'New Scholarship',
       dueDate: '2026-07-01',
       recommendationCount: 2,
+      status: 'In Progress',
     })));
     expect(apiPost).toHaveBeenCalledWith('/applications/42/essays', expect.objectContaining({
       theme: 'Leadership essay',

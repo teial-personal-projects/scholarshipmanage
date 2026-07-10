@@ -20,6 +20,7 @@ interface GridViewProps {
 
 type SortDirection = 'asc' | 'desc';
 type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'recommendationCount' | 'currentDependencies';
+type DateColumnMode = 'dueDate' | 'updatedAt';
 export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'inProgress' | 'submitted';
 export type DueDateFilter = 'all' | 'overdue' | 'next7' | 'nextTwoWeeks' | 'next30' | 'custom' | 'noDeadline';
 
@@ -108,19 +109,31 @@ function formatDate(value: string | null | undefined): string {
   return value ? formatDateNoTimezone(value) : '-';
 }
 
+function getDateColumnLabel(dateColumnMode: DateColumnMode): string {
+  return dateColumnMode === 'dueDate' ? 'Due Date' : 'Updated';
+}
+
+function getDateColumnValue(application: ApplicationResponse, dateColumnMode: DateColumnMode): string {
+  return dateColumnMode === 'dueDate'
+    ? formatDate(application.dueDate)
+    : formatDate(application.updatedAt);
+}
+
 function getCurrentDependenciesLabel(application: ApplicationResponse): string {
   const labels = getPendingWorkChips(application).map((chip) => chip.label);
   return labels.length ? labels.join(', ') : '-';
 }
 
-function getSortValue(application: ApplicationResponse, sortKey: SortKey): string | number {
+function getSortValue(application: ApplicationResponse, sortKey: SortKey, dateColumnMode: DateColumnMode): string | number {
   switch (sortKey) {
     case 'scholarshipName':
       return application.scholarshipName.toLowerCase();
     case 'status':
       return application.status.toLowerCase();
     case 'dueDate':
-      return parseDateOnlyToLocalDate(application.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
+      return parseDateOnlyToLocalDate(
+        dateColumnMode === 'dueDate' ? application.dueDate : application.updatedAt,
+      )?.getTime() ?? Number.POSITIVE_INFINITY;
     case 'awardAmount':
       return application.minAward ?? 0;
     case 'recommendationCount':
@@ -244,8 +257,9 @@ function Pagination({
 export default function GridView({ applications, onApplicationOpen, onDelete, filterRequest }: GridViewProps) {
   const { showError } = useToastHelpers();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showSubmitted, setShowSubmitted] = useState(true);
+  const [showSubmitted, setShowSubmitted] = useState(false);
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>('all');
+  const [dateColumnMode, setDateColumnMode] = useState<DateColumnMode>('dueDate');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -291,10 +305,13 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
     [...filteredApplications].sort((first, second) => {
       if (!sortKey) return sortByCreatedDesc(first, second);
 
-      const comparison = compareSortValues(getSortValue(first, sortKey), getSortValue(second, sortKey));
+      const comparison = compareSortValues(
+        getSortValue(first, sortKey, dateColumnMode),
+        getSortValue(second, sortKey, dateColumnMode),
+      );
       return sortDirection === 'asc' ? comparison : -comparison;
     })
-  ), [filteredApplications, sortDirection, sortKey]);
+  ), [dateColumnMode, filteredApplications, sortDirection, sortKey]);
 
   const totalPages = Math.ceil(filteredApplications.length / ITEMS_PER_PAGE);
   const pageApplications = sortedApplications.slice(
@@ -314,7 +331,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
     setCustomEndDate('');
     setStatusFilter(filterRequest.statusFilter ?? 'all');
     setDueDateFilter(filterRequest.dueDateFilter ?? 'all');
-    setShowSubmitted(filterRequest.showSubmitted ?? true);
+    setShowSubmitted(filterRequest.showSubmitted ?? false);
   }, [filterRequest]);
 
   const handleSort = (nextSortKey: SortKey) => {
@@ -342,17 +359,24 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
 
   const resetFilters = () => {
     setSearchTerm('');
-    setShowSubmitted(true);
+    setShowSubmitted(false);
     setDueDateFilter('all');
+    setDateColumnMode('dueDate');
     setCustomStartDate('');
     setCustomEndDate('');
     setStatusFilter('all');
   };
 
+  const gridColumns = useMemo(() => (
+    GRID_COLUMNS.map((column) => (
+      column.key === 'dueDate' ? { ...column, label: getDateColumnLabel(dateColumnMode) } : column
+    ))
+  ), [dateColumnMode]);
+
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <div className="grid gap-3 lg:grid-cols-[minmax(15rem,1fr)_auto_minmax(13rem,16rem)_auto] lg:items-center">
+        <div className="grid gap-3 lg:grid-cols-[minmax(15rem,1fr)_auto_minmax(11rem,14rem)_minmax(13rem,16rem)_auto] lg:items-center">
           <label className="relative block">
             <span className="sr-only">Search scholarship or company</span>
             <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
@@ -373,6 +397,19 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
               checked={showSubmitted}
               onChange={(event) => setShowSubmitted(event.target.checked)}
             />
+          </label>
+
+          <label className="relative block">
+            <span className="sr-only">Date column</span>
+            <Calendar size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+            <select
+              className="field-select h-10 pl-9"
+              value={dateColumnMode}
+              onChange={(event) => setDateColumnMode(event.target.value as DateColumnMode)}
+            >
+              <option value="dueDate">Due Date</option>
+              <option value="updatedAt">Updated</option>
+            </select>
           </label>
 
           <label className="relative block">
@@ -479,7 +516,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
               </colgroup>
               <thead>
                 <tr className="table-header-row">
-                  {GRID_COLUMNS.map((column) => {
+                  {gridColumns.map((column) => {
                     const isActive = sortKey === column.key;
 
                     return (
@@ -536,8 +573,12 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
                           {application.status}
                         </span>
                       </td>
-                      <td className={`px-4 py-1.5 ${urgencyDueDateStyles[urgency]}`}>
-                        {formatDate(application.dueDate)}
+                      <td
+                        className={`px-4 py-1.5 ${
+                          dateColumnMode === 'dueDate' ? urgencyDueDateStyles[urgency] : 'text-gray-700'
+                        }`}
+                      >
+                        {getDateColumnValue(application, dateColumnMode)}
                       </td>
                       <td className="px-4 py-1.5 text-gray-700">{formatMinimumAwardAmount(application)}</td>
                       <td className="px-4 py-1.5 text-gray-700">{application.recommendationCount ?? 0}</td>
@@ -616,8 +657,12 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-gray-700">
                       <div>
-                        <span className="block text-xs font-semibold uppercase text-gray-500">Due date</span>
-                        <span className={urgencyDueDateStyles[urgency]}>{formatDate(application.dueDate)}</span>
+                        <span className="block text-xs font-semibold uppercase text-gray-500">
+                          {getDateColumnLabel(dateColumnMode)}
+                        </span>
+                        <span className={dateColumnMode === 'dueDate' ? urgencyDueDateStyles[urgency] : 'text-gray-700'}>
+                          {getDateColumnValue(application, dateColumnMode)}
+                        </span>
                       </div>
                       <div>
                         <span className="block text-xs font-semibold uppercase text-gray-500">Min amount</span>
