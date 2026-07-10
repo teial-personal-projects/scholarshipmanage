@@ -21,14 +21,20 @@ interface GridViewProps {
 type SortDirection = 'asc' | 'desc';
 type SortKey = 'scholarshipName' | 'status' | 'dueDate' | 'awardAmount' | 'recommendationCount' | 'currentDependencies';
 type DateColumnMode = 'dueDate' | 'updatedAt';
-export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'inProgress' | 'submitted';
+type SortOptionId =
+  | 'dueDate'
+  | 'updatedAt'
+  | 'scholarshipName'
+  | 'awardAmount'
+  | 'recommendationCount'
+  | 'currentDependencies';
+export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'submitted';
 export type DueDateFilter = 'all' | 'overdue' | 'next7' | 'nextTwoWeeks' | 'next30' | 'custom' | 'noDeadline';
 
 export interface GridFilterRequest {
   id: number;
   statusFilter?: StatusFilter;
   dueDateFilter?: DueDateFilter;
-  showSubmitted?: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -55,11 +61,24 @@ const GRID_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'currentDependencies', label: 'Current Dependencies' },
 ];
 
+const SORT_OPTIONS: {
+  id: SortOptionId;
+  label: string;
+  sortKey: SortKey;
+  dateColumnMode?: DateColumnMode;
+}[] = [
+  { id: 'dueDate', label: 'Due Date', sortKey: 'dueDate', dateColumnMode: 'dueDate' },
+  { id: 'updatedAt', label: 'Updated', sortKey: 'dueDate', dateColumnMode: 'updatedAt' },
+  { id: 'scholarshipName', label: 'Scholarship Name', sortKey: 'scholarshipName' },
+  { id: 'awardAmount', label: 'Min Amount', sortKey: 'awardAmount' },
+  { id: 'recommendationCount', label: 'Recs', sortKey: 'recommendationCount' },
+  { id: 'currentDependencies', label: 'Current Dependencies', sortKey: 'currentDependencies' },
+];
+
 const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
+  { key: 'all', label: 'Active' },
   { key: 'needsAction', label: 'Dependencies' },
   { key: 'notStarted', label: 'Not Started' },
-  { key: 'inProgress', label: 'In Progress' },
   { key: 'submitted', label: 'Submitted' },
 ];
 
@@ -72,24 +91,6 @@ const DUE_DATE_FILTERS: { key: DueDateFilter; label: string }[] = [
   { key: 'custom', label: 'Custom range' },
   { key: 'noDeadline', label: 'No deadline' },
 ];
-
-const STATUS_FILTER_STYLES: Record<StatusFilter, { dot: string }> = {
-  all: {
-    dot: 'bg-brand-500',
-  },
-  needsAction: {
-    dot: 'bg-orange-500',
-  },
-  notStarted: {
-    dot: 'bg-gray-400',
-  },
-  inProgress: {
-    dot: 'bg-blue-500',
-  },
-  submitted: {
-    dot: 'bg-green-600',
-  },
-};
 
 const urgencyRowStyles: Record<DeadlineUrgency, string> = {
   overdue: 'bg-red-50/70 hover:bg-red-50',
@@ -153,11 +154,10 @@ function sortByCreatedDesc(first: ApplicationResponse, second: ApplicationRespon
 }
 
 function matchesStatusFilter(application: ApplicationResponse, statusFilter: StatusFilter): boolean {
-  if (statusFilter === 'all') return true;
+  if (statusFilter === 'all') return !isApplicationDone(application.status);
   if (statusFilter === 'notStarted') return application.status === 'Not Started';
-  if (statusFilter === 'inProgress') return application.status === 'In Progress';
   if (statusFilter === 'submitted') return isApplicationDone(application.status);
-  return applicationNeedsAction(application);
+  return !isApplicationDone(application.status) && applicationNeedsAction(application);
 }
 
 function matchesSearch(application: ApplicationResponse, searchTerm: string): boolean {
@@ -257,14 +257,13 @@ function Pagination({
 export default function GridView({ applications, onApplicationOpen, onDelete, filterRequest }: GridViewProps) {
   const { showError } = useToastHelpers();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showSubmitted, setShowSubmitted] = useState(false);
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>('all');
   const [dateColumnMode, setDateColumnMode] = useState<DateColumnMode>('dueDate');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>('dueDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -284,16 +283,14 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
   const baseFilteredApplications = useMemo(() => (
     applications.filter((application) => (
       matchesSearch(application, searchTerm) &&
-      (showSubmitted || !isApplicationDone(application.status)) &&
       matchesDueDateFilter(application, dueDateFilter, customStartDate, customEndDate)
     ))
-  ), [applications, customEndDate, customStartDate, dueDateFilter, searchTerm, showSubmitted]);
+  ), [applications, customEndDate, customStartDate, dueDateFilter, searchTerm]);
 
   const statusFilterCounts = useMemo(() => ({
-    all: baseFilteredApplications.length,
+    all: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'all')).length,
     needsAction: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'needsAction')).length,
     notStarted: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'notStarted')).length,
-    inProgress: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'inProgress')).length,
     submitted: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'submitted')).length,
   }), [baseFilteredApplications]);
 
@@ -303,13 +300,12 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
 
   const sortedApplications = useMemo(() => (
     [...filteredApplications].sort((first, second) => {
-      if (!sortKey) return sortByCreatedDesc(first, second);
-
       const comparison = compareSortValues(
         getSortValue(first, sortKey, dateColumnMode),
         getSortValue(second, sortKey, dateColumnMode),
       );
-      return sortDirection === 'asc' ? comparison : -comparison;
+      const directedComparison = sortDirection === 'asc' ? comparison : -comparison;
+      return directedComparison || sortByCreatedDesc(first, second);
     })
   ), [dateColumnMode, filteredApplications, sortDirection, sortKey]);
 
@@ -321,7 +317,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [applications.length, customEndDate, customStartDate, dueDateFilter, searchTerm, showSubmitted, statusFilter]);
+  }, [applications.length, customEndDate, customStartDate, dueDateFilter, searchTerm, statusFilter]);
 
   useEffect(() => {
     if (!filterRequest) return;
@@ -331,7 +327,6 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
     setCustomEndDate('');
     setStatusFilter(filterRequest.statusFilter ?? 'all');
     setDueDateFilter(filterRequest.dueDateFilter ?? 'all');
-    setShowSubmitted(filterRequest.showSubmitted ?? false);
   }, [filterRequest]);
 
   const handleSort = (nextSortKey: SortKey) => {
@@ -339,17 +334,35 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
 
     if (sortKey !== nextSortKey) {
       setSortKey(nextSortKey);
-      setSortDirection('asc');
-      return;
-    }
-
-    if (sortDirection === 'asc') {
       setSortDirection('desc');
       return;
     }
 
-    setSortKey(null);
-    setSortDirection('asc');
+    if (sortDirection === 'desc') {
+      setSortDirection('asc');
+      return;
+    }
+
+    setSortKey('dueDate');
+    setSortDirection('desc');
+  };
+
+  const sortOptionId = (
+    sortKey === 'dueDate' && dateColumnMode === 'updatedAt'
+      ? 'updatedAt'
+      : sortKey
+  ) as SortOptionId;
+
+  const handleSortOptionChange = (id: SortOptionId) => {
+    const option = SORT_OPTIONS.find((item) => item.id === id);
+    if (!option) return;
+
+    setSortKey(option.sortKey);
+    setSortDirection('desc');
+    if (option?.dateColumnMode) {
+      setDateColumnMode(option.dateColumnMode);
+    }
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
@@ -359,12 +372,13 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
 
   const resetFilters = () => {
     setSearchTerm('');
-    setShowSubmitted(false);
     setDueDateFilter('all');
     setDateColumnMode('dueDate');
     setCustomStartDate('');
     setCustomEndDate('');
     setStatusFilter('all');
+    setSortKey('dueDate');
+    setSortDirection('desc');
   };
 
   const gridColumns = useMemo(() => (
@@ -376,122 +390,107 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <div className="grid gap-3 lg:grid-cols-[minmax(15rem,1fr)_auto_minmax(11rem,14rem)_minmax(13rem,16rem)_auto] lg:items-center">
-          <label className="relative block">
-            <span className="sr-only">Search scholarship or company</span>
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
-            <input
-              type="search"
-              className="field-input h-10 pl-9"
-              placeholder="Search scholarship or company..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </label>
+        <label className="relative block">
+          <span className="sr-only">Search scholarship or company</span>
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+          <input
+            type="search"
+            className="field-input h-10 pl-9"
+            placeholder="Search scholarship or company..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </label>
 
-          <label className="inline-flex h-10 items-center justify-between gap-3 rounded-md border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm">
-            <span>Show Submitted</span>
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-brand-700"
-              checked={showSubmitted}
-              onChange={(event) => setShowSubmitted(event.target.checked)}
-            />
-          </label>
-
-          <label className="relative block">
-            <span className="sr-only">Date column</span>
-            <Calendar size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-[minmax(10rem,13rem)_minmax(12rem,14rem)_minmax(12rem,14rem)_auto] xl:items-end">
+          <label className="block">
+            <span className="field-label">Filter by status</span>
             <select
-              className="field-select h-10 pl-9"
-              value={dateColumnMode}
-              onChange={(event) => setDateColumnMode(event.target.value as DateColumnMode)}
+              className="field-select h-10"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
             >
-              <option value="dueDate">Due Date</option>
-              <option value="updatedAt">Updated</option>
-            </select>
-          </label>
-
-          <label className="relative block">
-            <span className="sr-only">Due date range</span>
-            <Calendar size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
-            <select
-              className="field-select h-10 pl-9"
-              value={dueDateFilter}
-              onChange={(event) => setDueDateFilter(event.target.value as DueDateFilter)}
-            >
-              {DUE_DATE_FILTERS.map((filter) => (
-                <option key={filter.key} value={filter.key}>{filter.label}</option>
+              {STATUS_FILTERS.map((filter) => (
+                <option key={filter.key} value={filter.key}>
+                  {filter.label} ({statusFilterCounts[filter.key]})
+                </option>
               ))}
             </select>
           </label>
 
+          <label className="block">
+            <span className="field-label">Filter by due date</span>
+            <span className="relative block">
+              <Calendar size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
+              <select
+                className="field-select h-10 pl-9"
+                value={dueDateFilter}
+                onChange={(event) => setDueDateFilter(event.target.value as DueDateFilter)}
+              >
+                {DUE_DATE_FILTERS.map((filter) => (
+                  <option key={filter.key} value={filter.key}>{filter.label}</option>
+                ))}
+              </select>
+            </span>
+          </label>
+
+          <label className="block">
+            <span className="field-label">Sort by</span>
+            <span className="relative block">
+              <ChevronDown size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" aria-hidden />
+              <select
+                className="field-select h-10 pl-9"
+                value={sortOptionId}
+                onChange={(event) => handleSortOptionChange(event.target.value as SortOptionId)}
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option
+                    key={option.id}
+                    value={option.id}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </label>
+
           <button
             type="button"
-            className="btn-ghost h-10 gap-1.5 px-3 text-xs"
+            className="btn-ghost h-10 gap-1.5 px-3 text-xs md:justify-self-start xl:justify-self-auto"
             onClick={resetFilters}
           >
             <RotateCcw size={14} aria-hidden />
             Reset
           </button>
         </div>
+      </div>
 
-        {dueDateFilter === 'custom' && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">
-            <label className="block">
-              <span className="field-label">Due from</span>
-              <input
-                type="date"
-                className="field-input"
-                value={customStartDate}
-                onChange={(event) => setCustomStartDate(event.target.value)}
-              />
-            </label>
-            <label className="block">
-              <span className="field-label">Due through</span>
-              <input
-                type="date"
-                className="field-input"
-                value={customEndDate}
-                onChange={(event) => setCustomEndDate(event.target.value)}
-              />
-            </label>
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2">
-          {STATUS_FILTERS.map((filter) => {
-            const isActive = statusFilter === filter.key;
-            const count = statusFilterCounts[filter.key];
-            const styles = STATUS_FILTER_STYLES[filter.key];
-
-            return (
-              <button
-                key={filter.key}
-                type="button"
-                aria-label={`${filter.label} (${count})`}
-                className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  isActive
-                    ? 'border-brand-300 bg-brand-50 text-brand-700'
-                    : 'border-gray-300 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700'
-                }`}
-                aria-pressed={isActive}
-                onClick={() => {
-                  setStatusFilter(filter.key);
-                }}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} aria-hidden />
-                {filter.label}
-                <span className={`rounded-full px-1.5 py-0.5 text-[11px] ${
-                  isActive ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
-                }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+      {dueDateFilter === 'custom' && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:max-w-xl">
+          <label className="block">
+            <span className="field-label">Due from</span>
+            <input
+              type="date"
+              className="field-input"
+              value={customStartDate}
+              onChange={(event) => setCustomStartDate(event.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="field-label">Due through</span>
+            <input
+              type="date"
+              className="field-input"
+              value={customEndDate}
+              onChange={(event) => setCustomEndDate(event.target.value)}
+            />
+          </label>
         </div>
+      )}
+
+      <div className="sr-only" aria-live="polite">
+        Showing {filteredApplications.length} applications.
       </div>
 
       {filteredApplications.length === 0 ? (
@@ -504,7 +503,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
       ) : (
         <>
           <div className="hidden md:block overflow-x-auto">
-            <table className="table-root table-fixed">
+            <table className="table-root min-w-[54rem] table-fixed">
               <colgroup>
                 <col className="w-[34%]" />
                 <col className="w-[12%]" />

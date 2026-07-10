@@ -61,20 +61,20 @@ const PRIORITY_URGENCIES = new Set<DeadlineUrgency>(['overdue', 'critical', 'war
 function getMetricFilterRequest(metric: DashboardMetric): Omit<GridFilterRequest, 'id'> {
   switch (metric.label) {
     case 'Dependencies':
-      return { statusFilter: 'needsAction', dueDateFilter: 'all', showSubmitted: false };
+      return { statusFilter: 'needsAction', dueDateFilter: 'all' };
     case 'Overdue':
-      return { statusFilter: 'all', dueDateFilter: 'overdue', showSubmitted: false };
+      return { statusFilter: 'all', dueDateFilter: 'overdue' };
     case 'Due this week':
-      return { statusFilter: 'all', dueDateFilter: 'next7', showSubmitted: false };
+      return { statusFilter: 'all', dueDateFilter: 'next7' };
     case 'Due next 2 weeks':
-      return { statusFilter: 'all', dueDateFilter: 'nextTwoWeeks', showSubmitted: false };
+      return { statusFilter: 'all', dueDateFilter: 'nextTwoWeeks' };
     case 'Not started':
-      return { statusFilter: 'notStarted', dueDateFilter: 'all', showSubmitted: true };
+      return { statusFilter: 'notStarted', dueDateFilter: 'all' };
     case 'Submitted':
-      return { statusFilter: 'submitted', dueDateFilter: 'all', showSubmitted: true };
+      return { statusFilter: 'submitted', dueDateFilter: 'all' };
     case 'Total Applications':
     default:
-      return { statusFilter: 'all', dueDateFilter: 'all', showSubmitted: true };
+      return { statusFilter: 'all', dueDateFilter: 'all' };
   }
 }
 
@@ -92,7 +92,6 @@ function PriorityApplications({
   onApplicationOpen: (application: ApplicationResponse) => void;
   onDelete: (id: number) => Promise<void>;
 }) {
-  const [isExpanded, setIsExpanded] = useState(true);
   const groups: { key: DeadlineUrgency; title: string; applications: ApplicationResponse[] }[] = [
     { key: 'overdue', title: 'Overdue', applications: [] },
     { key: 'critical', title: 'Due this week', applications: [] },
@@ -111,6 +110,11 @@ function PriorityApplications({
   const visibleGroups = groups.filter((group) => group.applications.length > 0);
   const priorityCount = visibleGroups.reduce((total, group) => total + group.applications.length, 0);
   const priorityApplications = visibleGroups.flatMap((group) => group.applications);
+  const [isExpanded, setIsExpanded] = useState(() => priorityCount > 0);
+
+  useEffect(() => {
+    if (priorityCount === 0) setIsExpanded(false);
+  }, [priorityCount]);
 
   return (
     <section className="overflow-hidden rounded-lg border border-red-200 bg-white shadow-sm ring-1 ring-red-100">

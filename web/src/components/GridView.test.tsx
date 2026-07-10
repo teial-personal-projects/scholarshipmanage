@@ -42,7 +42,7 @@ describe('GridView', () => {
     vi.clearAllMocks();
   });
 
-  it('defaults to active applications with submitted applications hidden', () => {
+  it('defaults to all active applications with submitted applications hidden', () => {
     renderGrid([
       makeApplication({
         id: 1,
@@ -58,9 +58,11 @@ describe('GridView', () => {
       }),
     ]);
 
-    expect(screen.getByRole('button', { name: 'Dependencies (0)' })).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('button', { name: 'All (1)' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByLabelText('Show Submitted')).not.toBeChecked();
+    expect(screen.getByLabelText('Filter by status')).toHaveValue('all');
+    expect(screen.getByRole('option', { name: 'Active (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Dependencies (0)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Submitted (1)' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Show Submitted')).not.toBeInTheDocument();
     expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
     expect(screen.queryByText('Submitted Scholarship')).not.toBeInTheDocument();
   });
@@ -79,14 +81,14 @@ describe('GridView', () => {
       }),
     ]);
 
-    expect(screen.getByRole('button', { name: 'Dependencies (0)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Dependencies (0)' })).toBeInTheDocument();
     expect(screen.getAllByText('Active Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Urgent Scholarship').length).toBeGreaterThan(0);
 
-    expect(screen.getByRole('button', { name: 'Not Started (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Not Started (2)' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Not Started (2)' }));
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'notStarted' } });
 
     expect(screen.getAllByText('Future Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Urgent Scholarship').length).toBeGreaterThan(0);
@@ -95,7 +97,7 @@ describe('GridView', () => {
     vi.useRealTimers();
   });
 
-  it('shows submitted applications when show submitted is turned on', () => {
+  it('shows submitted applications through the submitted status chip', () => {
     renderGrid([
       makeApplication({
         id: 1,
@@ -109,14 +111,14 @@ describe('GridView', () => {
       }),
     ]);
 
-    fireEvent.click(screen.getByLabelText('Show Submitted'));
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'submitted' } });
 
-    expect(screen.getAllByText('Draft Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'All (2)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('Draft Scholarship')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Filter by status')).toHaveValue('submitted');
   });
 
-  it('can switch the date column from due date to updated date', () => {
+  it('can switch the date column from due date to updated date through sort by', () => {
     renderGrid([
       makeApplication({
         id: 1,
@@ -134,7 +136,7 @@ describe('GridView', () => {
 
     expect(screen.getByRole('button', { name: 'Due Date' })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Date column'), { target: { value: 'updatedAt' } });
+    fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'updatedAt' } });
 
     expect(screen.getByRole('button', { name: 'Updated' })).toBeInTheDocument();
     expect(screen.getAllByText('06/10/2026').length).toBeGreaterThan(0);
@@ -149,7 +151,7 @@ describe('GridView', () => {
       makeApplication({ id: 2, scholarshipName: 'Later Scholarship', dueDate: '2026-07-25' }),
     ]);
 
-    fireEvent.change(screen.getByLabelText('Due date range'), { target: { value: 'next7' } });
+    fireEvent.change(screen.getByLabelText('Filter by due date'), { target: { value: 'next7' } });
 
     expect(screen.getAllByText('Soon Scholarship').length).toBeGreaterThan(0);
     expect(screen.queryByText('Later Scholarship')).not.toBeInTheDocument();
@@ -284,10 +286,10 @@ describe('GridView', () => {
     ]);
 
     expect(screen.queryByRole('button', { name: /Waiting on others/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Dependencies (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Dependencies (1)' })).toBeInTheDocument();
     expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dependencies (1)' }));
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'needsAction' } });
 
     expect(screen.getAllByText('Recommendation Scholarship').length).toBeGreaterThan(0);
     expect(screen.queryByText('Waiting for recommendation')).not.toBeInTheDocument();
@@ -315,9 +317,9 @@ describe('GridView', () => {
       }),
     ]);
 
-    expect(screen.getByRole('button', { name: 'Dependencies (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Dependencies (1)' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dependencies (1)' }));
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'needsAction' } });
 
     expect(screen.getAllByText('Pending Essay Scholarship').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Essays 1 left').length).toBeGreaterThan(0);
@@ -346,13 +348,12 @@ describe('GridView', () => {
             id: 1,
             statusFilter: 'submitted',
             dueDateFilter: 'all',
-            showSubmitted: true,
           }}
         />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('button', { name: 'Submitted (1)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Filter by status')).toHaveValue('submitted');
     expect(screen.getAllByText('Submitted Scholarship').length).toBeGreaterThan(0);
     expect(screen.queryByText('Draft Scholarship')).not.toBeInTheDocument();
   });

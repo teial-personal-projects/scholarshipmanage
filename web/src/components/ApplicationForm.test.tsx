@@ -1,5 +1,6 @@
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -21,6 +22,12 @@ vi.mock('../services/api', () => ({
 }));
 
 const renderApplicationForm = (initialEntries = ['/applications/new']) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
   const router = createMemoryRouter([
     { path: '/dashboard', element: <div>Dashboard</div> },
     { path: '/applications/new', element: <ApplicationForm /> },
@@ -29,7 +36,12 @@ const renderApplicationForm = (initialEntries = ['/applications/new']) => {
 
   return {
     router,
-    ...render(<RouterProvider router={router} />),
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    ),
   };
 };
 
@@ -105,6 +117,7 @@ describe('ApplicationForm', () => {
       collaborationType: 'recommendation',
       nextActionDueDate: '2026-06-20',
     }));
+    await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
   });
 
   it('shows the recommendation count in the collapsed essays and recommendations summary', async () => {
@@ -188,7 +201,7 @@ describe('ApplicationForm', () => {
       scholarshipName: 'Saved Scholarship',
       dueDate: '2026-07-01',
     })));
-    await waitFor(() => expect(screen.getByText('Application Detail')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
     expect(window.localStorage.length).toBe(0);
   });
 });
