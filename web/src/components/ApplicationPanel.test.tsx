@@ -307,6 +307,31 @@ describe('ApplicationPanel', () => {
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith('/essays/10'));
   });
 
+  it('moves a not-started application to in-progress when adding an essay from the panel', async () => {
+    const user = userEvent.setup();
+    vi.mocked(apiGet).mockImplementation(async (endpoint) => {
+      if (endpoint === '/applications/1/essays') return [];
+      if (endpoint === '/applications/1/collaborations') return collaborations;
+      if (endpoint === '/collaborators') return collaborators;
+      throw new Error(`Unexpected API call: ${endpoint}`);
+    });
+
+    render(
+      <ApplicationPanel
+        application={{ ...application, status: 'Not Started', essays: [] }}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await openWorkItemsSection(user);
+    await user.click(screen.getByRole('button', { name: 'Add Essay' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(apiPatch).toHaveBeenCalledWith('/applications/1', expect.objectContaining({
+      status: 'In Progress',
+    })));
+  });
+
   it('persists updating an existing recommendation collaboration status', async () => {
     const user = userEvent.setup();
     vi.mocked(apiGet).mockImplementation(async (endpoint) => {

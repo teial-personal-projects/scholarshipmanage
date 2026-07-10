@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
 
 import { apiGet, apiPost, apiPatch } from '../services/api';
@@ -19,6 +20,7 @@ import {
   type EssayDraft,
   type RecommendationDraft,
 } from './ApplicationWorkItemsDrafts';
+import { moveApplicationStatusToInProgress } from '../utils/applicationStatus';
 
 const DRAFT_STORAGE_VERSION = 1;
 const DRAFT_STORAGE_PREFIX = 'scholarshipmanage:application-form-draft';
@@ -133,6 +135,7 @@ function hasUnsavedDraft(
 
 function ApplicationForm() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const { showSuccess, showError } = useToastHelpers();
   const isEditMode = !!id;
@@ -182,7 +185,15 @@ function ApplicationForm() {
     )));
   };
 
+  const moveApplicationToInProgress = () => {
+    setValues((current) => ({
+      ...current,
+      status: moveApplicationStatusToInProgress(current.status),
+    }));
+  };
+
   const handleAddEssay = () => {
+    moveApplicationToInProgress();
     setEssayDrafts((current) => [...current, createBlankEssayDraft()]);
     setWorkItemsOpen(true);
   };
@@ -192,6 +203,7 @@ function ApplicationForm() {
   };
 
   const handleAddRecommendation = () => {
+    moveApplicationToInProgress();
     setRecommendationDrafts((current) => [...current, createBlankRecommendationDraft()]);
     setWorkItemsOpen(true);
   };
@@ -316,6 +328,7 @@ function ApplicationForm() {
         await apiPatch(`/applications/${id}`, toPayload(values));
         clearStoredDraft(storageKey);
         allowNavigationRef.current = true;
+        void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         showSuccess('Success', 'Application updated successfully', 3000);
         navigate(`/applications/${id}`);
       } else {
@@ -339,8 +352,9 @@ function ApplicationForm() {
           })));
         clearStoredDraft(storageKey);
         allowNavigationRef.current = true;
+        void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         showSuccess('Success', 'Application created successfully', 3000);
-        navigate(`/applications/${created.id}`);
+        navigate('/dashboard');
       }
       return true;
     } catch (err) {
@@ -356,6 +370,7 @@ function ApplicationForm() {
     id,
     isEditMode,
     navigate,
+    queryClient,
     recommendationDrafts,
     showError,
     showSuccess,

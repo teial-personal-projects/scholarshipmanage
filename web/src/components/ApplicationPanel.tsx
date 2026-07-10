@@ -29,6 +29,7 @@ import {
 import { apiDelete, apiGet, apiPatch, apiPost } from '../services/api';
 import { getDeadlineBadgeLabel } from '../utils/deadline';
 import { deriveNextAction } from '../utils/deriveNextAction';
+import { moveApplicationStatusToInProgress } from '../utils/applicationStatus';
 import { useToastHelpers } from '../utils/toast';
 
 const DRAFT_STORAGE_VERSION = 1;
@@ -327,7 +328,15 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
     )));
   };
 
+  const moveApplicationToInProgress = () => {
+    setDraft((current) => ({
+      ...current,
+      status: moveApplicationStatusToInProgress(current.status),
+    }));
+  };
+
   const handleAddEssay = () => {
+    moveApplicationToInProgress();
     setEssayDrafts((current) => [...current, createBlankEssayDraft()]);
   };
 
@@ -346,6 +355,7 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
   };
 
   const handleAddRecommendation = () => {
+    moveApplicationToInProgress();
     setRecommendationDrafts((prev) => [...prev, createBlankRecommendationDraft()]);
   };
 
