@@ -158,14 +158,14 @@ describe('Essays Routes', () => {
       const newEssay = {
         theme: 'Write about your goals',
         wordCount: 500,
-        status: 'completed',
+        status: 'awaiting_review',
       };
 
       const createdEssay = {
         ...mockEssays.personalStatement,
         theme: 'Write about your goals',
         word_count: 500,
-        status: 'completed',
+        status: 'awaiting_review',
         id: 10,
         application_id: 1,
         user_id: 1,

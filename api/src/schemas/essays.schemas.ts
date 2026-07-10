@@ -7,7 +7,7 @@ import { urlSchema } from '@scholarshipmanage/shared';
 
 // Units schema
 const unitsSchema = z.enum(['words', 'characters']).optional();
-const essayStatusSchema = z.enum(['not_started', 'in_progress', 'completed']).optional();
+const essayStatusSchema = z.enum(['not_started', 'in_progress', 'awaiting_review', 'completed']).optional();
 const optionalUrlSchema = z.preprocess(
   (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
   urlSchema.nullable().optional(),

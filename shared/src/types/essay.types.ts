@@ -1,4 +1,4 @@
-export type EssayStatus = 'not_started' | 'in_progress' | 'completed';
+export type EssayStatus = 'not_started' | 'in_progress' | 'awaiting_review' | 'completed';
 
 export interface Essay {
   essayId?: number;

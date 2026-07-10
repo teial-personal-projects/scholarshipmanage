@@ -476,6 +476,7 @@ function ApplicationDetail() {
 
   const getEssayStatus = (essay: EssayResponse) => {
     if (essay.status === 'completed') return { label: 'Complete', colorClass: 'badge-green' };
+    if (essay.status === 'awaiting_review') return { label: 'Awaiting Review', colorClass: 'badge-orange' };
     if (essay.status === 'in_progress') return { label: 'In progress', colorClass: 'badge-blue' };
     return { label: 'Not started', colorClass: 'badge-gray' };
   };

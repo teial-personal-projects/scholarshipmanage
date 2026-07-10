@@ -211,7 +211,7 @@ CREATE TABLE public.essays (
   units TEXT,
   essay_link TEXT,
   word_count INTEGER,
-  status TEXT DEFAULT 'not_started' CHECK (status IN ('not_started', 'in_progress', 'completed')),
+  status TEXT DEFAULT 'not_started' CHECK (status IN ('not_started', 'in_progress', 'awaiting_review', 'completed')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
