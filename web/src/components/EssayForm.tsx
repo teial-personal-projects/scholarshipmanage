@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiPost, apiPatch } from '../services/api';
-import type { EssayResponse } from '@scholarshipmanage/shared';
+import type { EssayResponse, EssayStatus } from '@scholarshipmanage/shared';
 import { useToastHelpers } from '../utils/toast';
 
 interface EssayFormProps {
@@ -18,7 +18,7 @@ function EssayForm({ isOpen, onClose, applicationId, essay, onSuccess }: EssayFo
   const [theme, setTheme] = useState('');
   const [wordCount, setWordCount] = useState('');
   const [essayLink, setEssayLink] = useState('');
-  const [status, setStatus] = useState('not_started');
+  const [status, setStatus] = useState<EssayStatus>('not_started');
 
   useEffect(() => {
     if (essay) {
@@ -45,7 +45,7 @@ function EssayForm({ isOpen, onClose, applicationId, essay, onSuccess }: EssayFo
         theme?: string;
         wordCount?: number;
         essayLink?: string | null;
-        status: string;
+        status: EssayStatus;
       } = {
         status,
       };
@@ -134,9 +134,10 @@ function EssayForm({ isOpen, onClose, applicationId, essay, onSuccess }: EssayFo
 
             <div>
               <label className="field-label">Status</label>
-              <select className="field-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <select className="field-select" value={status} onChange={(e) => setStatus(e.target.value as EssayStatus)}>
                 <option value="not_started">Not Started</option>
                 <option value="in_progress">In Progress</option>
+                <option value="awaiting_review">Awaiting Review</option>
                 <option value="completed">Complete</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">Current status of this essay</p>

@@ -37,6 +37,7 @@ interface ApplicationWorkItemsSectionProps {
 const ESSAY_STATUS_OPTIONS: { value: EssayStatus; label: string }[] = [
   { value: 'not_started', label: 'Not started' },
   { value: 'in_progress', label: 'In progress' },
+  { value: 'awaiting_review', label: 'Awaiting Review' },
   { value: 'completed', label: 'Completed' },
 ];
 

@@ -11,7 +11,7 @@ import type {
   ActionOwner,
   CollaborationActionType
 } from './collaborator.types.js';
-import type { Essay } from './essay.types.js';
+import type { Essay, EssayStatus } from './essay.types.js';
 import type { Recommendation } from './recommendation.types.js';
 
 /**
@@ -160,7 +160,7 @@ export interface EssayResponse {
   theme?: string | null;
   wordCount?: number | null;
   essayLink?: string | null;
-  status?: 'not_started' | 'in_progress' | 'completed';
+  status?: EssayStatus;
   createdAt: string;
   updatedAt?: string;
 }
