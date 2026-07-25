@@ -141,6 +141,9 @@ describe('GridView', () => {
     expect(screen.getByRole('button', { name: 'Updated' })).toBeInTheDocument();
     expect(screen.getAllByText('06/10/2026').length).toBeGreaterThan(0);
     expect(screen.getAllByText('06/01/2026').length).toBeGreaterThan(0);
+
+    const rowText = screen.getAllByRole('row').map((row) => row.textContent ?? '').join('\n');
+    expect(rowText.indexOf('Newer Update Scholarship')).toBeLessThan(rowText.indexOf('Older Update Scholarship'));
   });
 
   it('filters by due date presets', () => {
