@@ -1,7 +1,7 @@
 -- Scholarship Manage consolidated production schema
 -- Run this file once against a fresh Supabase/PostgreSQL project.
 --
--- This file represents the current desired schema after migrations 001-017.
+-- This file represents the current desired schema after migrations 001-020.
 -- Keep numbered migrations for history; use this file for new production bootstrap.
 
 -- ============================================================================
@@ -865,6 +865,48 @@ VALUES
     false,
     true,
     ARRAY['official', 'scholarships', 'career']
+  ),
+  (
+    'JLVCollegeCounseling',
+    'https://jlvcollegecounseling.com/',
+    'website',
+    NULL,
+    true,
+    7,
+    'JLV College Counseling',
+    'College counseling resource offering scholarship listings, application advice, and college planning guidance.',
+    'General',
+    false,
+    true,
+    ARRAY['scholarships', 'college', 'counseling']
+  ),
+  (
+    'Scholarships360',
+    'https://scholarships360.org/',
+    'website',
+    NULL,
+    true,
+    8,
+    'Scholarships360',
+    'Scholarship discovery platform offering vetted opportunities and financial aid guidance.',
+    'General',
+    false,
+    true,
+    ARRAY['scholarships', 'college', 'financial-aid']
+  ),
+  (
+    'RedKite',
+    'https://myredkite.com/',
+    'website',
+    NULL,
+    true,
+    7,
+    'Red Kite',
+    'Scholarship search platform that helps students discover and organize financial aid opportunities.',
+    'General',
+    false,
+    true,
+    ARRAY['scholarships', 'financial-aid', 'search']
   )
 ON CONFLICT (name) DO NOTHING;
 
