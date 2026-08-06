@@ -303,6 +303,24 @@ CREATE TRIGGER update_essays_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+CREATE OR REPLACE FUNCTION public.complete_essays_on_application_submission()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.essays
+  SET status = 'completed'
+  WHERE application_id = NEW.id
+    AND status IS DISTINCT FROM 'completed';
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER complete_essays_on_application_submission
+  AFTER UPDATE OF status ON public.applications
+  FOR EACH ROW
+  WHEN (NEW.status = 'Submitted' AND OLD.status IS DISTINCT FROM NEW.status)
+  EXECUTE FUNCTION public.complete_essays_on_application_submission();
+
 COMMENT ON TABLE public.applications IS 'Scholarship applications tracked by students';
 COMMENT ON COLUMN public.applications.user_id IS 'The student who owns this application';
 COMMENT ON COLUMN public.applications.last_reminder_sent_at IS 'Timestamp when the last reminder email was sent for this application. Used to prevent duplicate reminders within 24 hours.';

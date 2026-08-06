@@ -222,6 +222,24 @@ describe('ApplicationPanel', () => {
     expect(screen.getByText('Review and submit')).toBeInTheDocument();
   });
 
+  it('completes unfinished essays when the application is submitted', async () => {
+    const user = userEvent.setup();
+    render(<ApplicationPanel application={application} onClose={vi.fn()} />);
+
+    await openWorkItemsSection(user);
+    await screen.findByDisplayValue('Service prompt');
+    await user.selectOptions(screen.getAllByLabelText('Status')[0], 'Submitted');
+
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Status')[2]).toHaveValue('completed');
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(apiPatch).toHaveBeenCalledWith('/essays/11', expect.objectContaining({
+      status: 'completed',
+    })));
+  });
+
   it('opens linked Google Docs in a new tab', async () => {
     const user = userEvent.setup();
     render(<ApplicationPanel application={application} onClose={vi.fn()} />);
