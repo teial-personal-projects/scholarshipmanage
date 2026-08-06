@@ -32,6 +32,7 @@ describe('DashboardMetricStrip', () => {
     const metrics = [
       { label: 'Total Applications', value: 12 },
       { label: 'Submitted', value: 3 },
+      { label: 'Awarded', value: 2 },
     ];
 
     render(
@@ -45,5 +46,6 @@ describe('DashboardMetricStrip', () => {
     fireEvent.click(screen.getByRole('button', { name: /Submitted/ }));
 
     expect(onMetricSelect).toHaveBeenCalledWith(metrics[1]);
+    expect(screen.getByRole('button', { name: /Awarded/ })).toBeInTheDocument();
   });
 });

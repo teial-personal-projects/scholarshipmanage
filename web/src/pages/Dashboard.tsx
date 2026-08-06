@@ -72,6 +72,8 @@ function getMetricFilterRequest(metric: DashboardMetric): Omit<GridFilterRequest
       return { statusFilter: 'notStarted', dueDateFilter: 'all' };
     case 'Submitted':
       return { statusFilter: 'submitted', dueDateFilter: 'all' };
+    case 'Awarded':
+      return { statusFilter: 'awarded', dueDateFilter: 'all' };
     case 'Total Applications':
     default:
       return { statusFilter: 'all', dueDateFilter: 'all' };

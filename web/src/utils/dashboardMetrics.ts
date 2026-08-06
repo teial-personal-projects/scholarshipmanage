@@ -27,6 +27,7 @@ export interface DashboardMetrics {
   dueNextTwoWeeks: number;
   notStarted: number;
   submitted: number;
+  awarded: number;
   inProgress: number;
   summary: DashboardMetric[];
   statusMetrics: ApplicationStatusMetric[];
@@ -57,6 +58,7 @@ export function getDashboardMetrics(
   const dueNextTwoWeeks = filterApplicationsByRadar([...applications], 'nextTwoWeeks').length;
   const notStarted = filterApplicationsByRadar([...applications], 'notStarted').length;
   const submitted = countByStatus(applications, 'Submitted');
+  const awarded = countByStatus(applications, 'Awarded');
   const inProgress = countByStatus(applications, 'In Progress');
 
   const summary = [
@@ -67,6 +69,7 @@ export function getDashboardMetrics(
     { label: 'Due next 2 weeks', value: dueNextTwoWeeks },
     { label: 'Not started', value: notStarted },
     { label: 'Submitted', value: submitted },
+    { label: 'Awarded', value: awarded },
   ];
 
   const statusMetrics = APPLICATION_STATUSES.map((status) => {
@@ -89,6 +92,7 @@ export function getDashboardMetrics(
     dueNextTwoWeeks,
     notStarted,
     submitted,
+    awarded,
     inProgress,
     summary,
     statusMetrics,
