@@ -328,6 +328,18 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
     )));
   };
 
+  const handleApplicationChange = (updates: Partial<ApplicationFormValues>) => {
+    setDraft((current) => ({ ...current, ...updates }));
+
+    if (updates.status === 'Submitted') {
+      setEssayDrafts((current) => current.map((essay) => (
+        essay.isDeleted || essay.status === 'completed'
+          ? essay
+          : { ...essay, status: 'completed' }
+      )));
+    }
+  };
+
   const moveApplicationToInProgress = () => {
     setDraft((current) => ({
       ...current,
@@ -551,7 +563,7 @@ export default function ApplicationPanel({ application, onClose, onSaveSuccess }
           <ApplicationFormSections
             values={draft as ApplicationFormValues}
             compact
-            onChange={(updates) => setDraft((prev) => ({ ...prev, ...updates }))}
+            onChange={handleApplicationChange}
           />
 
           <ApplicationWorkItemsSection

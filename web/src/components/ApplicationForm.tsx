@@ -162,8 +162,17 @@ function ApplicationForm() {
     currentLocation.pathname !== nextLocation.pathname
   );
 
-  const handleChange = (updates: Partial<ApplicationFormValues>) =>
+  const handleChange = (updates: Partial<ApplicationFormValues>) => {
     setValues((prev) => ({ ...prev, ...updates }));
+
+    if (updates.status === 'Submitted') {
+      setEssayDrafts((current) => current.map((essay) => (
+        essay.isDeleted || essay.status === 'completed'
+          ? essay
+          : { ...essay, status: 'completed' }
+      )));
+    }
+  };
 
   const updateEssayDraft = <Key extends keyof EssayDraft>(
     localId: string,

@@ -6,6 +6,7 @@ import {
   FileText,
   ListTodo,
   SendHorizonal,
+  Trophy,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -74,6 +75,13 @@ const METRIC_VISUALS: Record<string, MetricVisual> = {
     iconClass: 'bg-green-100 text-green-700',
     valueClass: 'text-green-700',
     helperText: 'Sent in',
+  },
+  Awarded: {
+    Icon: Trophy,
+    cardClass: 'border-emerald-100 bg-emerald-50/70',
+    iconClass: 'bg-emerald-100 text-emerald-700',
+    valueClass: 'text-emerald-700',
+    helperText: 'Won',
   },
 };
 

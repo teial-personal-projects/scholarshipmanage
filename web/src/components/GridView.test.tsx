@@ -118,6 +118,30 @@ describe('GridView', () => {
     expect(screen.getByLabelText('Filter by status')).toHaveValue('submitted');
   });
 
+  it('filters awarded applications separately from submitted applications', () => {
+    renderGrid([
+      makeApplication({
+        id: 1,
+        scholarshipName: 'Submitted Scholarship',
+        status: 'Submitted',
+      }),
+      makeApplication({
+        id: 2,
+        scholarshipName: 'Awarded Scholarship',
+        status: 'Awarded',
+      }),
+    ]);
+
+    expect(screen.getByRole('option', { name: 'Submitted (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Awarded (1)' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'awarded' } });
+
+    expect(screen.getAllByText('Awarded Scholarship').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Submitted Scholarship')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Filter by status')).toHaveValue('awarded');
+  });
+
   it('can switch the date column from due date to updated date through sort by', () => {
     renderGrid([
       makeApplication({

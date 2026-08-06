@@ -28,7 +28,7 @@ type SortOptionId =
   | 'awardAmount'
   | 'recommendationCount'
   | 'currentDependencies';
-export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'submitted';
+export type StatusFilter = 'all' | 'needsAction' | 'notStarted' | 'submitted' | 'awarded';
 export type DueDateFilter = 'all' | 'overdue' | 'next7' | 'nextTwoWeeks' | 'next30' | 'custom' | 'noDeadline';
 
 export interface GridFilterRequest {
@@ -80,6 +80,7 @@ const STATUS_FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'needsAction', label: 'Dependencies' },
   { key: 'notStarted', label: 'Not Started' },
   { key: 'submitted', label: 'Submitted' },
+  { key: 'awarded', label: 'Awarded' },
 ];
 
 const DUE_DATE_FILTERS: { key: DueDateFilter; label: string }[] = [
@@ -156,7 +157,8 @@ function sortByCreatedDesc(first: ApplicationResponse, second: ApplicationRespon
 function matchesStatusFilter(application: ApplicationResponse, statusFilter: StatusFilter): boolean {
   if (statusFilter === 'all') return !isApplicationDone(application.status);
   if (statusFilter === 'notStarted') return application.status === 'Not Started';
-  if (statusFilter === 'submitted') return isApplicationDone(application.status);
+  if (statusFilter === 'submitted') return application.status === 'Submitted';
+  if (statusFilter === 'awarded') return application.status === 'Awarded';
   return !isApplicationDone(application.status) && applicationNeedsAction(application);
 }
 
@@ -292,6 +294,7 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
     needsAction: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'needsAction')).length,
     notStarted: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'notStarted')).length,
     submitted: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'submitted')).length,
+    awarded: baseFilteredApplications.filter((application) => matchesStatusFilter(application, 'awarded')).length,
   }), [baseFilteredApplications]);
 
   const filteredApplications = useMemo(() => (
