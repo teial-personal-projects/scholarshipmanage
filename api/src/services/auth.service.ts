@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase.js';
+import { supabase, supabaseAuth } from '../config/supabase.js';
 import { insertOne } from '../utils/supabase.js';
 import {
   DB_ERROR_CODES,
@@ -121,7 +121,7 @@ export const register = async (data: RegisterData) => {
   const {
     data: sessionData,
     error: sessionError,
-  } = await supabase.auth.signInWithPassword({
+  } = await supabaseAuth.auth.signInWithPassword({
     email,
     password,
   });
@@ -154,7 +154,7 @@ export const login = async (data: LoginData) => {
   const {
     data: sessionData,
     error,
-  } = await supabase.auth.signInWithPassword({
+  } = await supabaseAuth.auth.signInWithPassword({
     email,
     password,
   });
@@ -193,7 +193,7 @@ export const refreshSession = async (refreshToken: string) => {
   const {
     data: sessionData,
     error,
-  } = await supabase.auth.refreshSession({
+  } = await supabaseAuth.auth.refreshSession({
     refresh_token: refreshToken,
   });
 
@@ -206,4 +206,3 @@ export const refreshSession = async (refreshToken: string) => {
     session: sessionData.session,
   };
 };
-
