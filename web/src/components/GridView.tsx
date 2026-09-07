@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar, ChevronDown, ChevronUp, RotateCcw, Search, SquarePen, Trash2 } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Download, RotateCcw, Search, SquarePen, Trash2 } from 'lucide-react';
 
 import { isApplicationDone, type ApplicationResponse } from '@scholarshipmanage/shared';
 
@@ -9,6 +9,7 @@ import { getApplicationOrganizationLabel } from '../utils/applicationOrganizatio
 import { getPendingWorkChips } from '../utils/pendingWork';
 import { applicationNeedsAction } from '../utils/needsAction';
 import { formatDateNoTimezone, parseDateOnlyToLocalDate } from '../utils/date';
+import { downloadApplicationsCsv } from '../utils/applicationCsv';
 import { useToastHelpers } from '../utils/toast';
 
 interface GridViewProps {
@@ -257,7 +258,7 @@ function Pagination({
 }
 
 export default function GridView({ applications, onApplicationOpen, onDelete, filterRequest }: GridViewProps) {
-  const { showError } = useToastHelpers();
+  const { showError, showSuccess } = useToastHelpers();
   const [searchTerm, setSearchTerm] = useState('');
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>('all');
   const [dateColumnMode, setDateColumnMode] = useState<DateColumnMode>('dueDate');
@@ -384,6 +385,19 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
     setSortDirection('desc');
   };
 
+  const handleExport = () => {
+    try {
+      downloadApplicationsCsv(sortedApplications);
+      showSuccess(
+        'Export complete',
+        `${sortedApplications.length} scholarship${sortedApplications.length === 1 ? '' : 's'} exported.`,
+        3000,
+      );
+    } catch {
+      showError('Export failed', 'We could not create the CSV file. Please try again.', 5000);
+    }
+  };
+
   const gridColumns = useMemo(() => (
     GRID_COLUMNS.map((column) => (
       column.key === 'dueDate' ? { ...column, label: getDateColumnLabel(dateColumnMode) } : column
@@ -458,14 +472,25 @@ export default function GridView({ applications, onApplicationOpen, onDelete, fi
             </span>
           </label>
 
-          <button
-            type="button"
-            className="btn-ghost h-10 gap-1.5 px-3 text-xs md:justify-self-start xl:justify-self-auto"
-            onClick={resetFilters}
-          >
-            <RotateCcw size={14} aria-hidden />
-            Reset
-          </button>
+          <div className="flex items-center gap-2 md:justify-self-start xl:justify-self-auto">
+            <button
+              type="button"
+              className="btn-ghost h-10 gap-1.5 px-3 text-xs"
+              onClick={resetFilters}
+            >
+              <RotateCcw size={14} aria-hidden />
+              Reset
+            </button>
+            <button
+              type="button"
+              className="btn-outline h-10 gap-1.5 px-3 text-xs"
+              disabled={sortedApplications.length === 0}
+              onClick={handleExport}
+            >
+              <Download size={14} aria-hidden />
+              Export CSV
+            </button>
+          </div>
         </div>
       </div>
 
