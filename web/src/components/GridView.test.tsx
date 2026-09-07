@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import GridView from './GridView';
+import { downloadApplicationsCsv } from '../utils/applicationCsv';
 
 import type { ApplicationResponse } from '@scholarshipmanage/shared';
 
@@ -12,6 +13,10 @@ vi.mock('react-hot-toast', () => ({
     error: vi.fn(),
     success: vi.fn(),
   },
+}));
+
+vi.mock('../utils/applicationCsv', () => ({
+  downloadApplicationsCsv: vi.fn(),
 }));
 
 const makeApplication = (
@@ -140,6 +145,33 @@ describe('GridView', () => {
     expect(screen.getAllByText('Awarded Scholarship').length).toBeGreaterThan(0);
     expect(screen.queryByText('Submitted Scholarship')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Filter by status')).toHaveValue('awarded');
+  });
+
+  it('exports every application matching the current filters', () => {
+    const draftApplication = makeApplication({
+      id: 1,
+      scholarshipName: 'Draft Scholarship',
+      status: 'In Progress',
+    });
+    const submittedApplication = makeApplication({
+      id: 2,
+      scholarshipName: 'Submitted Scholarship',
+      status: 'Submitted',
+    });
+    renderGrid([draftApplication, submittedApplication]);
+
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'submitted' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+
+    expect(downloadApplicationsCsv).toHaveBeenCalledWith([submittedApplication]);
+  });
+
+  it('disables export when no applications match the current filters', () => {
+    renderGrid([makeApplication({ scholarshipName: 'Only Scholarship' })]);
+
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'no matches' } });
+
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
   });
 
   it('can switch the date column from due date to updated date through sort by', () => {
